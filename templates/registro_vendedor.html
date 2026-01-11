@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registro de Vendedor | ShopFusion</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/registro_vendedor.css') }}">
+  <script defer src="{{ url_for('static', filename='js/registro_vendedor.js') }}"></script>
+</head>
+<body>
+
+  <header class="rv-header">
+    <h1 class="fx-gradient-text">🧾 Registro de Vendedor</h1>
+    <p>Activa tu cuenta y comienza a vender en todo el Ecuador.</p>
+  </header>
+{% with messages = get_flashed_messages(with_categories=True) %}
+  {% if messages %}
+    <div class="alerts">
+      {% for category, msg in messages %}
+        <div class="alert alert-{{ category }}">
+          {{ msg }}
+          {% if category == 'success' %}
+            <a class="btn-inline" href="{{ url_for('login_vendedor') }}">Iniciar sesión</a>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+
+  <main class="rv-container">
+    <section class="rv-card">
+      <h2 class="fx-gradient-text">1) Datos del negocio</h2>
+
+      <form id="form-registro" action="{{ url_for('registro_vendedor') }}" method="POST" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="grid two">
+          <div class="field">
+            <label for="tipo_persona">Tipo de cuenta</label>
+            <select id="tipo_persona" name="tipo_persona" required>
+              <option value="" disabled selected>Selecciona…</option>
+              <option value="natural">Persona natural</option>
+              <option value="juridica">Razón social / empresa</option>
+            </select>
+            <small class="hint">Usado solo para propósitos de facturación.</small>
+          </div>
+
+          <div class="field">
+            <label for="nombre_comercial">Nombre comercial / Marca</label>
+            <input id="nombre_comercial" name="nombre_comercial" type="text" required maxlength="120" placeholder="Ej: Andina Store">
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div class="field">
+            <label for="email">Correo de cuenta</label>
+            <input id="email" name="email" type="email" required placeholder="tucorreo@dominio.com">
+          </div>
+
+          <div class="field">
+            <label for="telefono">Teléfono / WhatsApp</label>
+            <input id="telefono" name="telefono" type="tel" required placeholder="+593 9XXXXXXXX">
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div class="field">
+            <label for="ciudad">Ciudad</label>
+            <input id="ciudad" name="ciudad" type="text" required placeholder="Ej: Guayaquil, Quito, Cuenca…">
+          </div>
+
+          <div class="field">
+            <label for="direccion">Dirección</label>
+            <input id="direccion" name="direccion" type="text" required placeholder="Calle, número, referencia">
+          </div>
+        </div>
+
+        <hr class="hr">
+
+        <h2 class="fx-gradient-text">2) Pagos y retiros</h2>
+
+        <div class="grid two">
+          <div class="field">
+            <label for="metodo_pago">Método de retiro preferido</label>
+            <select id="metodo_pago" name="metodo_pago" required>
+              <option value="" disabled selected>Selecciona…</option>
+              <option value="banco">Transferencia bancaria (Pichincha / Guayaquil / Produbanco / otros)</option>
+              <option value="paypal">PayPal (retiro inmediato sin comisión)</option>
+            </select>
+            <small id="retiro_hint" class="hint">Selecciona un método para ver detalles.</small>
+          </div>
+
+          <div class="field" data-bank>
+            <label for="banco">Banco</label>
+            <select id="banco" name="banco">
+              <option value="" disabled selected>Selecciona tu banco</option>
+              <option value="Pichincha">Pichincha</option>
+              <option value="Guayaquil">Guayaquil</option>
+              <option value="Produbanco">Produbanco</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid two" data-bank>
+          <div class="field">
+            <label for="tipo_cuenta">Tipo de cuenta</label>
+            <select id="tipo_cuenta" name="tipo_cuenta">
+              <option value="" disabled selected>Selecciona…</option>
+              <option value="ahorros">Ahorros</option>
+              <option value="corriente">Corriente</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="numero_cuenta">Número de cuenta</label>
+            <input id="numero_cuenta" name="numero_cuenta" type="text" inputmode="numeric" maxlength="20" placeholder="Solo números">
+          </div>
+        </div>
+
+        <div class="field" data-paypal hidden>
+          <label for="paypal_email">Cuenta PayPal</label>
+          <input id="paypal_email" name="paypal_email" type="email" placeholder="tu-cuenta@paypal.com">
+        </div>
+
+        <div class="grid two">
+          <div class="field">
+            <label for="frecuencia_retiro">Frecuencia de retiro</label>
+            <select id="frecuencia_retiro" name="frecuencia_retiro" required>
+              <option value="" disabled selected>Selecciona…</option>
+              <option value="semanal">Semanal</option>
+              <option value="quincenal">Quincenal</option>
+              <option value="mensual">Mensual</option>
+            </select>
+            <small class="hint">Transferencias: semanal, quincenal o mensual. PayPal: inmediato.</small>
+          </div>
+        </div>
+
+        <hr class="hr">
+
+        <h2 class="fx-gradient-text">3) Acceso al panel</h2>
+
+        <div class="grid two">
+          <div class="field">
+            <label for="username">Usuario único</label>
+            <input id="username" name="username" type="text" required minlength="3" maxlength="32"
+                   pattern="^[a-z0-9._-]{3,32}$" placeholder="ej: andina_store">
+            <small class="hint">Min 3, max 32. Solo minúsculas, números, punto, guion y guion bajo.</small>
+          </div>
+
+          <div class="field">
+            <label for="password">Contraseña</label>
+            <input id="password" name="password" type="password" required minlength="6" placeholder="Mínimo 6 caracteres">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="password2">Repetir contraseña</label>
+          <input id="password2" name="password2" type="password" required minlength="6" placeholder="Debe coincidir">
+        </div>
+
+        <div class="field-check">
+          <input id="acepto" name="acepto" type="checkbox" required>
+          <label for="acepto">
+            Acepto los
+            <a href="{{ url_for('terminos') }}" target="_blank">Términos y Condiciones</a>,
+            <a href="{{ url_for('privacidad') }}" target="_blank">Política de Privacidad</a> y
+            <a href="#" target="_blank">Política de uso de vendedores</a>.
+          </label>
+        </div>
+<div class="form-actions">
+  <button type="submit" class="btn-primary">Crear mi cuenta de vendedor</button>
+  <a href="{{ url_for('login_vendedor') }}" class="btn-ghost">Iniciar sesión</a>
+  <a href="{{ url_for('vendedores_info') }}" class="btn-ghost">← Volver</a>
+</div>
+
+
+
+        <p class="mini">
+          * Comisión por venta: 10%. * El precio al comprador incluye +5%. * Tarifa mensual: $15.
+          * ShopFusion retiene fondos hasta confirmar guía de envío y factura.
+          * Retiros: PayPal inmediato (sin comisión). Transferencias: semanal/quincenal/mensual (bancos EC).
+        </p>
+      </form>
+    </section>
+  </main>
+
+</body>
+</html>

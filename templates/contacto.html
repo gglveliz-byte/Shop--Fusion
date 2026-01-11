@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacto - ShopFusion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v=3.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegant_styles.css') }}?v=3.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        .contact-container {
+            max-width: 900px;
+            margin: 100px auto 60px;
+            padding: 40px;
+        }
+        .contact-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .contact-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-elegant-dark);
+            margin-bottom: 15px;
+        }
+        .contact-header p {
+            font-size: 1.125rem;
+            color: var(--text-elegant-light);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .contact-form-container {
+            background: var(--bg-elegant-white);
+            border-radius: var(--radius-elegant-xl);
+            padding: 40px;
+            box-shadow: var(--shadow-elegant-lg);
+            margin-bottom: 40px;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-elegant-dark);
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid var(--border-elegant-light);
+            border-radius: var(--radius-elegant-md);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s;
+            background: var(--bg-elegant-gray-50);
+            color: var(--text-elegant-dark);
+        }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--elegant-primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            background: white;
+        }
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: var(--elegant-primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-elegant-md);
+            font-size: 1.125rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition-elegant);
+            box-shadow: var(--shadow-elegant-md);
+        }
+        .btn-submit:hover {
+            background: var(--elegant-primary-dark, #1e3a8a);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-elegant-lg);
+        }
+        .contact-info {
+            background: linear-gradient(135deg, var(--elegant-primary) 0%, var(--elegant-accent) 100%);
+            border-radius: var(--radius-elegant-xl);
+            padding: 40px;
+            color: white;
+            text-align: center;
+        }
+        .contact-info h3 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+        }
+        .contact-info-item {
+            margin-bottom: 25px;
+        }
+        .contact-info-item i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            opacity: 0.95;
+        }
+        .contact-info-item p {
+            margin: 5px 0;
+            opacity: 0.95;
+        }
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-elegant-md);
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+        .alert-error, .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('index') }}" aria-label="Ir a página principal de ShopFusion">
+            <svg id="logo" width="140" height="60" viewBox="0 0 140 60" role="img" aria-label="Logo de ShopFusion">
+                <title>Logo de ShopFusion</title>
+                <rect width="140" height="60" fill="#1C1C1C" rx="8"/>
+                <text x="10" y="40" fill="#FFD700" font-size="20" font-family="Inter, sans-serif">ShopFusion</text>
+            </svg>
+        </a>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                <li><a href="{{ url_for('soporte') }}">Soporte</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="contact-container">
+        <div class="contact-header">
+            <h1><i class="fas fa-envelope"></i> Contacta con Nosotros</h1>
+            <p>¿Tienes alguna pregunta, sugerencia o necesitas ayuda? Estamos aquí para ayudarte. Envíanos un mensaje y te responderemos lo antes posible.</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="contact-form-container">
+            <h2 style="font-size: 1.75rem; font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 30px; text-align: center;">
+                <i class="fas fa-paper-plane"></i> Envía tus Sugerencias
+            </h2>
+            <p style="color: var(--text-elegant-light); text-align: center; margin-bottom: 30px;">
+                <i class="fas fa-info-circle"></i> 
+                Sí, contactamos contigo dentro de las primeras 24 horas. En casos urgentes, responderemos en menos de 12 horas.
+            </p>
+            
+            <form id="contact-form" method="POST" action="{{ url_for('contacto') }}">
+                {{ form.hidden_tag() }}
+                
+                <div class="form-group">
+                    <label for="name">
+                        <i class="fas fa-user"></i> Nombre Completo *
+                    </label>
+                    {{ form.name(placeholder="Tu nombre completo", required=True, class="form-control", autocomplete="name") }}
+                    {% if form.name.errors %}
+                        <small style="color: #ef4444; display: block; margin-top: 5px;">{{ form.name.errors[0] }}</small>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="email">
+                        <i class="fas fa-envelope"></i> Correo Electrónico *
+                    </label>
+                    {{ form.email(placeholder="tu@email.com", required=True, class="form-control", autocomplete="email") }}
+                    {% if form.email.errors %}
+                        <small style="color: #ef4444; display: block; margin-top: 5px;">{{ form.email.errors[0] }}</small>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="message">
+                        <i class="fas fa-comment"></i> Mensaje *
+                    </label>
+                    {{ form.message(placeholder="Escribe tu mensaje, sugerencia, consulta o informe de errores aquí...", rows=8, required=True, class="form-control") }}
+                    {% if form.message.errors %}
+                        <small style="color: #ef4444; display: block; margin-top: 5px;">{{ form.message.errors[0] }}</small>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-paper-plane"></i> Enviar Mensaje
+                </button>
+            </form>
+        </div>
+
+        <div class="contact-info">
+            <h3><i class="fas fa-info-circle"></i> Información de Contacto</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; margin-top: 30px;">
+                <div class="contact-info-item">
+                    <i class="fas fa-envelope"></i>
+                    <p style="font-weight: 700; font-size: 1.125rem; margin-top: 10px;">Email</p>
+                    <a href="mailto:info@shopfusion.com" style="color: white; text-decoration: underline; opacity: 0.95;">
+                        info@shopfusion.com
+                    </a>
+                </div>
+                <div class="contact-info-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <p style="font-weight: 700; font-size: 1.125rem; margin-top: 10px;">Ubicación</p>
+                    <p>Milagro, Ecuador</p>
+                </div>
+                <div class="contact-info-item">
+                    <i class="fas fa-clock"></i>
+                    <p style="font-weight: 700; font-size: 1.125rem; margin-top: 10px;">Tiempo de Respuesta</p>
+                    <p>24 horas</p>
+                    <p style="font-size: 0.9rem; opacity: 0.85;">12 horas en casos urgentes</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>ShopFusion</h3>
+                <p style="color: var(--text-elegant-light);">Tu tienda online de confianza</p>
+            </div>
+            <div class="footer-section">
+                <h3>Enlaces</h3>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                    <li><a href="{{ url_for('soporte') }}">Soporte</a></li>
+                    <li><a href="{{ url_for('privacidad') }}">Privacidad</a></li>
+                    <li><a href="{{ url_for('terminos') }}">Términos</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; <span id="current-year"></span> ShopFusion. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+    <script>
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>

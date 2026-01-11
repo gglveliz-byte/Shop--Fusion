@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Vacantes - ShopFusion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/panel.css') }}">
+    <style>
+        .vacantes-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .form-vacante {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .vacantes-list {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .vacante-item {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+        .vacante-item:last-child {
+            border-bottom: none;
+        }
+        .vacante-info h4 {
+            margin: 0 0 0.5rem 0;
+            color: #1f2937;
+        }
+        .vacante-info p {
+            margin: 0.25rem 0;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        .vacante-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .badge-activa {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .badge-inactiva {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('index') }}">ShopFusion</a>
+        <nav>
+            <a href="{{ url_for('panel') }}">← Volver al Panel</a>
+            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+        </nav>
+    </header>
+
+    <main class="vacantes-container">
+        <h1>💼 Gestión de Vacantes</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" style="padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px; background: {% if category == 'success' %}#d1fae5; color: #065f46{% else %}#fee2e2; color: #991b1b{% endif %};">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Formulario para crear nueva vacante -->
+        <div class="form-vacante">
+            <h2>Crear Nueva Vacante</h2>
+            <form method="POST" action="{{ url_for('admin_vacantes') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="titulo">Título de la Vacante *</label>
+                    <input type="text" id="titulo" name="titulo" required style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="descripcion">Descripción *</label>
+                    <textarea id="descripcion" name="descripcion" required rows="4" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px;"></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="requisitos">Requisitos</label>
+                    <textarea id="requisitos" name="requisitos" rows="6" placeholder="Ejemplo:&#10;- Experiencia en ventas (mínimo 1 año)&#10;- Bachillerato completo&#10;- Excelente comunicación verbal&#10;- Manejo básico de sistemas" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px;"></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="activa" checked>
+                        <span>Vacante activa (visible para usuarios)</span>
+                    </label>
+                </div>
+
+                <button type="submit" style="padding: 0.75rem 2rem; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-plus"></i> Crear Vacante
+                </button>
+            </form>
+        </div>
+
+        <!-- Lista de vacantes -->
+        <div class="vacantes-list">
+            <h2>Vacantes Existentes</h2>
+            {% if vacantes %}
+                {% for vacante in vacantes %}
+                <div class="vacante-item">
+                    <div class="vacante-info" style="flex: 1;">
+                        <h4>{{ vacante.titulo }}</h4>
+                        <p>{{ vacante.descripcion[:150] }}{% if vacante.descripcion|length > 150 %}...{% endif %}</p>
+                        <p style="font-size: 0.85rem; color: #9ca3af; margin-top: 0.5rem;">
+                            Creada: {{ vacante.creado_en.strftime('%d/%m/%Y %H:%M') if vacante.creado_en else 'N/A' }}
+                        </p>
+                        <span class="badge {% if vacante.activa %}badge-activa{% else %}badge-inactiva{% endif %}">
+                            {{ 'Activa' if vacante.activa else 'Inactiva' }}
+                        </span>
+                    </div>
+                    <div class="vacante-actions">
+                        <a href="{{ url_for('admin_editar_vacante', vacante_id=vacante.id) }}" style="padding: 0.5rem 1rem; background: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9rem;">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <a href="{{ url_for('admin_aplicaciones_vacante', vacante_id=vacante.id) }}" style="padding: 0.5rem 1rem; background: #10b981; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9rem;">
+                            <i class="fas fa-users"></i> Aplicaciones
+                        </a>
+                        <form method="POST" action="{{ url_for('admin_eliminar_vacante', vacante_id=vacante.id) }}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de eliminar esta vacante?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" style="padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 0.9rem; cursor: pointer;">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No hay vacantes creadas aún.</p>
+            {% endif %}
+        </div>
+    </main>
+</body>
+</html>
+
+

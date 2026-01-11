@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro e Inicio de Sesión | ShopFusion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegant_styles.css') }}">
+    <style>
+        .tipo-selector-container {
+            max-width: 800px;
+            margin: 3rem auto;
+            padding: 2rem;
+        }
+        .tipo-selector-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .tipo-selector-header h1 {
+            font-size: 2rem;
+            color: var(--text-elegant-dark, #1C1C1C);
+            margin-bottom: 0.5rem;
+        }
+        .tipo-selector-header p {
+            color: var(--text-elegant-light, #64748b);
+        }
+        .tipos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .tipo-card {
+            padding: 2rem;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tipo-card:hover {
+            border-color: var(--primary-color, #1C1C1C);
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .tipo-card.active {
+            border-color: var(--primary-color, #1C1C1C);
+            background: rgba(28, 28, 28, 0.05);
+        }
+        .tipo-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .tipo-card h3 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-elegant-dark, #1C1C1C);
+        }
+        .tipo-card p {
+            margin: 0;
+            color: var(--text-elegant-light, #64748b);
+            font-size: 0.9rem;
+        }
+        .auth-container {
+            max-width: 450px;
+            margin: 2rem auto 0;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .auth-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .auth-tab {
+            flex: 1;
+            padding: 1rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        .auth-tab.active {
+            color: var(--primary-color, #1C1C1C);
+            border-bottom-color: var(--primary-color, #1C1C1C);
+        }
+        .auth-form {
+            display: none;
+        }
+        .auth-form.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-elegant-dark, #1C1C1C);
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color, #1C1C1C);
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--primary-color, #1C1C1C);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn-submit:hover {
+            background: #333;
+        }
+        .links-separados {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #e5e7eb;
+        }
+        .links-separados a {
+            display: inline-block;
+            margin: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            color: var(--primary-color, #1C1C1C);
+            text-decoration: none;
+            border: 2px solid var(--primary-color, #1C1C1C);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .links-separados a:hover {
+            background: var(--primary-color, #1C1C1C);
+            color: white;
+        }
+        .alerts {
+            margin-bottom: 1.5rem;
+        }
+        .alert {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="tipo-selector-container">
+        <div class="tipo-selector-header">
+            <h1>👤 ¿Qué tipo de cuenta necesitas?</h1>
+            <p>Selecciona el tipo de cuenta que deseas crear o iniciar sesión</p>
+        </div>
+
+        <div class="tipos-grid" id="tipos-grid">
+            <div class="tipo-card" data-tipo="cliente" onclick="selectTipo('cliente')">
+                <div class="tipo-icon">🛒</div>
+                <h3>Cliente</h3>
+                <p>Compra productos, obtén descuentos y sigue tus pedidos</p>
+            </div>
+            
+            <div class="tipo-card" data-tipo="afiliado" onclick="selectTipo('afiliado')">
+                <div class="tipo-icon">💰</div>
+                <h3>Afiliado</h3>
+                <p>Gana comisiones compartiendo productos</p>
+            </div>
+            
+            <div class="tipo-card" data-tipo="vendedor" onclick="selectTipo('vendedor')">
+                <div class="tipo-icon">🏪</div>
+                <h3>Vendedor</h3>
+                <p>Vende tus productos en ShopFusion</p>
+            </div>
+            
+            <div class="tipo-card" data-tipo="admin" onclick="selectTipo('admin')">
+                <div class="tipo-icon">🔐</div>
+                <h3>Administrador</h3>
+                <p>Acceso al panel de administración</p>
+            </div>
+        </div>
+
+        <div class="links-separados hidden" id="links-separados">
+            <h3 style="margin-bottom: 1rem; color: var(--text-elegant-dark, #1C1C1C);">Acceso directo:</h3>
+            <a href="#" id="link-registro" onclick="showForm('register'); return false;">Registrarse</a>
+            <a href="#" id="link-login" onclick="showForm('login'); return false;">Iniciar Sesión</a>
+        </div>
+
+        <div class="auth-container hidden" id="auth-container">
+            {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                    <div class="alerts">
+                        {% for category, msg in messages %}
+                            <div class="alert alert-{{ category }}">{{ msg }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="login" onclick="showForm('login')">Iniciar Sesión</button>
+                <button class="auth-tab" data-tab="register" onclick="showForm('register')">Registrarse</button>
+            </div>
+
+            <!-- Formulario de Login -->
+            <form id="login-form" class="auth-form active" action="" method="POST" id="form-login">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="correoInput">Correo electrónico</label>
+                    <input type="email" id="correoInput" name="correoInput" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="contrasenaInput">Contraseña</label>
+                    <input type="password" id="contrasenaInput" name="contrasenaInput" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn-submit">Iniciar Sesión</button>
+            </form>
+
+            <!-- Formulario de Registro Cliente -->
+            <form id="register-form-cliente" class="auth-form" action="{{ url_for('registro') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="nombreInput">Nombre completo</label>
+                    <input type="text" id="nombreInput" name="nombreInput" required autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label for="correoRegistro">Correo electrónico</label>
+                    <input type="email" id="correoRegistro" name="correoInput" required autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label for="contrasenaRegistro">Contraseña</label>
+                    <input type="password" id="contrasenaRegistro" name="contrasenaInput" required autocomplete="new-password" minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="confirmarContrasena">Confirmar contraseña</label>
+                    <input type="password" id="confirmarContrasena" name="confirmarContrasena" required autocomplete="new-password" minlength="6">
+                </div>
+                <button type="submit" class="btn-submit">Crear Cuenta de Cliente</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let selectedTipo = null;
+
+        function selectTipo(tipo) {
+            selectedTipo = tipo;
+            
+            // Remover active de todos los cards
+            document.querySelectorAll('.tipo-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // Agregar active al seleccionado
+            document.querySelector(`[data-tipo="${tipo}"]`).classList.add('active');
+            
+            // Mostrar links separados y auth container
+            document.getElementById('links-separados').classList.remove('hidden');
+            document.getElementById('auth-container').classList.remove('hidden');
+            
+            // Configurar formularios según el tipo
+            configurarFormularios(tipo);
+        }
+
+        function configurarFormularios(tipo) {
+            const loginForm = document.getElementById('login-form');
+            const registerFormCliente = document.getElementById('register-form-cliente');
+            
+            // Ocultar todos los formularios de registro primero
+            document.querySelectorAll('.auth-form').forEach(form => {
+                form.classList.remove('active');
+            });
+            
+            // Configurar acción del login según el tipo
+            if (tipo === 'cliente') {
+                loginForm.action = '{{ url_for("login", tipo="cliente") }}';
+                registerFormCliente.style.display = 'block';
+            } else if (tipo === 'afiliado') {
+                loginForm.action = '{{ url_for("afiliados_login") }}';
+                registerFormCliente.style.display = 'none';
+                window.location.href = '{{ url_for("afiliados_login") }}';
+                return;
+            } else if (tipo === 'vendedor') {
+                loginForm.action = '{{ url_for("login_vendedor") }}';
+                registerFormCliente.style.display = 'none';
+                window.location.href = '{{ url_for("login_vendedor") }}';
+                return;
+            } else if (tipo === 'admin') {
+                loginForm.action = '{{ url_for("admin") }}';
+                registerFormCliente.style.display = 'none';
+                window.location.href = '{{ url_for("admin") }}';
+                return;
+            }
+            
+            // Mostrar formulario de login por defecto
+            showForm('login');
+        }
+
+        function showForm(tipo) {
+            // Remover active de todos los tabs
+            document.querySelectorAll('.auth-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remover active de todos los forms
+            document.querySelectorAll('.auth-form').forEach(form => {
+                form.classList.remove('active');
+            });
+            
+            // Agregar active al tab y form seleccionado
+            if (tipo === 'login') {
+                document.querySelector('[data-tab="login"]').classList.add('active');
+                document.getElementById('login-form').classList.add('active');
+            } else if (tipo === 'register' && selectedTipo === 'cliente') {
+                document.querySelector('[data-tab="register"]').classList.add('active');
+                document.getElementById('register-form-cliente').classList.add('active');
+            }
+        }
+
+        // Validar contraseñas en registro
+        const registerFormCliente = document.getElementById('register-form-cliente');
+        if (registerFormCliente) {
+            registerFormCliente.addEventListener('submit', (e) => {
+                const password = document.getElementById('contrasenaRegistro').value;
+                const confirmPassword = document.getElementById('confirmarContrasena').value;
+                
+                if (password !== confirmPassword) {
+                    e.preventDefault();
+                    alert('Las contraseñas no coinciden');
+                    return false;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+

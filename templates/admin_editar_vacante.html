@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Vacante - ShopFusion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/panel.css') }}">
+    <style>
+        .edit-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        .form-edit {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('index') }}">ShopFusion</a>
+        <nav>
+            <a href="{{ url_for('admin_vacantes') }}">← Volver a Vacantes</a>
+            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+        </nav>
+    </header>
+
+    <main class="edit-container">
+        <h1>✏️ Editar Vacante</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" style="padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px; background: {% if category == 'success' %}#d1fae5; color: #065f46{% else %}#fee2e2; color: #991b1b{% endif %};">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="form-edit">
+            <form method="POST" action="{{ url_for('admin_editar_vacante', vacante_id=vacante.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="titulo">Título de la Vacante *</label>
+                    <input type="text" id="titulo" name="titulo" value="{{ vacante.titulo }}" required style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="descripcion">Descripción *</label>
+                    <textarea id="descripcion" name="descripcion" required rows="4" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px;">{{ vacante.descripcion }}</textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="requisitos">Requisitos</label>
+                    <textarea id="requisitos" name="requisitos" rows="6" style="width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px;">{{ vacante.requisitos or '' }}</textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" name="activa" {% if vacante.activa %}checked{% endif %}>
+                        <span>Vacante activa (visible para usuarios)</span>
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" style="padding: 0.75rem 2rem; background: #3b82f6; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                        <i class="fas fa-save"></i> Guardar Cambios
+                    </button>
+                    <a href="{{ url_for('admin_vacantes') }}" style="padding: 0.75rem 2rem; background: #6b7280; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </main>
+</body>
+</html>
+
+

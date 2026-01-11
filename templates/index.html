@@ -1,0 +1,3843 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ShopFusion: Tienda en línea premium con ofertas en tecnología, hogar y moda de Amazon, AliExpress, eBay.">
+    <meta name="keywords" content="ShopFusion, tecnología, ofertas, smartphones, hogar, moda">
+    <meta name="author" content="ShopFusion">
+    <title>ShopFusion - Tienda Premium de Tecnología y Moda</title>
+    <meta name="google-site-verification" content="bEN-Tm_eTifXTBETpt_IKSJkIj4PAMSt85LG0wtO38Y" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <script>
+      (function() {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (!token || window.__csrfFetchPatched) {
+          return;
+        }
+        window.__csrfFetchPatched = true;
+        const originalFetch = window.fetch;
+        window.fetch = function(resource, init) {
+          init = init || {};
+          const method = (init.method || 'GET').toUpperCase();
+          if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+            const headers = new Headers(init.headers || {});
+            if (!headers.has('X-CSRFToken')) {
+              headers.set('X-CSRFToken', token);
+            }
+            init.headers = headers;
+          }
+          if (!init.credentials) {
+            init.credentials = 'same-origin';
+          }
+          return originalFetch(resource, init);
+        };
+      })();
+    </script>
+    <link rel="icon" href="{{ url_for('static', filename='videos_imagenes/shop.png') }}" type="image/png">
+
+    <!-- CSS de sorteo -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sorteo.css') }}?v=3.0">
+    <!-- CSS principal (luxury / claro-oscuro) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v=3.0">
+    <!-- CSS mejoras elegantes -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles_improvements.css') }}?v=3.0">
+    <!-- CSS estilos elegantes profesionales -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegant_styles.css') }}?v=3.0">
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+          integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Estilos banner de cookies mejorado -->
+    <style>
+      .cookie-banner {
+        position: fixed;
+        bottom: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - 2rem);
+        max-width: 960px;
+        background: var(--bg-card, #0f0f1a);
+        color: var(--text-white, #ffffff);
+        padding: 1rem 1.25rem;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border-subtle, rgba(255, 255, 255, 0.1));
+        font-family: var(--font-body, system-ui, sans-serif);
+        font-size: 0.875rem;
+        z-index: 9999;
+        display: none;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+      }
+
+      body.dark-theme .cookie-banner {
+        background: var(--bg-card, #0f0f1a);
+        color: var(--text-white, #ffffff);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 1px var(--border-subtle, rgba(255, 255, 255, 0.1));
+      }
+
+      body:not(.dark-theme) .cookie-banner {
+        background: #ffffff;
+        color: #1a1a1a;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.1);
+      }
+      
+      body:not(.dark-theme) .cookie-banner__text a {
+        color: #d94f00;
+      }
+      
+      body:not(.dark-theme) .cookie-banner__text a:hover {
+        color: #f26716;
+      }
+
+      .cookie-banner.is-visible {
+        display: block;
+        animation: slideUpCookie 0.4s ease-out;
+      }
+
+      @keyframes slideUpCookie {
+        from {
+          opacity: 0;
+          transform: translateX(-50%) translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+      }
+
+      .cookie-banner__content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .cookie-banner__text {
+        line-height: 1.6;
+      }
+
+      .cookie-banner__text a {
+        color: var(--neon-orange, #ff5f1f);
+        text-decoration: underline;
+        transition: color 0.2s;
+      }
+
+      .cookie-banner__text a:hover {
+        color: var(--neon-orange-light, #ff7f4f);
+      }
+
+      .cookie-banner__buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .cookie-banner__btn {
+        border: none;
+        border-radius: 8px;
+        padding: 0.6rem 1.2rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+        font-family: var(--font-body, system-ui, sans-serif);
+      }
+
+      .cookie-banner__btn--primary {
+        background: var(--neon-orange, #ff5f1f);
+        color: #ffffff;
+        box-shadow: 0 4px 15px rgba(255, 95, 31, 0.4);
+      }
+
+      .cookie-banner__btn--primary:hover {
+        background: var(--neon-orange-light, #ff7f4f);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 95, 31, 0.5);
+      }
+
+      .cookie-banner__btn--secondary {
+        background: transparent;
+        color: var(--text-white, #ffffff);
+        border: 1.5px solid var(--border-medium, rgba(255, 255, 255, 0.2));
+      }
+
+      body:not(.dark-theme) .cookie-banner__btn--secondary {
+        color: var(--text-dark, #1a1a1a);
+        border-color: var(--border-medium-light, rgba(0, 0, 0, 0.2));
+      }
+
+      .cookie-banner__btn--secondary:hover {
+        background: var(--bg-card-hover, rgba(255, 255, 255, 0.1));
+        border-color: var(--neon-orange, #ff5f1f);
+      }
+
+      @media (min-width: 640px) {
+        .cookie-banner__content {
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+          gap: 1.5rem;
+        }
+
+        .cookie-banner__text {
+          max-width: 70%;
+          flex: 1;
+        }
+
+        .cookie-banner__buttons {
+          flex-shrink: 0;
+        }
+      }
+      
+      /* Estilos del Modal del Carrito */
+      .cart-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10000;
+        display: none; /* Oculto por defecto */
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .cart-modal.is-open {
+        display: flex; /* Solo mostrar cuando tiene la clase is-open */
+      }
+      
+      .cart-modal__backdrop {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+      }
+      
+      .cart-modal__dialog {
+        position: relative;
+        background: white;
+        border-radius: 16px;
+        max-width: 900px;
+        width: 90%;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        z-index: 10001;
+        animation: slideInCart 0.3s ease-out;
+      }
+      
+      @keyframes slideInCart {
+        from {
+          opacity: 0;
+          transform: translateY(-20px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      
+      .cart-modal__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        border-bottom: 2px solid #e5e7eb;
+      }
+      
+      .cart-modal__header h2 {
+        margin: 0;
+        color: var(--text-elegant-dark, #1C1C1C);
+        font-size: 1.5rem;
+      }
+      
+      .cart-modal__close {
+        background: none;
+        border: none;
+        font-size: 2rem;
+        cursor: pointer;
+        color: #6b7280;
+        line-height: 1;
+        padding: 0;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.3s;
+      }
+      
+      .cart-modal__close:hover {
+        background: #f3f4f6;
+        color: #1C1C1C;
+      }
+      
+      .cart-modal__content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem 2rem;
+      }
+      
+      .cart-items-list {
+        max-height: 400px;
+        overflow-y: auto;
+        margin-bottom: 1.5rem;
+      }
+      
+      .cart-item {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        align-items: center;
+      }
+      
+      .cart-item:last-child {
+        border-bottom: none;
+      }
+      
+      .cart-item__image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        background: #f3f4f6;
+      }
+      
+      .cart-item__info {
+        flex: 1;
+        min-width: 0;
+      }
+      
+      .cart-item__name {
+        margin: 0 0 0.25rem 0;
+        color: var(--text-elegant-dark, #1C1C1C);
+        font-size: 1rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      .cart-item__price {
+        color: #6b7280;
+        font-size: 0.9rem;
+      }
+      
+      .cart-item__actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      
+      .cart-quantity-control {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.25rem;
+      }
+      
+      .cart-quantity-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+        color: var(--primary-color, #1C1C1C);
+        padding: 0 0.5rem;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .cart-quantity-btn:hover {
+        background: rgba(28, 28, 28, 0.1);
+        border-radius: 4px;
+      }
+      
+      .cart-quantity-input {
+        width: 40px;
+        text-align: center;
+        border: none;
+        font-weight: 600;
+        background: transparent;
+      }
+      
+      .cart-item__total {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--primary-color, #1C1C1C);
+        min-width: 80px;
+        text-align: right;
+      }
+      
+      .cart-item__remove {
+        background: none;
+        border: none;
+        color: #ef4444;
+        cursor: pointer;
+        font-size: 1.2rem;
+        padding: 0.5rem;
+        border-radius: 4px;
+        transition: all 0.2s;
+      }
+      
+      .cart-item__remove:hover {
+        background: rgba(239, 68, 68, 0.1);
+      }
+      
+      .cart-summary {
+        background: #f9fafb;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-top: 1.5rem;
+        border-top: 2px solid #e5e7eb;
+      }
+      
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        color: #6b7280;
+      }
+      
+      .summary-total {
+        border-top: 2px solid var(--primary-color, #1C1C1C);
+        margin-top: 0.5rem;
+        padding-top: 0.75rem;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-elegant-dark, #1C1C1C);
+      }
+      
+      .btn-checkout {
+        width: 100%;
+        padding: 1rem;
+        background: var(--primary-color, #1C1C1C);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 1rem;
+        transition: background 0.3s;
+      }
+      
+      .btn-checkout:hover:not(:disabled) {
+        background: #333;
+      }
+      
+      .btn-checkout:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      
+      .btn-continue-shopping {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        background: var(--primary-color, #1C1C1C);
+        color: white;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: background 0.3s;
+      }
+      
+      .btn-continue-shopping:hover {
+        background: #333;
+      }
+      
+      @media (max-width: 768px) {
+        .cart-modal__dialog {
+          width: 100%;
+          max-width: 100%;
+          max-height: 100vh;
+          border-radius: 0;
+        }
+        
+        .cart-item {
+          flex-wrap: wrap;
+        }
+        
+        .cart-item__actions {
+          width: 100%;
+          justify-content: space-between;
+        }
+      }
+      
+      /* Estilos del Modal de Cuenta */
+      .account-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .account-modal.is-open {
+        display: flex;
+      }
+      
+      .account-modal__backdrop {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+      }
+      
+      .account-modal__dialog {
+        position: relative;
+        background: white;
+        border-radius: 16px;
+        max-width: 900px;
+        width: 90%;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        z-index: 10001;
+        animation: slideInCart 0.3s ease-out;
+      }
+      
+      .account-modal__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        border-bottom: 2px solid #e5e7eb;
+      }
+      
+      .account-modal__header h2 {
+        margin: 0;
+        color: var(--text-elegant-dark, #1C1C1C);
+        font-size: 1.5rem;
+      }
+      
+      .account-modal__close {
+        background: none;
+        border: none;
+        font-size: 2rem;
+        cursor: pointer;
+        color: #6b7280;
+        line-height: 1;
+        padding: 0;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.3s;
+      }
+      
+      .account-modal__close:hover {
+        background: #f3f4f6;
+        color: #1C1C1C;
+      }
+      
+      .account-modal__content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem 2rem;
+      }
+      
+      .account-tabs {
+        display: flex;
+        gap: 0.5rem;
+        border-bottom: 2px solid #e5e7eb;
+        margin-bottom: 1.5rem;
+        overflow-x: auto;
+      }
+      
+      .account-tab {
+        padding: 0.75rem 1.5rem;
+        background: none;
+        border: none;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #6b7280;
+        transition: all 0.3s;
+        white-space: nowrap;
+      }
+      
+      .account-tab:hover {
+        color: var(--primary-color, #1C1C1C);
+      }
+      
+      .account-tab.active {
+        color: var(--primary-color, #1C1C1C);
+        border-bottom-color: var(--primary-color, #1C1C1C);
+      }
+      
+      .account-tab-content {
+        min-height: 300px;
+      }
+      
+      .profile-info p {
+        margin: 1rem 0;
+        font-size: 1rem;
+      }
+      
+      .purchase-item, .address-item, .invoice-item {
+        padding: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        background: #f9fafb;
+      }
+      
+      .btn-add-address, .btn-save, .btn-cancel, .btn-request, .btn-logout {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 1rem;
+      }
+      
+      .btn-add-address, .btn-save {
+        background: var(--primary-color, #1C1C1C);
+        color: white;
+      }
+      
+      .btn-add-address:hover, .btn-save:hover {
+        background: #333;
+      }
+      
+      .btn-cancel {
+        background: #e5e7eb;
+        color: #1C1C1C;
+        margin-left: 0.5rem;
+      }
+      
+      .btn-request {
+        background: #10b981;
+        color: white;
+      }
+      
+      .btn-request:hover {
+        background: #059669;
+      }
+      
+      .btn-logout {
+        background: #ef4444;
+        color: white;
+        width: 100%;
+      }
+      
+      .btn-logout:hover {
+        background: #dc2626;
+      }
+      
+      .form-group {
+        margin-bottom: 1rem;
+      }
+      
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--text-elegant-dark, #1C1C1C);
+      }
+      
+      .form-group input, .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+      }
+      
+      .form-group input:focus, .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary-color, #1C1C1C);
+      }
+      
+      @media (max-width: 768px) {
+        .account-modal__dialog {
+          width: 100%;
+          max-width: 100%;
+          max-height: 100vh;
+          border-radius: 0;
+        }
+        
+        .account-tabs {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+        }
+      }
+    </style>
+</head>
+
+<body>
+<!-- Banner de cookies / consentimiento -->
+<div id="cookie-banner"
+     class="cookie-banner"
+     aria-hidden="true"
+     role="dialog"
+     aria-label="Aviso de cookies">
+  <div class="cookie-banner__content">
+    <p class="cookie-banner__text">
+      Usamos cookies propias y de terceros para estadísticas.
+      Puedes aceptar todas o usar solo las cookies necesarias.
+      Consulta nuestra
+      <a href="{{ url_for('privacidad') }}">Política de Privacidad</a>.
+    </p>
+    <div class="cookie-banner__buttons">
+      <button id="cookie-accept-all"
+              class="cookie-banner__btn cookie-banner__btn--primary">
+        Aceptar todo
+      </button>
+      <button id="cookie-accept-necessary"
+              class="cookie-banner__btn cookie-banner__btn--secondary">
+        Solo necesarias
+      </button>
+    </div>
+  </div>
+</div>
+
+<header>
+    <a href="{{ url_for('index') }}" aria-label="Ir a página principal de ShopFusion">
+        <svg id="logo" width="140" height="60" viewBox="0 0 140 60" role="img" aria-label="Logo de ShopFusion">
+            <title>Logo de ShopFusion</title>
+            <rect width="140" height="60" fill="#1C1C1C" rx="8"/>
+            <text x="10" y="40" fill="#FFD700" font-size="20" font-family="Inter, sans-serif">ShopFusion</text>
+        </svg>
+    </a>
+    <nav aria-label="Menú principal">
+        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Abrir menú de navegación">
+            <span class="hamburger" aria-hidden="true"></span>
+        </button>
+        <ul id="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link nav-cart" aria-label="Ver carrito" id="cart-link" onclick="if(typeof window.openCartModal === 'function') { window.openCartModal(); } return false;">
+                    <span class="cart-icon">🛒</span>
+                    <span class="cart-count" id="cart-count">0</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                {% if session.get('usuario_id') and session.get('rol', '').lower().strip() == 'cliente' %}
+                    <a href="#" class="nav-link nav-user" aria-label="Mi cuenta" onclick="if(typeof window.openAccountPanel === 'function') { window.openAccountPanel(); } return false;">
+                        <span class="user-icon">👤</span>
+                        <span class="user-name">{{ session.get('nombre', 'Mi cuenta') }}</span>
+                    </a>
+                {% else %}
+                    <a href="#" class="nav-link nav-login" aria-label="Iniciar sesión" onclick="if(typeof window.openClientAuthModal === 'function') { window.openClientAuthModal(); } return false;">
+                        <span class="login-icon">🔐</span>
+                        <span>Iniciar Sesión</span>
+                    </a>
+                {% endif %}
+            </li>
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <!-- BUSCADOR COMPACTO -->
+    <div class="search-compact-wrapper">
+        <form id="search-form" class="search-compact-form" onsubmit="return false;">
+            <div class="search-compact-container">
+                <input type="text" 
+                       id="search-input" 
+                       name="q" 
+                       placeholder="Buscar productos..." 
+                       aria-label="Buscar productos"
+                       class="search-compact-input"
+                       autocomplete="off">
+                <select id="filter-categoria" name="categoria" class="search-compact-select">
+                    <option value="">Todas</option>
+                    {% if categorias_todas %}
+                        {% for categoria in categorias_todas %}
+                            <option value="{{ categoria.nombre }}">
+                                {{ categoria.nombre }}
+                            </option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+                <button type="button" id="search-btn" class="search-compact-btn" aria-label="Buscar">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button type="button" id="clear-search-btn" class="search-compact-btn" aria-label="Limpiar búsqueda" style="display: none; background: rgba(255, 255, 255, 0.2);">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </form>
+        <div id="search-results-info" class="search-results-info" style="display: none;">
+            <span id="search-results-count"></span>
+            <button type="button" id="clear-search-info" class="clear-search-link">Limpiar filtros</button>
+        </div>
+    </div>
+
+    <!-- HERO VIDEO -->
+    <section id="hero" class="hero" aria-labelledby="hero-title">
+        <!-- Video ESCRITORIO -->
+        <video class="video-desktop" autoplay muted loop playsinline preload="auto">
+            <source src="{{ url_for('static', filename='videos_imagenes/video_presentacion.mp4') }}" type="video/mp4">
+        </video>
+
+        <!-- Video MÓVIL -->
+        <video class="video-mobile" autoplay muted loop playsinline preload="auto">
+            <source src="{{ url_for('static', filename='videos_imagenes/movile_fondo.mp4') }}" type="video/mp4">
+        </video>
+
+        <div class="overlay"></div>
+        <div class="hero-content">
+        </div>
+    </section>
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container">
+          {% for category, message in messages %}
+            {% if category in ['success', 'error', 'warning'] %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- SORTEO -->
+    {% if sorteo %}
+    <section id="sorteo-card" aria-labelledby="sorteo-title">
+      <div class="sorteo-card-container">
+        <img src="{{ sorteo.imagen }}" alt="Premio del sorteo" class="sorteo-img">
+
+        <div class="sorteo-info">
+          <h2 id="sorteo-title">🎉 ¡Gran Sorteo ShopFusion! 🎁</h2>
+          <p class="sorteo-text">
+            Gana <span class="highlight">{{ sorteo.titulo }}</span>
+          </p>
+          <p class="sorteo-desc">{{ sorteo.descripcion }}</p>
+          <p class="sorteo-precio">
+            🎟️ Participa por solo <strong>$1</strong> y podrías ser el próximo ganador.
+          </p>
+
+          <!-- Botón de PayPal del sorteo -->
+          <div id="paypal-button-container"></div>
+        </div>
+      </div>
+
+      <!-- Modal registro sorteo -->
+      <div id="registro-modal" hidden>
+        <div class="modal-content">
+          <button class="btn-cerrar" id="cerrarModal">X</button>
+          <h2>Registro de Participante</h2>
+          <form id="registro-form" method="POST" action="/registrar_boleto">
+            <div class="form-group">
+              <label for="nombre">Nombre completo</label>
+              <input type="text" id="nombre" name="nombre" required>
+            </div>
+            <div class="form-group">
+              <label for="contacto">Correo o teléfono</label>
+              <input type="text" id="contacto" name="contacto" required>
+            </div>
+            <input type="hidden" name="sorteo_id" value="{{ sorteo.id }}">
+            <button type="submit" class="btn-enviar">Obtener número de boleto</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Bandera de pago confirmado para JS -->
+      <script id="pago-data" type="application/json">
+        {{ 'true' if pago_confirmado else 'false' }}
+      </script>
+
+      <!-- Abrir modal registro cuando pago está confirmado -->
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const pagoScript = document.getElementById('pago-data');
+          if (!pagoScript) return;
+
+          let pagoConfirmado = false;
+          try {
+            pagoConfirmado = JSON.parse(pagoScript.textContent.trim());
+          } catch (e) {
+            console.warn('No se pudo leer pago-data:', e);
+          }
+
+          if (pagoConfirmado) {
+            const modal = document.getElementById('registro-modal');
+            if (!modal) return;
+
+            modal.classList.add('active');
+            modal.removeAttribute('hidden');
+            document.body.style.overflow = 'hidden';
+          }
+        });
+      </script>
+    </section>
+    {% endif %}
+
+    <!-- PRODUCTOS MÁS VENDIDOS -->
+    {% if productos_mas_vendidos and productos_mas_vendidos|length > 0 %}
+    <section class="category-section mas-vendidos-section" data-category="mas-vendidos">
+        <div class="category-header">
+            <h2 class="category-title">
+                <i class="fas fa-fire"></i>
+                Más Vendidos
+            </h2>
+            <span class="product-count">{{ productos_mas_vendidos | length }} producto{{ 's' if productos_mas_vendidos | length != 1 else '' }}</span>
+        </div>
+        
+        <div class="category-carousel-wrapper">
+            <button class="carousel-nav prev" aria-label="Más vendidos anteriores" data-category="mas-vendidos">&#9664;</button>
+            
+            <div class="products-container" data-category="mas-vendidos">
+                {% for producto in productos_mas_vendidos %}
+                    {% set precio_final = producto.precio_oferta if (producto.precio_oferta and producto.precio_oferta < producto.precio) else producto.precio %}
+                    <div class="product-card exclusive" data-producto-id="{{ producto.id }}" data-producto-categoria="{{ producto.categoria | lower if producto.categoria else '' }}">
+                        <div class="product-content">
+                            <div class="exclusive-badge">🔥 Más Vendido</div>
+
+                            <!-- Carrusel interno de imágenes -->
+                            <div class="carousel">
+                                {% if producto.imagenes and producto.imagenes|length > 0 %}
+                                    {% for img in producto.imagenes %}
+                                        {% if img %}
+                                        <img src="{{ img }}"
+                                             alt="Imagen de {{ producto.titulo }}"
+                                             class="product-media"
+                                             onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=Sin+imagen';">
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                                {% if not producto.imagenes or producto.imagenes|length == 0 or not producto.imagenes[0] %}
+                                    <img src="https://via.placeholder.com/300x200?text=Sin+imagen"
+                                         alt="Sin imagen disponible"
+                                         class="product-media">
+                                {% endif %}
+                            </div>
+
+                            <!-- Info producto -->
+                            <h3 class="product-name">{{ producto.titulo }}</h3>
+                            <p class="product-desc">{{ producto.descripcion }}</p>
+
+                            <!-- Precio / oferta -->
+                            <div class="price-block">
+                                {% if producto.precio_oferta and producto.precio_oferta < producto.precio %}
+                                    <span class="old-price">
+                                        ${{ '%.2f' | format(producto.precio) }}
+                                    </span>
+                                    <span class="offer-price">
+                                        ${{ '%.2f' | format(producto.precio_oferta) }}
+                                    </span>
+                                    <span class="discount-badge">
+                                        -{{ ((1 - (producto.precio_oferta / producto.precio)) * 100)
+                                             | round(0, 'floor') }}%
+                                    </span>
+                                {% else %}
+                                    <span class="price">
+                                        ${{ '%.2f' | format(precio_final) }}
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Stock -->
+                            <p class="stock">
+                                {% if producto.stock > 0 %}
+                                    <i class="fas fa-check-circle"></i>
+                                    <span class="in-stock">En stock ({{ producto.stock }} disponibles)</span>
+                                {% else %}
+                                    <span class="out-of-stock">Sin stock</span>
+                                {% endif %}
+                            </p>
+                            <div class="button-container">
+                                <button class="btn view-more-btn" 
+                                        data-product-id="{{ producto.id }}"
+                                        type="button">
+                                    <i class="fas fa-eye"></i> Ver detalles
+                                </button>
+                                {% if producto.stock > 0 %}
+                                <button class="btn add-to-cart-btn"
+                                        data-product-id="{{ producto.id }}"
+                                        data-product-titulo="{{ producto.titulo|e }}"
+                                        data-product-precio="{{ '%.2f'|format(precio_final) }}"
+                                        type="button"
+                                        title="Agregar al carrito">
+                                    <i class="fas fa-cart-plus"></i> Agregar al carrito
+                                </button>
+                                <button class="btn buy-exclusive-btn" 
+                                        data-product-id="{{ producto.id }}"
+                                        data-product-titulo="{{ producto.titulo|e }}"
+                                        data-product-precio="{{ '%.2f'|format(precio_final) }}"
+                                        type="button">
+                                    <i class="fas fa-shopping-cart"></i> Comprar ahora
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <button class="carousel-nav next" aria-label="Más vendidos siguientes" data-category="mas-vendidos">&#9654;</button>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- PRODUCTOS POR CATEGORÍA -->
+    {% if categorias_con_productos %}
+        {% set icon_map = {
+            'Tecnología': 'fa-microchip',
+            'Electrónica': 'fa-plug',
+            'Celulares y Smartphones': 'fa-mobile-alt',
+            'Computadoras y Laptops': 'fa-laptop',
+            'Tablets': 'fa-tablet-alt',
+            'Accesorios Tecnológicos': 'fa-headphones',
+            'Audio y Sonido': 'fa-volume-up',
+            'Gaming': 'fa-gamepad',
+            'Hogar y Jardín': 'fa-home',
+            'Electrodomésticos': 'fa-blender',
+            'Muebles': 'fa-couch',
+            'Decoración': 'fa-palette',
+            'Cocina': 'fa-utensils',
+            'Baño': 'fa-bath',
+            'Iluminación': 'fa-lightbulb',
+            'Ropa y Moda': 'fa-tshirt',
+            'Calzado': 'fa-shoe-prints',
+            'Accesorios de Moda': 'fa-gem',
+            'Relojes': 'fa-clock',
+            'Bolsos y Mochilas': 'fa-shopping-bag',
+            'Belleza y Cuidado Personal': 'fa-spa',
+            'Cosméticos': 'fa-paint-brush',
+            'Perfumes': 'fa-spray-can',
+            'Cuidado del Cabello': 'fa-cut',
+            'Cuidado de la Piel': 'fa-hand-sparkles',
+            'Salud y Bienestar': 'fa-heartbeat',
+            'Fitness y Deportes': 'fa-running',
+            'Suplementos': 'fa-capsules',
+            'Equipamiento Deportivo': 'fa-dumbbell',
+            'Educación': 'fa-graduation-cap',
+            'Libros': 'fa-book',
+            'Material Escolar': 'fa-pencil-alt',
+            'Juguetes y Juegos': 'fa-puzzle-piece',
+            'Bebés y Niños': 'fa-baby',
+            'Automotriz': 'fa-car',
+            'Herramientas': 'fa-wrench',
+            'Jardín y Exterior': 'fa-seedling',
+            'Mascotas': 'fa-paw',
+            'Viajes y Turismo': 'fa-suitcase-rolling',
+            'Alimentos y Bebidas': 'fa-utensils',
+            'Otros': 'fa-box'
+        } %}
+        
+        {% for categoria in categorias_con_productos %}
+            {% set productos_categoria = productos_por_categoria.get(categoria, []) %}
+            {% if productos_categoria %}
+                <section class="category-section" data-category="{{ categoria | lower }}">
+                    <div class="category-header">
+                        <h2 class="category-title">
+                            <i class="fas {{ icon_map.get(categoria, 'fa-tag') }}"></i>
+                            {{ categoria }}
+                        </h2>
+                        <span class="product-count">{{ productos_categoria | length }} producto{{ 's' if productos_categoria | length != 1 else '' }}</span>
+                    </div>
+                    
+                    <div class="category-carousel-wrapper">
+                        <button class="carousel-nav prev" aria-label="{{ categoria }} anteriores" data-category="{{ categoria | lower }}">&#9664;</button>
+                        
+                        <div class="products-container" data-category="{{ categoria | lower }}">
+                            {% for producto in productos_categoria %}
+                                {% set precio_final = producto.precio_oferta if (producto.precio_oferta and producto.precio_oferta < producto.precio) else producto.precio %}
+                                <div class="product-card exclusive" data-producto-id="{{ producto.id }}" data-producto-categoria="{{ producto.categoria | lower if producto.categoria else '' }}">
+                                    <div class="product-content">
+                                        <div class="exclusive-badge">Exclusivo ShopFusion</div>
+
+                                        <!-- Carrusel interno de imágenes -->
+                                        <div class="carousel">
+                                            {% if producto.imagenes and producto.imagenes|length > 0 %}
+                                                {% for img in producto.imagenes %}
+                                                    {% if img %}
+                                                    <img src="{{ img }}"
+                                                         alt="Imagen de {{ producto.titulo }}"
+                                                         class="product-media"
+                                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=Sin+imagen';">
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% endif %}
+                                            {% if not producto.imagenes or producto.imagenes|length == 0 or not producto.imagenes[0] %}
+                                                <img src="https://via.placeholder.com/300x200?text=Sin+imagen"
+                                                     alt="Sin imagen disponible"
+                                                     class="product-media">
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Info producto -->
+                                        <h3 class="product-name">{{ producto.titulo }}</h3>
+                                        <p class="product-desc">{{ producto.descripcion }}</p>
+
+                                        <!-- Precio / oferta -->
+                                        <div class="price-block">
+                                            {% if producto.precio_oferta and producto.precio_oferta < producto.precio %}
+                                                <span class="old-price">
+                                                    ${{ '%.2f' | format(producto.precio) }}
+                                                </span>
+                                                <span class="offer-price">
+                                                    ${{ '%.2f' | format(producto.precio_oferta) }}
+                                                </span>
+                                                <span class="discount-badge">
+                                                    -{{ ((1 - (producto.precio_oferta / producto.precio)) * 100)
+                                                         | round(0, 'floor') }}%
+                                                </span>
+                                            {% else %}
+                                                <span class="price">
+                                                    Precio: ${{ '%.2f' | format(producto.precio) }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Stock -->
+                                        <p class="stock">
+                                            {% if producto.stock > 0 %}
+                                                Stock: {{ producto.stock }} unidades
+                                            {% else %}
+                                                <span class="out-of-stock">Sin stock</span>
+                                            {% endif %}
+                                        </p>
+
+                                        <!-- Botones: ver detalles (modal) + agregar al carrito + comprar ahora (PayPal) -->
+                                        <div class="button-container">
+                                            <button class="btn view-more-btn" 
+                                                    data-product-id="{{ producto.id }}"
+                                                    type="button">
+                                                <i class="fas fa-eye"></i> Ver detalles
+                                            </button>
+                                            {% if producto.stock > 0 %}
+                                            <button class="btn add-to-cart-btn"
+                                                    data-product-id="{{ producto.id }}"
+                                                    data-product-titulo="{{ producto.titulo|e }}"
+                                                    data-product-precio="{{ '%.2f'|format(precio_final) }}"
+                                                    type="button"
+                                                    title="Agregar al carrito">
+                                                <i class="fas fa-cart-plus"></i> Agregar al carrito
+                                            </button>
+                                            <button class="btn buy-exclusive-btn"
+                                                    data-product-id="{{ producto.id }}"
+                                                    data-product-titulo="{{ producto.titulo|e }}"
+                                                    data-product-precio="{{ '%.2f'|format(precio_final) }}"
+                                                    type="button">
+                                                <i class="fas fa-shopping-cart"></i> Comprar ahora
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <button class="carousel-nav next" aria-label="{{ categoria }} siguientes" data-category="{{ categoria | lower }}">&#9654;</button>
+                    </div>
+                </section>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <section id="shopfusion-exclusives">
+            <p id="no-exclusivos">No hay productos exclusivos de ShopFusion disponibles por el momento.</p>
+        </section>
+    {% endif %}
+
+
+    <!-- MODAL DETALLE EXCLUSIVOS -->
+    <div id="product-modal" class="product-modal" aria-hidden="true">
+      <div class="product-modal__backdrop" data-modal-close></div>
+
+      <div class="product-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
+        <button class="product-modal__close" type="button" aria-label="Cerrar detalle de producto" data-modal-close>
+          &times;
+        </button>
+
+        <div class="product-modal__content">
+          <div class="product-modal__media">
+            <button class="modal-nav modal-nav--prev" type="button" aria-label="Imagen anterior">
+              &#9664;
+            </button>
+
+            <img id="modal-image" src="" alt="Producto ShopFusion" class="product-modal__image">
+
+            <button class="modal-nav modal-nav--next" type="button" aria-label="Imagen siguiente">
+              &#9654;
+            </button>
+          </div>
+
+          <div class="product-modal__info">
+            <h3 id="product-modal-title" class="product-modal__title"></h3>
+            <p id="product-modal-category" class="product-modal__category"></p>
+            <p id="product-modal-desc" class="product-modal__desc"></p>
+
+            <div id="product-modal-prices" class="product-modal__prices"></div>
+
+            <p id="product-modal-stock" class="product-modal__stock"></p>
+
+            <div class="product-modal__actions">
+              <button class="btn buy-exclusive-btn-modal" type="button">
+                <i class="fas fa-shopping-cart"></i>
+                Comprar ahora
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Botón flotante móvil para comprar desde el modal de detalles -->
+    <button id="floating-buy-cta" class="floating-buy-cta" type="button" aria-label="Comprar ahora">
+      Comprar ahora
+    </button>
+
+    <!-- MODAL DEL CARRITO (Tiempo Real) -->
+    <div id="cart-modal" class="cart-modal" aria-hidden="true">
+        <div class="cart-modal__backdrop" onclick="if(typeof window.closeCartModal === 'function') { window.closeCartModal(); }"></div>
+        <div class="cart-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="cart-modal-title">
+            <div class="cart-modal__header">
+                <h2 id="cart-modal-title">🛒 Carrito de Compras</h2>
+                <button type="button" class="cart-modal__close" onclick="if(typeof window.closeCartModal === 'function') { window.closeCartModal(); }" aria-label="Cerrar carrito">
+                    &times;
+                </button>
+            </div>
+            <div class="cart-modal__content">
+                <div id="cart-loading" class="cart-loading" style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando carrito...
+                </div>
+                <div id="cart-empty" class="cart-empty" style="display: none; text-align: center; padding: 3rem;">
+                    <i class="fas fa-shopping-cart" style="font-size: 4rem; color: #ccc; margin-bottom: 1rem;"></i>
+                    <h3>Tu carrito está vacío</h3>
+                    <p>Agrega productos para comenzar a comprar</p>
+                    <button onclick="if(typeof window.closeCartModal === 'function') { window.closeCartModal(); }" class="btn-continue-shopping">Continuar comprando</button>
+                </div>
+                <div id="cart-items-container" class="cart-items-container" style="display: none;">
+                    <div id="cart-items-list" class="cart-items-list"></div>
+                    <div id="cart-summary" class="cart-summary">
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span id="cart-subtotal">$0.00</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Envío</span>
+                            <span style="color: #10b981; font-weight: 600;">Gratis</span>
+                        </div>
+                        <div id="cart-visitor-info" class="cart-visitor-info" style="display: none; background: #e0f2fe; color: #0c4a6e; padding: 1rem; border-radius: 8px; margin: 1rem 0; font-size: 0.9rem; border-left: 4px solid #0284c7;">
+                            <div style="display: flex; align-items: start; gap: 0.75rem;">
+                                <i class="fas fa-info-circle" style="font-size: 1.2rem; margin-top: 0.1rem;"></i>
+                                <div style="flex: 1;">
+                                    <strong style="display: block; margin-bottom: 0.5rem;">Estás comprando como visitante (Consumidor Final)</strong>
+                                    <ul style="margin: 0.5rem 0 0 0; padding-left: 1.25rem; line-height: 1.6;">
+                                        <li>Límite de compra: <strong>$50.00</strong></li>
+                                        <li>No se emitirá factura fiscal</li>
+                                        <li>Si necesitas factura, <a href="#" onclick="if(typeof window.openClientAuthModal === 'function') { window.openClientAuthModal(); } return false;" style="color: #0284c7; text-decoration: underline; font-weight: 600;">debes registrarte</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="cart-limit-warning" class="cart-limit-warning" style="display: none; background: #fef3c7; color: #92400e; padding: 0.75rem; border-radius: 8px; margin: 1rem 0; font-size: 0.9rem; border-left: 4px solid #f59e0b;">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>Límite excedido:</strong> Los visitantes solo pueden comprar hasta $50. <a href="#" onclick="if(typeof window.openClientAuthModal === 'function') { window.openClientAuthModal(); } return false;" style="color: #92400e; text-decoration: underline; font-weight: 600;">Inicia sesión</a> para compras mayores.
+                        </div>
+                        <div id="cart-user-info" class="cart-user-info" style="display: none; background: #f0fdf4; color: #166534; padding: 1rem; border-radius: 8px; margin: 1rem 0; font-size: 0.9rem; border-left: 4px solid #22c55e;">
+                            <div style="display: flex; align-items: start; gap: 0.75rem;">
+                                <i class="fas fa-check-circle" style="font-size: 1.2rem; margin-top: 0.1rem;"></i>
+                                <div style="flex: 1;">
+                                    <strong style="display: block; margin-bottom: 0.25rem;">Sesión iniciada</strong>
+                                    <span id="cart-user-name" style="display: block; margin-bottom: 0.5rem;"></span>
+                                    <span style="font-size: 0.85rem;">✓ Puedes comprar sin límite de monto</span><br>
+                                    <span style="font-size: 0.85rem;">✓ Puedes solicitar factura fiscal</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="summary-row summary-total">
+                            <span>Total</span>
+                            <span id="cart-total">$0.00</span>
+                        </div>
+                        <button id="cart-checkout-btn" class="btn-checkout" onclick="checkoutFromModal()">
+                            Proceder al Pago
+                        </button>
+                        <a href="{{ url_for('carrito') }}" class="btn-view-full-cart" style="display: block; text-align: center; margin-top: 1rem; color: #6b7280; text-decoration: none;">
+                            Ver carrito completo →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE COMPRA EXCLUSIVOS (PayPal) -->
+    <div class="product-modal" id="exclusive-modal" aria-hidden="true">
+        <div class="product-modal__backdrop"></div>
+        <div class="product-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="exclusive-modal-title">
+            <button type="button" class="product-modal__close" id="exclusive-modal-close-btn" aria-label="Cerrar ventana" data-modal-close="exclusive">
+                &times;
+            </button>
+
+            <h2 id="exclusive-modal-title" class="modal-title">Producto exclusivo</h2>
+            <p id="exclusive-modal-price" class="modal-price">Total a pagar: $0.00</p>
+
+            <form id="exclusive-checkout-form" class="exclusive-checkout-form">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="ccp-nombre">Nombre</label>
+                        <input type="text" id="ccp-nombre" name="nombre" placeholder="Tu nombre">
+                    </div>
+                    <div class="form-field">
+                        <label for="ccp-apellido">Apellido</label>
+                        <input type="text" id="ccp-apellido" name="apellido" placeholder="Tu apellido">
+                    </div>
+                    <div class="form-field">
+                        <label for="ccp-email">Correo electrónico</label>
+                        <input type="email" id="ccp-email" name="email" placeholder="tucorreo@ejemplo.com">
+                    </div>
+                    <div class="form-field">
+                        <label for="ccp-telefono">Teléfono</label>
+                        <input type="text" id="ccp-telefono" name="telefono" placeholder="Número de contacto">
+                    </div>
+                    <div class="form-field">
+                        <label for="ccp-pais">País</label>
+                        <input type="text" id="ccp-pais" name="pais" placeholder="Ecuador, Perú, etc.">
+                    </div>
+                    <div class="form-field form-field--full">
+                        <label for="ccp-direccion">Dirección completa</label>
+                        <textarea id="ccp-direccion" name="direccion" rows="3" placeholder="Dirección exacta (puedes pegar la de Google Maps)"></textarea>
+                    </div>
+                </div>
+            </form>
+
+            <div id="exclusive-paypal-button-container" class="paypal-button-wrap"></div>
+            <p id="exclusive-checkout-message" class="checkout-message"></p>
+        </div>
+    </div>
+
+    <!-- MODAL DE LOGIN/REGISTRO PARA CLIENTES -->
+    <div id="client-auth-modal" class="account-modal" aria-hidden="true">
+        <div class="account-modal__backdrop" onclick="if(typeof window.closeClientAuthModal === 'function') { window.closeClientAuthModal(); }"></div>
+        <div class="account-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="client-auth-modal-title" style="max-width: 500px;">
+            <div class="account-modal__header">
+                <h2 id="client-auth-modal-title">👤 Iniciar Sesión / Registrarse</h2>
+                <button type="button" class="account-modal__close" onclick="if(typeof window.closeClientAuthModal === 'function') { window.closeClientAuthModal(); }" aria-label="Cerrar">
+                    &times;
+                </button>
+            </div>
+            <div class="account-modal__content">
+                <div class="auth-tabs" style="display: flex; gap: 0; margin-bottom: 1.5rem; border-bottom: 2px solid #e5e7eb;">
+                    <button class="auth-tab active" data-auth-tab="login" style="flex: 1; padding: 0.75rem 1.5rem; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 600; color: #6b7280; transition: all 0.3s;">
+                        Iniciar Sesión
+                    </button>
+                    <button class="auth-tab" data-auth-tab="register" style="flex: 1; padding: 0.75rem 1.5rem; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 600; color: #6b7280; transition: all 0.3s;">
+                        Registrarse
+                    </button>
+                </div>
+                
+                <!-- Formulario de Login -->
+                <form id="client-login-form" class="auth-form active" style="display: block;" method="POST" action="{{ url_for('login') }}?tipo=cliente">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="form-group">
+                        <label for="client-login-email">Correo electrónico</label>
+                        <input type="email" id="client-login-email" name="correoInput" required autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-login-password">Contraseña</label>
+                        <input type="password" id="client-login-password" name="contrasenaInput" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn-save" style="width: 100%;">Iniciar Sesión</button>
+                </form>
+                
+                <!-- Formulario de Registro -->
+                <form id="client-register-form" class="auth-form" style="display: none;" method="POST" action="{{ url_for('registro') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="form-group">
+                        <label for="client-register-name">Nombre completo</label>
+                        <input type="text" id="client-register-name" name="nombreInput" required autocomplete="name">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-register-email">Correo electrónico</label>
+                        <input type="email" id="client-register-email" name="correoInput" required autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-register-password">Contraseña</label>
+                        <input type="password" id="client-register-password" name="contrasenaInput" required autocomplete="new-password" minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="client-register-confirm">Confirmar contraseña</label>
+                        <input type="password" id="client-register-confirm" name="confirmarContrasena" required autocomplete="new-password" minlength="6">
+                    </div>
+                    <button type="submit" class="btn-save" style="width: 100%;">Crear Cuenta</button>
+                    <div style="margin-top: 1rem; padding: 1rem; background: #f9fafb; border-radius: 8px; font-size: 0.9rem;">
+                        <strong>🎁 Al registrarte obtienes:</strong>
+                        <ul style="margin: 0.5rem 0 0 0; padding-left: 1.25rem;">
+                            <li>Carrito vinculado a tu cuenta</li>
+                            <li>Sin límite de compra</li>
+                            <li>Historial de compras</li>
+                            <li>Facturas disponibles</li>
+                        </ul>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CUENTA DEL CLIENTE -->
+    <div id="account-modal" class="account-modal" aria-hidden="true">
+        <div class="account-modal__backdrop" onclick="if(typeof window.closeAccountPanel === 'function') { window.closeAccountPanel(); }"></div>
+        <div class="account-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="account-modal-title">
+            <div class="account-modal__header">
+                <h2 id="account-modal-title">👤 Mi Cuenta</h2>
+                <button type="button" class="account-modal__close" onclick="if(typeof window.closeAccountPanel === 'function') { window.closeAccountPanel(); }" aria-label="Cerrar panel de cuenta">
+                    &times;
+                </button>
+            </div>
+            <div class="account-modal__content">
+                <div class="account-tabs">
+                    <button class="account-tab active" data-tab="profile">Perfil</button>
+                    <button class="account-tab" data-tab="purchases">Compras</button>
+                    <button class="account-tab" data-tab="addresses">Direcciones</button>
+                    <button class="account-tab" data-tab="invoices">Facturas</button>
+                    <button class="account-tab" data-tab="settings">Configuración</button>
+                </div>
+                
+                <div class="account-tab-content" id="account-tab-profile">
+                    <div class="account-loading" style="text-align: center; padding: 2rem;">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando perfil...
+                    </div>
+                    <div id="account-profile-content" style="display: none;">
+                        <div class="profile-info">
+                            <h3>Información Personal</h3>
+                            <p><strong>Nombre:</strong> <span id="profile-nombre"></span></p>
+                            <p><strong>Email:</strong> <span id="profile-email"></span></p>
+                            <p><strong>Rol:</strong> <span id="profile-rol"></span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="account-tab-content" id="account-tab-purchases" style="display: none;">
+                    <div class="account-loading" style="text-align: center; padding: 2rem;">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando compras...
+                    </div>
+                    <div id="account-purchases-content" style="display: none;">
+                        <h3>Mis Compras</h3>
+                        <div id="purchases-list"></div>
+                    </div>
+                </div>
+                
+                <div class="account-tab-content" id="account-tab-addresses" style="display: none;">
+                    <div class="account-loading" style="text-align: center; padding: 2rem;">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando direcciones...
+                    </div>
+                    <div id="account-addresses-content" style="display: none;">
+                        <h3>Mis Direcciones</h3>
+                        <div id="addresses-list"></div>
+                        <button class="btn-add-address" onclick="showAddAddressForm()">+ Agregar Nueva Dirección</button>
+                        <div id="add-address-form" style="display: none; margin-top: 1rem; padding: 1rem; background: #f9fafb; border-radius: 8px;">
+                            <h4>Nueva Dirección</h4>
+                            <form id="new-address-form">
+                                <div class="form-group">
+                                    <label>País</label>
+                                    <input type="text" name="pais" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Ciudad</label>
+                                    <input type="text" name="ciudad" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Dirección Completa</label>
+                                    <textarea name="direccion" rows="3" required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Teléfono</label>
+                                    <input type="text" name="telefono" required>
+                                </div>
+                                <button type="submit" class="btn-save">Guardar Dirección</button>
+                                <button type="button" class="btn-cancel" onclick="hideAddAddressForm()">Cancelar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="account-tab-content" id="account-tab-invoices" style="display: none;">
+                    <div class="account-loading" style="text-align: center; padding: 2rem;">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando facturas...
+                    </div>
+                    <div id="account-invoices-content" style="display: none;">
+                        <h3>Mis Facturas</h3>
+                        <div id="invoices-list"></div>
+                    </div>
+                </div>
+                
+                <div class="account-tab-content" id="account-tab-settings" style="display: none;">
+                    <div id="account-settings-content">
+                        <h3>Configuración</h3>
+                        <div class="settings-section">
+                            <h4>Cambiar Contraseña</h4>
+                            <form id="change-password-form">
+                                <div class="form-group">
+                                    <label>Contraseña Actual</label>
+                                    <input type="password" name="current_password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Nueva Contraseña</label>
+                                    <input type="password" name="new_password" required minlength="6">
+                                </div>
+                                <div class="form-group">
+                                    <label>Confirmar Nueva Contraseña</label>
+                                    <input type="password" name="confirm_password" required minlength="6">
+                                </div>
+                                <button type="submit" class="btn-save">Cambiar Contraseña</button>
+                            </form>
+                        </div>
+                        
+                        <div class="settings-section" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+                            <h4>Oportunidades</h4>
+                            <p>¿Quieres trabajar con nosotros?</p>
+                            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+                                <a href="{{ url_for('registro_vendedor') }}" class="btn-request" style="text-decoration: none; text-align: center;">Ser Proveedor</a>
+                                <a href="{{ url_for('afiliados_registro') }}" class="btn-request" style="text-decoration: none; text-align: center;">Afiliarte</a>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
+                            <button class="btn-logout" onclick="logout()">Cerrar Sesión</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ABOUT -->
+    <section id="about" class="about-section">
+        <div class="container">
+            <h2>Acerca de <span>ShopFusion</span></h2>
+            <p>ShopFusion es tu tienda en línea todo en uno. Ofrecemos productos de tecnología, salud, software, hogar y mucho más, seleccionados de diferentes marcas reconocidas alrededor del mundo. No nos limitamos a un solo proveedor: queremos que encuentres todo lo que necesitas en un solo lugar.</p>
+            <p>Nos enfocamos en <strong>calidad, variedad y comodidad</strong> para que tu experiencia de compra sea fácil, segura y confiable. Desde gadgets innovadores hasta artículos esenciales, nuestro objetivo es simplificar tu vida y acercarte lo mejor de cada categoría.</p>
+            <p><strong>Con ShopFusion, todo está al alcance de un clic.</strong></p>
+        </div>
+    </section>
+
+    <!-- CONTACTO -->
+    <section id="contact" aria-labelledby="contact-title">
+        <h1 id="contact-title" class="section-header">Envía tus Sugerencias</h1>
+        <div class="contact-wrapper">
+            <form id="contact-form" class="form-horizontal contact-form" method="POST" action="{{ url_for('contact') }}" role="form">
+                {{ form_contact.hidden_tag() }}
+                <div class="form-group">
+                    <div class="col-sm-12">
+                        {{ form_contact.name.label(class="contact-label") }}
+                        {{ form_contact.name(placeholder="Tu nombre", required=True, class="form-control form-input") }}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-12">
+                        {{ form_contact.email.label(class="contact-label") }}
+                        {{ form_contact.email(placeholder="Tu email", required=True, class="form-control form-input") }}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-12">
+                        {{ form_contact.message.label(class="contact-label") }}
+                        {{ form_contact.message(placeholder="Tus sugerencias para mejorar nuestros servicios, informe de errores y mucho mas...", rows=10, required=True, class="form-control form-textarea") }}
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary send-button" type="submit">
+                        <div class="alt-send-button">
+                            <i class="fa fa-paper-plane" aria-hidden="true"></i>
+                            <span class="send-text">ENVIAR</span>
+                        </div>
+                    </button>
+                </div>
+            </form>
+
+            <div class="direct-contact-container">
+                <ul class="contact-list">
+                    <li class="list-item">
+                        <i class="fa fa-map-marker fa-2x" aria-hidden="true"></i>
+                        <span class="contact-text place">Milagro, Ecuador</span>
+                    </li>
+                    <li class="list-item">
+                        <i class="fa fa-phone fa-2x" aria-hidden="true"></i>
+                        <span class="contact-text phone"></span>
+                    </li>
+                    <li class="list-item">
+                        <i class="fa fa-envelope fa-2x" aria-hidden="true"></i>
+                        <span class="contact-text gmail">
+                            <a href="mailto:info@shopfusion.com" title="Envíanos un email"></a>
+                        </span>
+                    </li>
+                </ul>
+                <hr class="contact-separator">
+                <ul class="social-media-list">
+                    <li>
+                        <a href="https://www.tiktok.com/@shop.fusion16?_t=ZM-90AxZP8S6Xr&_r=1" target="_blank" class="contact-icon" aria-label="TikTok de ShopFusion">
+                            <i class="fab fa-tiktok" aria-hidden="true"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://www.facebook.com/profile.php?id=61581285494066" target="_blank" class="contact-icon" aria-label="Facebook de ShopFusion">
+                            <i class="fab fa-facebook-f" aria-hidden="true"></i>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://instagram.com" target="_blank" class="contact-icon" aria-label="Instagram de ShopFusion">
+                            <i class="fab fa-instagram" aria-hidden="true"></i>
+                        </a>
+                    </li>
+                </ul>
+                <hr class="contact-separator">
+                <div class="copyright">&copy; <span id="current-year"></span> ShopFusion. Todos los derechos reservados.</div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <div class="footer-container">
+        <!-- Sección: Información de la empresa -->
+        <div class="footer-section">
+            <h3><i class="fas fa-store"></i> ShopFusion</h3>
+            <p style="color: var(--text-elegant-light); margin-bottom: 20px; line-height: 1.6;">
+                Tu tienda online de confianza con productos exclusivos y de calidad. 
+                Ofreciendo las mejores ofertas en tecnología, hogar y moda.
+            </p>
+            <div class="footer-social">
+                <a href="https://www.tiktok.com/@shop.fusion16" target="_blank" aria-label="TikTok" title="Síguenos en TikTok">
+                    <i class="fab fa-tiktok"></i>
+                </a>
+                <a href="https://www.facebook.com/profile.php?id=61581285494066" target="_blank" aria-label="Facebook" title="Síguenos en Facebook">
+                    <i class="fab fa-facebook-f"></i>
+                </a>
+                <a href="https://instagram.com" target="_blank" aria-label="Instagram" title="Síguenos en Instagram">
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Sección: Enlaces Legales -->
+        <div class="footer-section">
+            <h3><i class="fas fa-balance-scale"></i> Legal</h3>
+            <ul>
+                <li><a href="{{ url_for('privacidad') }}"><i class="fas fa-shield-alt"></i> Política de Privacidad</a></li>
+                <li><a href="{{ url_for('terminos') }}"><i class="fas fa-file-contract"></i> Términos y Condiciones</a></li>
+                <li><a href="{{ url_for('contacto') }}"><i class="fas fa-envelope"></i> Contacto</a></li>
+            </ul>
+        </div>
+
+        <!-- Sección: Trabaja con Nosotros -->
+        <div class="footer-section">
+            <h3><i class="fas fa-handshake"></i> Trabaja con Nosotros</h3>
+            <ul>
+                <li><a href="{{ url_for('trabaja_con_nosotros') }}"><i class="fas fa-briefcase"></i> Vacantes - ShopFusion</a></li>
+                {% if session.get('afiliado_auth') %}
+                    <li><a href="{{ url_for('afiliados_panel') }}"><i class="fas fa-user-tie"></i> Panel de Afiliado</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('trabaja_con_nosotros') }}#afiliados"><i class="fas fa-user-plus"></i> Afiliarte</a></li>
+                    <li><a href="{{ url_for('afiliados_login') }}"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión como Afiliado</a></li>
+                {% endif %}
+                {% if session.get('vendedor_id') %}
+                    <li><a href="{{ url_for('vendedor_panel') }}"><i class="fas fa-truck"></i> Panel de Proveedor</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('registro_vendedor') }}"><i class="fas fa-store"></i> Ser Proveedor</a></li>
+                    <li><a href="{{ url_for('login_vendedor') }}"><i class="fas fa-sign-in-alt"></i> Iniciar Sesión como Proveedor</a></li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <!-- Sección: Ayuda y Soporte -->
+        <div class="footer-section">
+            <h3><i class="fas fa-question-circle"></i> Ayuda</h3>
+            <ul>
+                <li><a href="{{ url_for('soporte') }}"><i class="fas fa-ticket-alt"></i> Crear Ticket de Soporte</a></li>
+                <li><a href="{{ url_for('soporte') }}#envios"><i class="fas fa-shipping-fast"></i> Información de Envíos</a></li>
+                <li><a href="{{ url_for('soporte') }}#preguntas"><i class="fas fa-question"></i> Preguntas Frecuentes</a></li>
+                <li><a href="{{ url_for('exclusivos') }}"><i class="fas fa-shopping-bag"></i> Ver Todos los Productos</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>&copy; <span id="current-year"></span> ShopFusion. Todos los derechos reservados.</p>
+        <p style="font-size: 0.75rem; margin-top: 8px;">
+            <i class="fas fa-map-marker-alt"></i> Milagro, Ecuador
+        </p>
+    </div>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const year = new Date().getFullYear();
+    const yearElements = document.querySelectorAll('#current-year');
+    yearElements.forEach(el => el.textContent = year);
+});
+</script>
+
+
+<!-- Consentimiento de cookies (simplificado sin anuncios) -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const banner = document.getElementById('cookie-banner');
+  if (!banner) return;
+
+  const btnAcceptAll = document.getElementById('cookie-accept-all');
+  const btnAcceptNecessary = document.getElementById('cookie-accept-necessary');
+  const STORAGE_KEY = 'sf_cookie_consent_v1';
+
+  function hideBanner() {
+    banner.classList.remove('is-visible');
+    banner.setAttribute('aria-hidden', 'true');
+  }
+
+  function showBanner() {
+    banner.classList.add('is-visible');
+    banner.setAttribute('aria-hidden', 'false');
+  }
+
+  function saveConsent(value) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+    } catch (e) {}
+  }
+
+  let saved = null;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      saved = JSON.parse(raw);
+    }
+  } catch (e) {}
+
+  if (saved) {
+    hideBanner();
+  } else {
+    showBanner();
+  }
+
+  if (btnAcceptAll) {
+    btnAcceptAll.addEventListener('click', function () {
+      saveConsent({ accepted: true });
+      hideBanner();
+    });
+  }
+
+  if (btnAcceptNecessary) {
+    btnAcceptNecessary.addEventListener('click', function () {
+      saveConsent({ accepted: false });
+      hideBanner();
+    });
+  }
+});
+</script>
+
+<!-- JS PRINCIPAL -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    /* ========== NAVBAR MÓVIL ========== */
+    const navToggle = document.querySelector('.nav-toggle');
+    const navMenu = document.getElementById('nav-menu');
+
+    if (navToggle && navMenu) {
+        navToggle.addEventListener('click', () => {
+            const expanded = navToggle.getAttribute('aria-expanded') === 'true';
+            const newState = !expanded;
+            navToggle.setAttribute('aria-expanded', String(newState));
+            navMenu.classList.toggle('is-open', newState);
+        });
+
+        navMenu.addEventListener('click', (e) => {
+            if (e.target.classList.contains('nav-link')) {
+                navToggle.setAttribute('aria-expanded', 'false');
+                navMenu.classList.remove('is-open');
+            }
+        });
+    }
+
+    /* ========== BUSCADOR EN TIEMPO REAL ========== */
+    let searchTimeout = null;
+    let allProducts = [];
+    
+    // Cargar todos los productos al inicio
+    function loadAllProducts() {
+        const productCards = document.querySelectorAll('.product-card[data-producto-id]');
+            allProducts = Array.from(productCards).map(card => {
+            // Buscar la sección de categoría más cercana
+            let section = card.closest('.category-section');
+            let categoryName = '';
+            
+            // Obtener categoría del atributo data-producto-categoria (más preciso)
+            const productoCategoria = (card.dataset.productoCategoria || '').toLowerCase().trim();
+            
+            // Si no hay categoría en el atributo, intentar obtenerla del título de la sección
+            if (!productoCategoria && section) {
+                const titleElement = section.querySelector('.category-title');
+                if (titleElement) {
+                    // Remover iconos y espacios extra
+                    categoryName = titleElement.textContent
+                        .replace(/🔥|⭐|💻|🏠|👕|🎮|📱|⚡|🎧|⌚|💎|🎨|🏃|🍔|📚|🎬|🔧|🌿|💄|👟|🎯|🏆|🔮|🌟|✨/g, '')
+                        .trim()
+                        .toLowerCase();
+                }
+            } else {
+                categoryName = productoCategoria;
+            }
+            
+            return {
+                element: card,
+                id: card.dataset.productoId,
+                title: (card.querySelector('.product-name')?.textContent || '').toLowerCase().trim(),
+                desc: (card.querySelector('.product-desc')?.textContent || '').toLowerCase().trim(),
+                category: categoryName,
+                section: section
+            };
+        });
+    }
+    
+    // Función de búsqueda en tiempo real
+    function performRealTimeSearch() {
+        const termino = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
+        const categoriaSelect = document.getElementById('filter-categoria');
+        const categoria = categoriaSelect ? categoriaSelect.value.trim().toLowerCase() : '';
+        const clearBtn = document.getElementById('clear-search-btn');
+        const resultsInfo = document.getElementById('search-results-info');
+        const resultsCount = document.getElementById('search-results-count');
+        
+        // Mostrar/ocultar botón de limpiar
+        if (termino || categoria) {
+            if (clearBtn) clearBtn.style.display = 'flex';
+            if (resultsInfo) resultsInfo.style.display = 'flex';
+        } else {
+            if (clearBtn) clearBtn.style.display = 'none';
+            if (resultsInfo) resultsInfo.style.display = 'none';
+        }
+        
+        let visibleCount = 0;
+        
+        // Diccionario de sinónimos y palabras relacionadas
+        const sinonimos = {
+            'celular': ['smartphone', 'teléfono', 'telefono', 'móvil', 'movil', 'cel', 'phone', 'iphone', 'android', 'samsung', 'xiaomi', 'huawei'],
+            'smartphone': ['celular', 'teléfono', 'telefono', 'móvil', 'movil', 'cel', 'phone', 'iphone', 'android'],
+            'teléfono': ['celular', 'smartphone', 'telefono', 'móvil', 'movil', 'cel', 'phone'],
+            'telefono': ['celular', 'smartphone', 'teléfono', 'móvil', 'movil', 'cel', 'phone'],
+            'móvil': ['celular', 'smartphone', 'teléfono', 'telefono', 'movil', 'cel', 'phone'],
+            'movil': ['celular', 'smartphone', 'teléfono', 'telefono', 'móvil', 'cel', 'phone'],
+            'tablet': ['tableta', 'ipad', 'tab', 'tablet pc', 'samsung tablet'],
+            'tableta': ['tablet', 'ipad', 'tab', 'tablet pc'],
+            'laptop': ['portátil', 'portatil', 'notebook', 'computadora portátil', 'computadora portatil', 'pc portátil', 'pc portatil'],
+            'portátil': ['laptop', 'portatil', 'notebook', 'computadora portátil', 'computadora portatil', 'pc portátil', 'pc portatil'],
+            'portatil': ['laptop', 'portátil', 'notebook', 'computadora portátil', 'computadora portatil', 'pc portátil', 'pc portatil'],
+            'notebook': ['laptop', 'portátil', 'portatil', 'computadora portátil', 'computadora portatil'],
+            'auriculares': ['audífonos', 'audifonos', 'headphones', 'headset', 'cascos', 'audifono', 'audífono'],
+            'audífonos': ['auriculares', 'audifonos', 'headphones', 'headset', 'cascos', 'audifono', 'auricular'],
+            'audifonos': ['auriculares', 'audífonos', 'headphones', 'headset', 'cascos', 'audifono', 'auricular'],
+            'reloj': ['watch', 'smartwatch', 'pulsera', 'reloj inteligente'],
+            'smartwatch': ['reloj', 'watch', 'reloj inteligente', 'pulsera inteligente'],
+            'reloj inteligente': ['smartwatch', 'reloj', 'watch', 'pulsera inteligente']
+        };
+        
+        // Obtener palabras relacionadas al término de búsqueda
+        function getRelatedTerms(searchTerm) {
+            const termLower = searchTerm.toLowerCase().trim();
+            const relatedTerms = [termLower];
+            
+            // Buscar sinónimos directos
+            if (sinonimos[termLower]) {
+                relatedTerms.push(...sinonimos[termLower]);
+            }
+            
+            // Buscar sinónimos inversos (si "smartphone" está en sinónimos de "celular")
+            Object.keys(sinonimos).forEach(key => {
+                if (sinonimos[key].includes(termLower)) {
+                    relatedTerms.push(key);
+                    relatedTerms.push(...sinonimos[key]);
+                }
+            });
+            
+            // También buscar palabras individuales si el término tiene varias palabras
+            const words = termLower.split(/\s+/);
+            if (words.length > 1) {
+                words.forEach(word => {
+                    if (sinonimos[word]) {
+                        relatedTerms.push(...sinonimos[word]);
+                    }
+                });
+            }
+            
+            // Eliminar duplicados y retornar array único
+            return [...new Set(relatedTerms)];
+        }
+        
+        // Filtrar productos
+        allProducts.forEach(product => {
+            let matchesTerm = true;
+            
+            if (termino) {
+                // Obtener términos relacionados (sinónimos)
+                const relatedTerms = getRelatedTerms(termino);
+                
+                // Buscar en título, descripción Y categoría (tanto del producto como de la sección) con términos relacionados
+                const searchText = (
+                    product.title + ' ' + 
+                    product.desc + ' ' + 
+                    product.category + ' ' + 
+                    (product.productCategoria || '')
+                ).toLowerCase();
+                
+                // También verificar coincidencias parciales en palabras individuales
+                const searchWords = termino.split(/\s+/);
+                
+                // Verificar si alguno de los términos relacionados está presente
+                matchesTerm = relatedTerms.some(term => 
+                    searchText.includes(term)
+                );
+            }
+            
+            // Verificar coincidencia con categoría
+            let matchesCategory = true;
+            if (categoria) {
+                const categoriaLower = categoria.toLowerCase().trim();
+                // Comparar directamente con la categoría del producto
+                matchesCategory = product.category.includes(categoriaLower) || 
+                                 categoriaLower.includes(product.category) ||
+                                 // También verificar si el texto de la opción coincide
+                                 (categoriaSelect && Array.from(categoriaSelect.options).some(opt => {
+                                     if (opt.value.toLowerCase() === categoriaLower) {
+                                         const optText = opt.text.toLowerCase().trim();
+                                         return product.category.includes(optText) || optText.includes(product.category);
+                                     }
+                                     return false;
+                                 }));
+            }
+            
+            const shouldShow = matchesTerm && matchesCategory;
+            
+            if (shouldShow) {
+                product.element.style.display = '';
+                visibleCount++;
+            } else {
+                product.element.style.display = 'none';
+            }
+        });
+        
+        // Ocultar secciones de categorías vacías
+        document.querySelectorAll('.category-section').forEach(section => {
+            const categoryProducts = section.querySelectorAll('.product-card[data-producto-id]');
+            const visibleProducts = Array.from(categoryProducts).filter(card => 
+                card.style.display !== 'none'
+            );
+            
+            if (visibleProducts.length === 0 && (termino || categoria)) {
+                section.style.display = 'none';
+            } else {
+                section.style.display = '';
+            }
+        });
+        
+        // Actualizar contador de resultados
+        if (resultsCount) {
+            if (termino || categoria) {
+                resultsCount.textContent = `${visibleCount} producto${visibleCount !== 1 ? 's' : ''} encontrado${visibleCount !== 1 ? 's' : ''}`;
+            } else {
+                resultsCount.textContent = '';
+            }
+        }
+        
+        // Scroll suave al primer resultado si hay búsqueda
+        if ((termino || categoria) && visibleCount > 0) {
+            const firstVisible = allProducts.find(p => p.element.style.display !== 'none');
+            if (firstVisible && firstVisible.section) {
+                setTimeout(() => {
+                    firstVisible.section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        }
+    }
+    
+    // Función con debounce para optimizar búsqueda
+    function debounceSearch() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            performRealTimeSearch();
+        }, 200); // Esperar 200ms después de que el usuario deje de escribir
+    }
+    
+    // Función para limpiar búsqueda
+    function clearSearch() {
+        const searchInput = document.getElementById('search-input');
+        const filterCategoria = document.getElementById('filter-categoria');
+        
+        if (searchInput) searchInput.value = '';
+        if (filterCategoria) filterCategoria.value = '';
+        performRealTimeSearch();
+        searchInput?.focus();
+    }
+    
+    // Event listeners
+    const searchInput = document.getElementById('search-input');
+    const filterCategoria = document.getElementById('filter-categoria');
+    const clearBtn = document.getElementById('clear-search-btn');
+    const clearSearchInfo = document.getElementById('clear-search-info');
+    
+    // Cargar productos al iniciar
+    function initializeSearch() {
+        loadAllProducts();
+        // Si hay parámetros en la URL, aplicar búsqueda inicial
+        const urlParams = new URLSearchParams(window.location.search);
+        const q = urlParams.get('q');
+        const cat = urlParams.get('categoria');
+        if (q && searchInput) {
+            searchInput.value = q;
+        }
+        if (cat && filterCategoria) {
+            filterCategoria.value = cat;
+        }
+        if (q || cat) {
+            performRealTimeSearch();
+        }
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeSearch);
+    } else {
+        initializeSearch();
+    }
+    
+    // Búsqueda en tiempo real mientras escribe
+    if (searchInput) {
+        searchInput.addEventListener('input', debounceSearch);
+        searchInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Escape') {
+                clearSearch();
+            } else {
+                debounceSearch();
+            }
+        });
+    }
+    
+    // Filtro por categoría en tiempo real
+    if (filterCategoria) {
+        filterCategoria.addEventListener('change', () => {
+            performRealTimeSearch();
+        });
+    }
+    
+    // Botón de limpiar búsqueda
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearSearch);
+    }
+    
+    // Limpiar desde el info
+    if (clearSearchInfo) {
+        clearSearchInfo.addEventListener('click', clearSearch);
+    }
+    
+    // Botón de búsqueda (opcional, para compatibilidad)
+    const searchBtn = document.getElementById('search-btn');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            performRealTimeSearch();
+        });
+    }
+
+    /* ========== CARRUSELES POR CATEGORÍA ========== */
+    // Cada sección de categoría tiene su propio carrusel
+    document.querySelectorAll('.category-carousel-wrapper').forEach(wrapper => {
+        const container = wrapper.querySelector('.products-container');
+        const prevBtn = wrapper.querySelector('.carousel-nav.prev');
+        const nextBtn = wrapper.querySelector('.carousel-nav.next');
+        
+        if (!container || !prevBtn || !nextBtn) return;
+        
+        const scrollAmount = 300;
+        
+        prevBtn.addEventListener('click', () => {
+            container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        });
+        
+        nextBtn.addEventListener('click', () => {
+            container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        });
+        
+        // Actualizar visibilidad de botones según scroll
+        const updateButtons = () => {
+            const isAtStart = container.scrollLeft <= 0;
+            const isAtEnd = container.scrollLeft >= container.scrollWidth - container.clientWidth - 10;
+            
+            prevBtn.style.opacity = isAtStart ? '0.3' : '1';
+            prevBtn.style.pointerEvents = isAtStart ? 'none' : 'auto';
+            
+            nextBtn.style.opacity = isAtEnd ? '0.3' : '1';
+            nextBtn.style.pointerEvents = isAtEnd ? 'none' : 'auto';
+        };
+        
+        container.addEventListener('scroll', updateButtons);
+        updateButtons();
+    });
+
+    /* ========== CARRUSEL DE IMÁGENES EN TARJETAS (INTERNO) ========== */
+    const carousels = document.querySelectorAll('.product-card .carousel');
+    carousels.forEach((carousel, idx) => {
+        const imgs = carousel.querySelectorAll('img');
+        if (!imgs.length) return;
+
+        let current = 0;
+        imgs.forEach((img, i) => {
+            img.classList.toggle('is-active', i === 0);
+        });
+
+        if (imgs.length > 1) {
+            const delay = 4000 + (idx % 5) * 250;
+            setInterval(() => {
+                imgs[current].classList.remove('is-active');
+                current = (current + 1) % imgs.length;
+                imgs[current].classList.add('is-active');
+            }, delay);
+        }
+    });
+
+
+    /* ========== OCULTAR ALERTAS AUTOMÁTICAMENTE ========== */
+    setTimeout(() => {
+        document.querySelectorAll('.alert').forEach(a => a.remove());
+    }, 9000);
+
+    /* ========== AÑO EN COPYRIGHT ========== */
+    const yearSpan = document.getElementById('current-year');
+    if (yearSpan) {
+        yearSpan.textContent = new Date().getFullYear();
+    }
+});
+</script>
+
+<!-- SCRIPT DE VIDEOS BLOQUEADOS -->
+<script>
+(function(){
+  'use strict';
+
+  function lockVideos(selector='section#hero video'){
+    const vids = document.querySelectorAll(selector);
+    vids.forEach(v => {
+      v.removeAttribute('controls');
+      v.muted = true;
+      v.loop = true;
+      v.playsInline = true;
+      v.setAttribute('disablepictureinpicture','');
+      v.setAttribute('controlsList','nodownload noplaybackrate noremoteplayback nofullscreen');
+      v.style.pointerEvents = 'none';
+
+      v.addEventListener('contextmenu', e => e.preventDefault());
+      v.addEventListener('enterpictureinpicture', () => {
+        if (document.exitPictureInPicture) document.exitPictureInPicture().catch(()=>{});
+      });
+      const forcePlay = () => v.play().catch(()=>{});
+      v.addEventListener('pause', (e) => { e.preventDefault?.(); forcePlay(); });
+      v.addEventListener('ratechange', () => { if (v.playbackRate !== 1) v.playbackRate = 1; });
+
+      let lastT = 0;
+      v.addEventListener('timeupdate', () => { lastT = v.currentTime; });
+      v.addEventListener('seeking', () => {
+        if (Math.abs(v.currentTime - lastT) > 0.2) {
+          try { v.currentTime = lastT; } catch(_){}
+        }
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && v.paused) forcePlay();
+      });
+
+      forcePlay();
+    });
+
+    const blocked = new Set([' ', 'Spacebar', 'k', 'j', 'l', 'f', 'm', 'ArrowLeft', 'ArrowRight', 'MediaPlayPause']);
+
+    document.addEventListener('keydown', (e) => {
+      const target = e.target;
+      const tagName = target.tagName;
+
+      if (tagName === 'INPUT' || tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
+      if (blocked.has(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    }, true);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => lockVideos());
+  } else {
+    lockVideos();
+  }
+})();
+</script>
+
+<!-- MODAL DETALLE EXCLUSIVOS -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('product-modal');
+  if (!modal) return;
+
+  const modalImage = document.getElementById('modal-image');
+  const modalTitle = document.getElementById('product-modal-title');
+  const modalCategory = document.getElementById('product-modal-category');
+  const modalDesc = document.getElementById('product-modal-desc');
+  const modalPrices = document.getElementById('product-modal-prices');
+  const modalStock = document.getElementById('product-modal-stock');
+  const buyBtnModal = modal.querySelector('.buy-exclusive-btn-modal');
+  const floatingBuy = document.getElementById('floating-buy-cta');
+
+  const btnPrev = modal.querySelector('.modal-nav--prev');
+  const btnNext = modal.querySelector('.modal-nav--next');
+
+  let currentImages = [];
+  let currentIndex = 0;
+
+  window.trackAffiliateProductClick = function(productId) {
+    const pid = parseInt(productId, 10);
+    if (!pid) return;
+    if (window.__skipAffiliateTrackOnce && String(window.__skipAffiliateTrackOnce) === String(pid)) {
+      window.__skipAffiliateTrackOnce = null;
+      return;
+    }
+    fetch('/api/afiliados/track-click', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ producto_id: pid })
+    }).catch(() => {});
+  };
+
+  function openModal() {
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    toggleFloatingBuy(true);
+  }
+
+  function closeModal() {
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    currentImages = [];
+    currentIndex = 0;
+    toggleFloatingBuy(false);
+  }
+
+  function updateModalImage() {
+    if (!currentImages.length) return;
+    const img = currentImages[currentIndex];
+    modalImage.src = img.src;
+    modalImage.alt = img.alt || modalTitle.textContent || 'Imagen de producto ShopFusion';
+  }
+
+  function showNextImage() {
+    if (!currentImages.length) return;
+    currentIndex = (currentIndex + 1) % currentImages.length;
+    updateModalImage();
+  }
+
+  function showPrevImage() {
+    if (!currentImages.length) return;
+    currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+    updateModalImage();
+  }
+
+  const exclusivesSection = document.getElementById('shopfusion-exclusives');
+
+  function fillModalFromCard(card) {
+    const titleEl = card.querySelector('.product-name');
+    const descEl = card.querySelector('.product-desc');
+    const catEl = card.querySelector('.categoria');
+    const stockEl = card.querySelector('.stock');
+
+    modalTitle.textContent = titleEl ? titleEl.textContent.trim() : '';
+    modalDesc.textContent = descEl ? descEl.textContent.trim() : '';
+    modalCategory.textContent = catEl ? catEl.textContent.trim() : '';
+    modalStock.textContent = stockEl ? stockEl.textContent.trim() : '';
+
+    const priceBlock = card.querySelector('.price-block');
+    modalPrices.innerHTML = priceBlock ? priceBlock.innerHTML : '';
+
+    const buyBtnInCard = card.querySelector('.buy-exclusive-btn');
+
+    if (buyBtnModal) {
+      if (buyBtnInCard) {
+        const pid = buyBtnInCard.dataset.productId || '';
+        const titulo = buyBtnInCard.dataset.productTitulo || '';
+        const precio = buyBtnInCard.dataset.productPrecio || '';
+
+        buyBtnModal.dataset.productId = pid;
+        buyBtnModal.dataset.productTitulo = titulo;
+        buyBtnModal.dataset.productPrecio = precio;
+        buyBtnModal.style.display = '';
+        toggleFloatingBuy(true);
+      } else {
+        buyBtnModal.dataset.productId = '';
+        buyBtnModal.dataset.productTitulo = '';
+        buyBtnModal.dataset.productPrecio = '';
+        buyBtnModal.style.display = 'none';
+        toggleFloatingBuy(false);
+      }
+    }
+
+    const imgs = card.querySelectorAll('.carousel img');
+    currentImages = Array.from(imgs).map(img => ({
+      src: img.getAttribute('src'),
+      alt: img.getAttribute('alt')
+    }));
+
+    if (!currentImages.length) {
+      currentImages = [{
+        src: 'https://via.placeholder.com/300x200?text=Sin+imagen',
+        alt: 'Sin imagen'
+      }];
+    }
+
+    currentIndex = 0;
+    updateModalImage();
+  }
+
+  // Usar exclusivesSection si existe, sino usar document pero con cuidado
+  const clickArea = exclusivesSection || document;
+
+  // Delegated to cover original, duplicated and future exclusive cards
+  clickArea.addEventListener('click', (event) => {
+    // IMPORTANTE: No bloquear enlaces de navegación (carrito, header, nav, etc.)
+    const clickedLink = event.target.closest('a[href]');
+    
+    // Si el clic es en el header o nav, permitir navegación normal SIEMPRE
+    if (clickedLink && clickedLink.closest('header, nav, .nav-link, .nav-item')) {
+      return; // Permitir que los enlaces del nav funcionen normalmente
+    }
+    
+    // Si es el enlace del carrito o cualquier enlace fuera de productos exclusivos, permitir navegación normal
+    const cartLink = event.target.closest('#cart-link, .nav-cart, a[href*="carrito"]');
+    const loginLink = event.target.closest('.nav-login, a[href*="login"]');
+    
+    if (cartLink || loginLink || (clickedLink && !clickedLink.closest('.product-card.exclusive'))) {
+      return; // Permitir que los enlaces funcionen normalmente
+    }
+    
+    // Ver detalles
+    const viewBtn = event.target.closest('.product-card.exclusive .view-more-btn');
+    if (viewBtn) {
+      event.preventDefault();
+      event.stopPropagation();
+      const productId = viewBtn.getAttribute('data-product-id');
+      if (window.trackAffiliateProductClick) {
+        window.trackAffiliateProductClick(productId);
+      }
+      const card = viewBtn.closest('.product-card.exclusive');
+      if (!card) {
+        console.error('No se encontró la tarjeta del producto');
+        return;
+      }
+      try {
+        fillModalFromCard(card);
+        openModal();
+      } catch (error) {
+        console.error('Error al abrir modal:', error);
+        alert('Error al mostrar los detalles del producto. Por favor, intenta nuevamente.');
+      }
+      return;
+    }
+    
+    // Comprar ahora - desde la tarjeta (agregar al carrito o abrir checkout)
+    const buyBtn = event.target.closest('.product-card.exclusive .buy-exclusive-btn');
+    if (buyBtn) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const productId = buyBtn.getAttribute('data-product-id');
+      const titulo = buyBtn.getAttribute('data-product-titulo') || '';
+      const precio = buyBtn.getAttribute('data-product-precio') || '0';
+
+      if (window.trackAffiliateProductClick) {
+        window.trackAffiliateProductClick(productId);
+      }
+      
+      if (!productId || !precio || precio === '0') {
+        console.error('Faltan datos del producto:', { productId, titulo, precio });
+        alert('Error: Faltan datos del producto. Por favor, recarga la página.');
+        return;
+      }
+      
+      // Agregar producto al carrito primero
+      fetch('/api/carrito/agregar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          producto_id: parseInt(productId, 10),
+          cantidad: 1
+        })
+      })
+      .then(res => res.json())
+      .then(async data => {
+        if (data.success) {
+          // Actualizar contador del carrito automáticamente
+          if (typeof updateCartCount === 'function') {
+            await updateCartCount();
+          }
+          
+          // Si el modal del carrito está abierto, actualizarlo automáticamente
+          if (typeof loadCartModal === 'function') {
+            const cartModal = document.getElementById('cart-modal');
+            if (cartModal && cartModal.classList.contains('is-open')) {
+              await loadCartModal();
+            }
+          }
+          
+          // Disparar evento para actualizar otros componentes
+          document.dispatchEvent(new CustomEvent('carritoUpdated', { detail: data }));
+          
+          // Opción 1: Redirigir al carrito (recomendado)
+          window.location.href = '{{ url_for("carrito") }}';
+          
+          // Opción 2: O abrir modal de checkout individual (descomentar si prefieres esto)
+          // let attempts = 0;
+          // const maxAttempts = 15;
+          // const tryOpenCheckout = () => {
+          //   attempts++;
+          //   if (typeof window.openCheckoutModal === 'function') {
+          //     try {
+          //       window.openCheckoutModal(parseInt(productId, 10), titulo, parseFloat(precio));
+          //     } catch (err) {
+          //       console.error('Error al abrir checkout:', err);
+          //     }
+          //   } else if (attempts < maxAttempts) {
+          //     setTimeout(tryOpenCheckout, 200);
+          //   }
+          // };
+          // tryOpenCheckout();
+        } else {
+          alert(data.error || 'Error al agregar producto al carrito');
+        }
+      })
+      .catch(error => {
+        console.error('Error al agregar al carrito:', error);
+        alert('Error al agregar producto al carrito');
+      });
+      
+      return;
+    }
+  });
+
+  if (btnNext) btnNext.addEventListener('click', showNextImage);
+  if (btnPrev) btnPrev.addEventListener('click', showPrevImage);
+
+  if (buyBtnModal) {
+    buyBtnModal.addEventListener('click', () => {
+      const pid = buyBtnModal.dataset.productId;
+      const titulo = buyBtnModal.dataset.productTitulo;
+      const precio = buyBtnModal.dataset.productPrecio;
+
+      if (!pid || !precio) return;
+
+      closeModal();
+
+      const originalBtn = document.querySelector(
+        '.product-card.exclusive .buy-exclusive-btn[data-product-id="' + pid + '"]'
+      );
+      if (originalBtn) {
+        originalBtn.click();
+      }
+    });
+  }
+
+  function toggleFloatingBuy(show) {
+    if (!floatingBuy) return;
+    floatingBuy.classList.toggle('is-visible', !!show);
+  }
+
+  if (floatingBuy) {
+    floatingBuy.addEventListener('click', () => {
+      if (buyBtnModal && buyBtnModal.dataset.productId) {
+        buyBtnModal.click();
+      }
+    });
+  }
+
+  modal.addEventListener('click', (e) => {
+    // Cerrar si se hace click en el backdrop o en elementos con data-modal-close
+    if (e.target.matches('[data-modal-close]') || e.target === modal || e.target.classList.contains('product-modal__backdrop')) {
+      closeModal();
+    }
+  });
+  
+  // Asegurar que el botón de cerrar funcione correctamente
+  const closeButton = modal.querySelector('.product-modal__close');
+  if (closeButton) {
+    closeButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeModal();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('is-open')) {
+      closeModal();
+    }
+  });
+});
+</script>
+
+<!-- SDK GLOBAL DE PAYPAL (sorteo + exclusivos) -->
+<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD"></script>
+
+<!-- SCRIPT CHECKOUT EXCLUSIVOS -->
+<script>
+(function() {
+    'use strict';
+    
+    let modal, backdrop, closeBtn, titleEl, priceEl, form, paypalContainer, messageEl;
+    let selectedProductId = null;
+    let selectedProductTitle = '';
+    let selectedProductPrice = 0;
+    
+    function initCheckout() {
+        modal = document.getElementById('exclusive-modal');
+        if (!modal) {
+            console.warn('Modal de checkout no encontrado');
+            return;
+        }
+
+        backdrop = modal.querySelector('.product-modal__backdrop');
+        closeBtn = modal.querySelector('.product-modal__close');
+        titleEl = document.getElementById('exclusive-modal-title');
+        priceEl = document.getElementById('exclusive-modal-price');
+        form = document.getElementById('exclusive-checkout-form');
+        paypalContainer = document.getElementById('exclusive-paypal-button-container');
+        messageEl = document.getElementById('exclusive-checkout-message');
+        
+        // Configurar el botón de cerrar INMEDIATAMENTE
+        setupCloseButton();
+    }
+    
+    function setupCloseButton() {
+        // Buscar el botón de cerrar de múltiples formas
+        const closeButton = modal.querySelector('.product-modal__close') || 
+                           modal.querySelector('button[aria-label="Cerrar ventana"]') ||
+                           document.querySelector('#exclusive-modal .product-modal__close');
+        
+        if (!closeButton) {
+            console.error('Botón de cerrar no encontrado en el modal de checkout');
+            return;
+        }
+        
+        // Remover cualquier listener previo para evitar duplicados
+        const newCloseBtn = closeButton.cloneNode(true);
+        closeButton.parentNode.replaceChild(newCloseBtn, closeButton);
+        
+        // Configurar estilos para asegurar que sea clickeable
+        newCloseBtn.style.pointerEvents = 'auto';
+        newCloseBtn.style.cursor = 'pointer';
+        newCloseBtn.style.zIndex = '10001';
+        newCloseBtn.style.position = 'absolute';
+        newCloseBtn.setAttribute('tabindex', '0');
+        
+        // Función para cerrar
+        const handleClose = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeModal();
+            return false;
+        };
+        
+        // Agregar múltiples event listeners
+        newCloseBtn.addEventListener('click', handleClose, true);
+        newCloseBtn.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }, true);
+        newCloseBtn.addEventListener('mouseup', handleClose, true);
+        newCloseBtn.addEventListener('touchend', handleClose, true);
+        newCloseBtn.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+        }, true);
+        newCloseBtn.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                closeModal();
+            }
+        });
+        
+        // También usar delegación de eventos desde el modal
+        modal.addEventListener('click', function(e) {
+            if (e.target === newCloseBtn || e.target.closest('.product-modal__close')) {
+                e.preventDefault();
+                e.stopPropagation();
+                closeModal();
+            }
+        }, true);
+        
+        console.log('Botón de cerrar configurado correctamente');
+    }
+    
+    function showFlashMessage(type, text) {
+        let container = document.querySelector('.flash-container');
+
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'flash-container';
+            document.body.appendChild(container);
+        }
+
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-' + type;
+        alert.textContent = text;
+
+        container.appendChild(alert);
+
+        setTimeout(() => {
+            alert.remove();
+        }, 9000);
+    }
+
+    // Hacer la función global INMEDIATAMENTE para que esté disponible
+    window.openCheckoutModal = function(productId, titulo, precio) {
+        // Verificar que los elementos estén disponibles
+        if (!modal || !titleEl || !priceEl || !form || !paypalContainer) {
+            console.error('Elementos del modal no están inicializados, reintentando...');
+            // Reintentar inicialización
+            initCheckout();
+            if (!modal || !titleEl || !priceEl || !form || !paypalContainer) {
+                alert('Error: El modal de compra no está disponible. Por favor, recarga la página.');
+                return;
+            }
+        }
+        
+        selectedProductId = productId;
+        selectedProductTitle = titulo;
+        selectedProductPrice = parseFloat(precio || 0);
+
+        titleEl.textContent = titulo;
+        priceEl.textContent = 'Total a pagar: $' + selectedProductPrice.toFixed(2);
+        messageEl.textContent = '';
+        form.reset();
+
+        paypalContainer.innerHTML = '';
+        
+        // Mostrar el modal
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+
+        if (!(window.paypal && paypal.Buttons)) {
+            const errText = '⚠️ No se pudo cargar PayPal. Actualiza la página.';
+            messageEl.textContent = errText;
+            showFlashMessage('error', errText);
+        } else {
+            paypal.Buttons({
+                onClick: function(data, actions) {
+                    const required = ['nombre','apellido','email','telefono','pais','direccion'];
+                    let valid = true;
+
+                    required.forEach(function(name) {
+                        const input = form.querySelector('[name="' + name + '"]');
+                        if (!input) return;
+                        if (!input.value.trim()) {
+                            valid = false;
+                            input.classList.add('field-error');
+                        } else {
+                            input.classList.remove('field-error');
+                        }
+                    });
+
+                    if (!valid) {
+                        const errText = 'Por favor completa todos los datos antes de pagar.';
+                        messageEl.textContent = errText;
+                        showFlashMessage('warning', errText);
+                        return actions.reject();
+                    }
+
+                    messageEl.textContent = '';
+                    return actions.resolve();
+                },
+                createOrder: function(data, actions) {
+                    return actions.order.create({
+                        purchase_units: [{
+                            description: selectedProductTitle,
+                            amount: {
+                                currency_code: 'USD',
+                                value: selectedProductPrice.toFixed(2)
+                            }
+                        }]
+                    });
+                },
+                onApprove: function(data, actions) {
+                    const payload = {
+                        orderID: data.orderID,
+                        producto_id: selectedProductId,
+                        cantidad: 1,
+                        nombre: form.nombre.value.trim(),
+                        apellido: form.apellido.value.trim(),
+                        email: form.email.value.trim(),
+                        telefono: form.telefono.value.trim(),
+                        pais: form.pais.value.trim(),
+                        direccion: form.direccion.value.trim()
+                    };
+
+                    return fetch('/api/exclusivos/checkout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(function(res) { return res.json(); })
+                    .then(function(resp) {
+                        if (resp.status === 'success') {
+                            const okText = '✅ Pago completado. Tus datos se guardaron correctamente. Tu producto se enviará pronto.';
+                            messageEl.textContent = okText;
+                            showFlashMessage('success', okText);
+                            setTimeout(closeModal, 3000);
+                        } else {
+                            const errText = '⚠️ El pago se procesó en PayPal, pero hubo un problema registrando la compra: ' + (resp.error || '');
+                            messageEl.textContent = errText;
+                            showFlashMessage('error', errText);
+                        }
+                    })
+                    .catch(function(err) {
+                        console.error(err);
+                        const errText = '⚠️ Ocurrió un error al registrar la compra. Revisa tu correo o contáctanos.';
+                        messageEl.textContent = errText;
+                        showFlashMessage('error', errText);
+                    });
+                },
+                onError: function(err) {
+                    console.error(err);
+                    const errText = '⚠️ Ocurrió un error con PayPal. Intenta nuevamente.';
+                    messageEl.textContent = errText;
+                    showFlashMessage('error', errText);
+                }
+            }).render('#exclusive-paypal-button-container');
+        }
+
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+    };
+    
+    // Mantener compatibilidad con código existente
+    const openModal = window.openCheckoutModal;
+
+    function closeModal() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        selectedProductId = null;
+    }
+
+    // El botón de cerrar ya está configurado en setupCloseButton()
+    // No necesitamos duplicar el código aquí
+    if (backdrop) {
+        backdrop.addEventListener('click', function(e) {
+            if (e.target === backdrop) {
+                closeModal();
+            }
+        });
+        // También para touch
+        backdrop.addEventListener('touchend', function(e) {
+            if (e.target === backdrop) {
+                closeModal();
+            }
+        });
+    }
+    
+    // Inicializar cuando el DOM esté listo
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCheckout);
+    } else {
+        initCheckout();
+    }
+    
+    // Event listener global adicional para el botón de cerrar (captura de eventos)
+    document.addEventListener('click', function(e) {
+        const closeBtn = e.target.closest('#exclusive-modal-close-btn, #exclusive-modal .product-modal__close');
+        if (closeBtn && modal && modal.classList.contains('is-open')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeModal();
+            return false;
+        }
+    }, true);
+    
+    // También escuchar eventos de teclado
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal && modal.classList.contains('is-open')) {
+            closeModal();
+        }
+    });
+})();
+</script>
+
+
+<!-- Tus scripts adicionales -->
+<script defer src="{{ url_for('static', filename='js/sorteo.js') }}"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
+        onerror="console.error('Failed to load GSAP')"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"
+        onerror="console.error('Failed to load ScrollTrigger')"></script>
+<script defer src="{{ url_for('static', filename='js/animations.js') }}"></script>
+
+
+
+<!-- JavaScript para actualizar contador del carrito -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // PROTECCIÓN GLOBAL: Asegurar que TODOS los enlaces del nav/header funcionen
+    // EXCEPTO el carrito que tiene su propio handler
+    document.addEventListener('click', function(e) {
+        const clickedLink = e.target.closest('header a[href], nav a[href]');
+        if (clickedLink) {
+            // Si es el enlace del carrito, no hacer nada (tiene su propio handler)
+            if (clickedLink.id === 'cart-link' || clickedLink.classList.contains('nav-cart')) {
+                return; // Dejar que el onclick del carrito maneje el evento
+            }
+            
+            const href = clickedLink.getAttribute('href');
+            // Solo procesar si es un enlace válido
+            if (href && href !== '#' && href !== 'javascript:void(0)' && !href.startsWith('#')) {
+                // Si el enlace está en el nav/header, asegurar que funcione
+                // No prevenir el comportamiento por defecto, solo asegurar navegación
+                const isNavLink = clickedLink.closest('nav, header');
+                if (isNavLink) {
+                    // Si por alguna razón fue bloqueado, forzar navegación
+                    setTimeout(() => {
+                        if (e.defaultPrevented) {
+                            window.location.href = href;
+                        }
+                    }, 0);
+                }
+            }
+        }
+    }, true); // Capture phase - se ejecuta ANTES que otros listeners
+    
+    // Asegurar que TODOS los enlaces del nav funcionen correctamente
+    // EXCEPTO el carrito que tiene su propio handler
+    const navLinks = document.querySelectorAll('header a[href], nav a[href]');
+    navLinks.forEach(link => {
+        // Si es el enlace del carrito, no hacer nada (tiene su propio onclick)
+        if (link.id === 'cart-link' || link.classList.contains('nav-cart')) {
+            // Solo asegurar que el onclick funcione
+            link.addEventListener('click', function(e) {
+                if (this.getAttribute('href') === '#') {
+                    // Permitir que el onclick maneje el evento
+                    return true;
+                }
+            }, false);
+            return; // Saltar este enlace
+        }
+        
+        // Remover cualquier listener que pueda estar bloqueando
+        const newLink = link.cloneNode(true);
+        link.parentNode.replaceChild(newLink, link);
+        
+        // Agregar listener simple que solo permite navegación
+        newLink.addEventListener('click', function(e) {
+            const href = this.getAttribute('href');
+            if (href && href !== '#' && href !== 'javascript:void(0)' && !href.startsWith('#')) {
+                // No prevenir nada, solo asegurar navegación
+                // Si fue bloqueado, forzar navegación
+                if (e.defaultPrevented) {
+                    e.stopImmediatePropagation();
+                    window.location.href = href;
+                    return false;
+                }
+            }
+        }, false); // Bubble phase - después de otros listeners
+        
+        // También asegurar que funcione con eventos de teclado
+        newLink.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                const href = this.getAttribute('href');
+                if (href && href !== '#' && href !== 'javascript:void(0)' && !href.startsWith('#')) {
+                    e.preventDefault();
+                    window.location.href = href;
+                }
+            }
+        });
+    });
+    
+    // Función para actualizar el contador del carrito
+    async function updateCartCount() {
+        const cartCountEl = document.getElementById('cart-count');
+        if (!cartCountEl) return;
+        
+        try {
+            // Obtener contador del carrito desde la API
+            const response = await fetch('/api/carrito/contador');
+            const data = await response.json();
+            const count = data.total_items || 0;
+            cartCountEl.textContent = count;
+            cartCountEl.style.display = count > 0 ? 'block' : 'none';
+            
+            // Disparar evento para que otros componentes se actualicen
+            document.dispatchEvent(new CustomEvent('cartCountUpdated', { detail: { count } }));
+        } catch (error) {
+            console.error('Error al obtener contador del carrito:', error);
+            const cartCountEl = document.getElementById('cart-count');
+            if (cartCountEl) {
+                cartCountEl.textContent = '0';
+                cartCountEl.style.display = 'none';
+            }
+        }
+    }
+    
+    // Hacer función global
+    window.updateCartCount = updateCartCount;
+    
+    // Actualizar contador al cargar la página
+    updateCartCount();
+    
+    // Actualizar contador cuando se actualice el carrito (evento personalizado)
+    document.addEventListener('carritoUpdated', function() {
+        updateCartCount();
+        // Si el modal está abierto, actualizarlo también
+        const cartModal = document.getElementById('cart-modal');
+        if (cartModal && cartModal.classList.contains('is-open')) {
+            if (typeof loadCartModal === 'function') {
+                loadCartModal();
+            }
+        }
+    });
+    
+    // Agregar productos al carrito
+    document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+        btn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const productoId = this.getAttribute('data-product-id');
+            const productoNombre = this.getAttribute('data-product-titulo');
+
+            if (!productoId) {
+                alert('Error: ID de producto no encontrado');
+                return;
+            }
+
+            if (window.trackAffiliateProductClick) {
+                window.trackAffiliateProductClick(productoId);
+            }
+            
+            try {
+                const response = await fetch('/api/carrito/agregar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        producto_id: parseInt(productoId),
+                        cantidad: 1
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Actualizar contador inmediatamente
+                    await updateCartCount();
+                    
+                    // Si el modal está abierto, recargar el carrito automáticamente
+                    const cartModal = document.getElementById('cart-modal');
+                    if (cartModal && cartModal.classList.contains('is-open')) {
+                        if (typeof loadCartModal === 'function') {
+                            await loadCartModal();
+                        }
+                    }
+                    
+                    // Mostrar mensaje de éxito
+                    const mensaje = document.createElement('div');
+                    mensaje.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 1rem 1.5rem; border-radius: 8px; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideInRight 0.3s ease;';
+                    mensaje.textContent = `✓ ${productoNombre} agregado al carrito`;
+                    document.body.appendChild(mensaje);
+                    
+                    setTimeout(() => {
+                        mensaje.style.transition = 'opacity 0.3s';
+                        mensaje.style.opacity = '0';
+                        setTimeout(() => mensaje.remove(), 300);
+                    }, 2000);
+                    
+                    // Disparar evento para actualizar otros componentes
+                    document.dispatchEvent(new CustomEvent('carritoUpdated', { detail: data }));
+                } else {
+                    if (data.limite_excedido) {
+                        if (typeof window.openClientAuthModal === 'function') {
+                            window.openClientAuthModal();
+                        }
+                        alert(data.error || 'Debes iniciar sesion para compras mayores a $50.');
+                        return;
+                    }
+                    alert(data.error || 'Error al agregar producto al carrito');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al agregar producto al carrito. Por favor, intenta nuevamente.');
+            }
+        });
+    });
+});
+
+// ========== MODAL DEL CARRITO EN TIEMPO REAL ==========
+let cartModal = null;
+
+// Hacer funciones globales
+window.openCartModal = function() {
+    cartModal = document.getElementById('cart-modal');
+    if (!cartModal) {
+        console.error('Modal del carrito no encontrado');
+        return;
+    }
+    
+    // Asegurar que esté oculto primero
+    cartModal.style.display = 'none';
+    
+    // Agregar clase y mostrar
+    cartModal.classList.add('is-open');
+    cartModal.setAttribute('aria-hidden', 'false');
+    cartModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Cargar carrito
+    if (typeof loadCartModal === 'function') {
+        loadCartModal();
+    }
+};
+
+window.closeCartModal = function() {
+    cartModal = document.getElementById('cart-modal');
+    if (!cartModal) return;
+    
+    // Remover clase y ocultar
+    cartModal.classList.remove('is-open');
+    cartModal.setAttribute('aria-hidden', 'true');
+    cartModal.style.display = 'none';
+    document.body.style.overflow = '';
+};
+
+// Cerrar con Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('cart-modal');
+        if (modal && modal.classList.contains('is-open')) {
+            closeCartModal();
+        }
+    }
+});
+
+async function loadCartModal() {
+    const loading = document.getElementById('cart-loading');
+    const empty = document.getElementById('cart-empty');
+    const container = document.getElementById('cart-items-container');
+    const itemsList = document.getElementById('cart-items-list');
+    
+    if (!loading || !empty || !container || !itemsList) return;
+    
+    // Mostrar loading
+    loading.style.display = 'block';
+    empty.style.display = 'none';
+    container.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/carrito/detalles');
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.error || 'Error al cargar carrito');
+        }
+        
+        loading.style.display = 'none';
+        
+        if (!data.carrito || data.carrito.length === 0) {
+            empty.style.display = 'block';
+            container.style.display = 'none';
+            return;
+        }
+        
+        // Mostrar items
+        empty.style.display = 'none';
+        container.style.display = 'block';
+        
+        // Renderizar items
+        itemsList.innerHTML = '';
+        data.carrito.forEach(item => {
+            const itemElement = createCartItemElement(item);
+            itemsList.appendChild(itemElement);
+        });
+        
+        // Actualizar totales
+        const subtotalEl = document.getElementById('cart-subtotal');
+        const totalEl = document.getElementById('cart-total');
+        if (subtotalEl) subtotalEl.textContent = '$' + data.total.toFixed(2);
+        if (totalEl) totalEl.textContent = '$' + data.total.toFixed(2);
+        
+        // Mostrar información según tipo de usuario
+        const visitorInfo = document.getElementById('cart-visitor-info');
+        const limitWarning = document.getElementById('cart-limit-warning');
+        const userInfo = document.getElementById('cart-user-info');
+        const checkoutBtn = document.getElementById('cart-checkout-btn');
+        
+        // Ocultar todos primero
+        if (visitorInfo) visitorInfo.style.display = 'none';
+        if (limitWarning) limitWarning.style.display = 'none';
+        if (userInfo) userInfo.style.display = 'none';
+        
+        if (data.es_visitante) {
+            // Visitante: mostrar info y advertencia si excede límite
+            if (visitorInfo) visitorInfo.style.display = 'block';
+            
+            if (data.limite_excedido) {
+                if (limitWarning) limitWarning.style.display = 'block';
+                if (checkoutBtn) {
+                    checkoutBtn.disabled = true;
+                    checkoutBtn.textContent = 'Límite excedido - Inicia sesión';
+                }
+            } else {
+                if (limitWarning) limitWarning.style.display = 'none';
+                if (checkoutBtn) {
+                    checkoutBtn.disabled = false;
+                    checkoutBtn.textContent = 'Proceder al Pago';
+                }
+            }
+        } else {
+            // Usuario autenticado: mostrar info de sesión
+            if (userInfo) {
+                userInfo.style.display = 'block';
+                const userNameEl = document.getElementById('cart-user-name');
+                if (userNameEl && data.usuario_info) {
+                    userNameEl.textContent = `Bienvenido, ${data.usuario_info.nombre || data.usuario_info.email || 'Usuario'}`;
+                }
+            }
+            if (checkoutBtn) {
+                checkoutBtn.disabled = false;
+                checkoutBtn.textContent = 'Proceder al Pago';
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error al cargar carrito:', error);
+        loading.style.display = 'none';
+        empty.style.display = 'block';
+        empty.innerHTML = `
+            <i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: #ef4444; margin-bottom: 1rem;"></i>
+            <h3>Error al cargar el carrito</h3>
+            <p>${error.message}</p>
+            <button onclick="loadCartModal()" class="btn-continue-shopping">Reintentar</button>
+        `;
+    }
+}
+
+function createCartItemElement(item) {
+    const div = document.createElement('div');
+    div.className = 'cart-item';
+    div.setAttribute('data-producto-id', item.producto_id);
+    
+    const precioUnitario = parseFloat(item.precio || 0);
+    const cantidad = parseInt(item.cantidad || 1);
+    const totalItem = precioUnitario * cantidad;
+    
+    div.innerHTML = `
+        <img src="${item.imagen || '/static/images/placeholder.jpg'}" 
+             alt="${item.nombre || 'Producto'}" 
+             class="cart-item__image"
+             onerror="this.src='/static/images/placeholder.jpg'">
+        <div class="cart-item__info">
+            <h3 class="cart-item__name">${item.nombre || 'Producto'}</h3>
+            <p class="cart-item__price">Precio unitario: $${precioUnitario.toFixed(2)}</p>
+            <p class="cart-item__price" style="font-size: 0.85rem; color: #9ca3af;">Stock: ${item.stock || 0} disponibles</p>
+        </div>
+        <div class="cart-item__actions">
+            <div class="cart-quantity-control">
+                <button class="cart-quantity-btn" onclick="updateCartQuantity(${item.producto_id}, -1)" type="button">-</button>
+                <input type="number" 
+                       class="cart-quantity-input" 
+                       value="${cantidad}" 
+                       min="1" 
+                       max="${item.stock || 999}"
+                       onchange="updateCartQuantityFromInput(${item.producto_id}, this.value)">
+                <button class="cart-quantity-btn" onclick="updateCartQuantity(${item.producto_id}, 1)" type="button">+</button>
+            </div>
+            <div class="cart-item__total" data-producto-id="${item.producto_id}">
+                $${totalItem.toFixed(2)}
+            </div>
+            <button class="cart-item__remove" onclick="removeCartItem(${item.producto_id})" type="button" title="Eliminar">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+    
+    return div;
+}
+
+async function updateCartQuantity(productoId, change) {
+    const item = document.querySelector(`.cart-item[data-producto-id="${productoId}"]`);
+    if (!item) return;
+    
+    const input = item.querySelector('.cart-quantity-input');
+    if (!input) return;
+    
+    const maxStock = parseInt(input.getAttribute('max')) || 999;
+    let nuevaCantidad = parseInt(input.value) + change;
+    
+    if (nuevaCantidad < 1) nuevaCantidad = 1;
+    if (nuevaCantidad > maxStock) {
+        alert(`Solo hay ${maxStock} unidades disponibles`);
+        nuevaCantidad = maxStock;
+    }
+    
+    await actualizarCantidadCarrito(productoId, nuevaCantidad, input);
+}
+
+async function updateCartQuantityFromInput(productoId, nuevaCantidad) {
+    const item = document.querySelector(`.cart-item[data-producto-id="${productoId}"]`);
+    if (!item) return;
+    
+    const input = item.querySelector('.cart-quantity-input');
+    if (!input) return;
+    
+    const maxStock = parseInt(input.getAttribute('max')) || 999;
+    nuevaCantidad = parseInt(nuevaCantidad) || 1;
+    
+    if (nuevaCantidad < 1) nuevaCantidad = 1;
+    if (nuevaCantidad > maxStock) {
+        alert(`Solo hay ${maxStock} unidades disponibles`);
+        nuevaCantidad = maxStock;
+        input.value = nuevaCantidad;
+    }
+    
+    await actualizarCantidadCarrito(productoId, nuevaCantidad, input);
+}
+
+async function actualizarCantidadCarrito(productoId, nuevaCantidad, input) {
+    try {
+        const response = await fetch('/api/carrito/actualizar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                producto_id: productoId,
+                cantidad: nuevaCantidad
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            if (input) input.value = nuevaCantidad;
+            
+            // Actualizar precio total del item
+            const item = document.querySelector(`.cart-item[data-producto-id="${productoId}"]`);
+            if (item) {
+                const totalElement = item.querySelector('.cart-item__total');
+                if (totalElement && data.precio_total_item) {
+                    totalElement.textContent = '$' + parseFloat(data.precio_total_item).toFixed(2);
+                }
+            }
+            
+            // Actualizar totales del carrito
+            if (data.total_precio !== undefined) {
+                const subtotalEl = document.getElementById('cart-subtotal');
+                const totalEl = document.getElementById('cart-total');
+                if (subtotalEl) subtotalEl.textContent = '$' + parseFloat(data.total_precio).toFixed(2);
+                if (totalEl) totalEl.textContent = '$' + parseFloat(data.total_precio).toFixed(2);
+            } else {
+                // Recargar carrito completo
+                await loadCartModal();
+            }
+            
+            // Actualizar contador automáticamente
+            await updateCartCount();
+            
+            // Disparar evento para actualizar otros componentes
+            document.dispatchEvent(new CustomEvent('carritoUpdated', { detail: data }));
+        } else {
+            alert(data.error || 'Error al actualizar cantidad');
+            // Recargar carrito para restaurar valores
+            await loadCartModal();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al actualizar cantidad');
+        await loadCartModal();
+    }
+}
+
+async function removeCartItem(productoId) {
+    if (!confirm('¿Estás seguro de eliminar este producto del carrito?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/carrito/eliminar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                producto_id: productoId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Eliminar del DOM con animación
+            const item = document.querySelector(`.cart-item[data-producto-id="${productoId}"]`);
+            if (item) {
+                item.style.transition = 'opacity 0.3s, transform 0.3s';
+                item.style.opacity = '0';
+                item.style.transform = 'translateX(-20px)';
+                setTimeout(async () => {
+                    item.remove();
+                    
+                    // Actualizar contador inmediatamente
+                    await updateCartCount();
+                    
+                    // Recargar carrito completo para actualizar totales
+                    await loadCartModal();
+                    
+                    // Disparar evento para actualizar otros componentes
+                    document.dispatchEvent(new CustomEvent('carritoUpdated', { detail: data }));
+                }, 300);
+            } else {
+                // Si no se encuentra el item, recargar todo
+                await updateCartCount();
+                await loadCartModal();
+                document.dispatchEvent(new CustomEvent('carritoUpdated', { detail: data }));
+            }
+        } else {
+            alert(data.error || 'Error al eliminar producto');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al eliminar producto');
+    }
+}
+
+function checkoutFromModal() {
+    // Redirigir a la página de carrito para checkout completo
+    window.location.href = '{{ url_for("carrito") }}';
+}
+
+// ========== MODAL DE LOGIN/REGISTRO PARA CLIENTES ==========
+let clientAuthModal = null;
+
+window.openClientAuthModal = function() {
+    clientAuthModal = document.getElementById('client-auth-modal');
+    if (!clientAuthModal) {
+        console.error('Modal de autenticación de cliente no encontrado');
+        return;
+    }
+    
+    clientAuthModal.classList.add('is-open');
+    clientAuthModal.setAttribute('aria-hidden', 'false');
+    clientAuthModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Activar pestaña de login por defecto
+    switchAuthTab('login');
+};
+
+window.closeClientAuthModal = function() {
+    clientAuthModal = document.getElementById('client-auth-modal');
+    if (!clientAuthModal) return;
+    
+    clientAuthModal.classList.remove('is-open');
+    clientAuthModal.setAttribute('aria-hidden', 'true');
+    clientAuthModal.style.display = 'none';
+    document.body.style.overflow = '';
+};
+
+// Cambiar pestañas de login/registro
+function switchAuthTab(tabName) {
+    // Ocultar todos los formularios
+    document.querySelectorAll('.auth-form').forEach(form => {
+        form.style.display = 'none';
+    });
+    
+    // Remover active de todos los tabs
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.style) {
+            tab.style.borderBottomColor = 'transparent';
+            tab.style.color = '#6b7280';
+        }
+    });
+    
+    // Mostrar formulario seleccionado
+    if (tabName === 'login') {
+        const loginForm = document.getElementById('client-login-form');
+        if (loginForm) loginForm.style.display = 'block';
+    } else if (tabName === 'register') {
+        const registerForm = document.getElementById('client-register-form');
+        if (registerForm) registerForm.style.display = 'block';
+    }
+    
+    // Activar tab seleccionado
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+        if (tab.getAttribute('data-auth-tab') === tabName) {
+            tab.classList.add('active');
+            if (tab.style) {
+                tab.style.borderBottomColor = 'var(--primary-color, #1C1C1C)';
+                tab.style.color = 'var(--primary-color, #1C1C1C)';
+            }
+        }
+    });
+}
+
+// Event listeners para tabs de autenticación
+document.addEventListener('DOMContentLoaded', () => {
+    // Tabs de login/registro
+    document.querySelectorAll('.auth-tab[data-auth-tab]').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.getAttribute('data-auth-tab');
+            switchAuthTab(tabName);
+        });
+    });
+    
+    // Validar contraseñas en registro
+    const registerForm = document.getElementById('client-register-form');
+    if (registerForm) {
+        registerForm.addEventListener('submit', (e) => {
+            const password = document.getElementById('client-register-password').value;
+            const confirm = document.getElementById('client-register-confirm').value;
+            if (password !== confirm) {
+                e.preventDefault();
+                alert('Las contraseñas no coinciden');
+                return false;
+            }
+        });
+    }
+    
+    // Cerrar modal con Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('client-auth-modal');
+            if (modal && modal.classList.contains('is-open')) {
+                closeClientAuthModal();
+            }
+        }
+    });
+});
+
+// ========== MODAL DE CUENTA DEL CLIENTE ==========
+let accountModal = null;
+let currentTab = 'profile';
+
+// Hacer funciones globales
+window.openAccountPanel = function() {
+    accountModal = document.getElementById('account-modal');
+    if (!accountModal) {
+        console.error('Modal de cuenta no encontrado');
+        return;
+    }
+    
+    accountModal.classList.add('is-open');
+    accountModal.setAttribute('aria-hidden', 'false');
+    accountModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Cargar datos del perfil
+    loadAccountProfile();
+    // Activar pestaña de perfil por defecto
+    switchAccountTab('profile');
+};
+
+window.closeAccountPanel = function() {
+    accountModal = document.getElementById('account-modal');
+    if (!accountModal) return;
+    
+    accountModal.classList.remove('is-open');
+    accountModal.setAttribute('aria-hidden', 'true');
+    accountModal.style.display = 'none';
+    document.body.style.overflow = '';
+};
+
+// Cambiar pestañas
+function switchAccountTab(tabName) {
+    currentTab = tabName;
+    
+    // Ocultar todos los contenidos
+    document.querySelectorAll('.account-tab-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    
+    // Remover active de todos los tabs
+    document.querySelectorAll('.account-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Mostrar contenido seleccionado
+    const content = document.getElementById(`account-tab-${tabName}`);
+    if (content) {
+        content.style.display = 'block';
+    }
+    
+    // Activar tab seleccionado
+    document.querySelectorAll('.account-tab').forEach(tab => {
+        if (tab.getAttribute('data-tab') === tabName) {
+            tab.classList.add('active');
+        }
+    });
+    
+    // Cargar datos según la pestaña
+    if (tabName === 'profile') {
+        loadAccountProfile();
+    } else if (tabName === 'purchases') {
+        loadAccountPurchases();
+    } else if (tabName === 'addresses') {
+        loadAccountAddresses();
+    } else if (tabName === 'invoices') {
+        loadAccountInvoices();
+    }
+}
+
+// Event listeners para tabs
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.account-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.getAttribute('data-tab');
+            switchAccountTab(tabName);
+        });
+    });
+    
+    // Cerrar con Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('account-modal');
+            if (modal && modal.classList.contains('is-open')) {
+                closeAccountPanel();
+            }
+        }
+    });
+});
+
+// Cargar perfil
+async function loadAccountProfile() {
+    const loading = document.querySelector('#account-tab-profile .account-loading');
+    const content = document.getElementById('account-profile-content');
+    
+    if (loading) loading.style.display = 'block';
+    if (content) content.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/cuenta/perfil');
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('profile-nombre').textContent = data.nombre || '';
+            document.getElementById('profile-email').textContent = data.email || '';
+            document.getElementById('profile-rol').textContent = data.rol || 'Cliente';
+            
+            if (loading) loading.style.display = 'none';
+            if (content) content.style.display = 'block';
+        } else {
+            throw new Error(data.error || 'Error al cargar perfil');
+        }
+    } catch (error) {
+        console.error('Error al cargar perfil:', error);
+        if (loading) loading.innerHTML = '<p style="color: #ef4444;">Error al cargar perfil</p>';
+    }
+}
+
+// Cargar compras
+async function loadAccountPurchases() {
+    const loading = document.querySelector('#account-tab-purchases .account-loading');
+    const content = document.getElementById('account-purchases-content');
+    const list = document.getElementById('purchases-list');
+    
+    if (loading) loading.style.display = 'block';
+    if (content) content.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/cuenta/compras');
+        const data = await response.json();
+        
+        if (data.success) {
+            if (data.compras && data.compras.length > 0) {
+                list.innerHTML = data.compras.map(compra => `
+                    <div class="purchase-item">
+                        <h4>${compra.producto_titulo || 'Producto'}</h4>
+                        <p><strong>Cantidad:</strong> ${compra.cantidad || 1}</p>
+                        <p><strong>Total:</strong> $${parseFloat(compra.monto_total || 0).toFixed(2)}</p>
+                        <p><strong>Fecha:</strong> ${new Date(compra.creado_en).toLocaleDateString()}</p>
+                        <p><strong>Estado:</strong> ${compra.estado_pago || 'pagado'}</p>
+                        <p><strong>Orden PayPal:</strong> ${compra.paypal_order_id || 'N/A'}</p>
+                    </div>
+                `).join('');
+            } else {
+                list.innerHTML = '<p>No tienes compras realizadas aún.</p>';
+            }
+            
+            if (loading) loading.style.display = 'none';
+            if (content) content.style.display = 'block';
+        } else {
+            throw new Error(data.error || 'Error al cargar compras');
+        }
+    } catch (error) {
+        console.error('Error al cargar compras:', error);
+        if (loading) loading.innerHTML = '<p style="color: #ef4444;">Error al cargar compras</p>';
+    }
+}
+
+// Cargar direcciones
+async function loadAccountAddresses() {
+    const loading = document.querySelector('#account-tab-addresses .account-loading');
+    const content = document.getElementById('account-addresses-content');
+    const list = document.getElementById('addresses-list');
+    
+    if (loading) loading.style.display = 'block';
+    if (content) content.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/cuenta/direcciones');
+        const data = await response.json();
+        
+        if (data.success) {
+            if (data.direcciones && data.direcciones.length > 0) {
+                list.innerHTML = data.direcciones.map((dir, index) => `
+                    <div class="address-item">
+                        <h4>Dirección ${index + 1}</h4>
+                        <p><strong>País:</strong> ${dir.pais || ''}</p>
+                        <p><strong>Ciudad:</strong> ${dir.ciudad || ''}</p>
+                        <p><strong>Dirección:</strong> ${dir.direccion || ''}</p>
+                        <p><strong>Teléfono:</strong> ${dir.telefono || ''}</p>
+                        <button class="btn-delete" onclick="deleteAddress(${dir.id || index})" style="background: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-top: 0.5rem;">Eliminar</button>
+                    </div>
+                `).join('');
+            } else {
+                list.innerHTML = '<p>No tienes direcciones guardadas. Agrega una nueva dirección.</p>';
+            }
+            
+            if (loading) loading.style.display = 'none';
+            if (content) content.style.display = 'block';
+        } else {
+            throw new Error(data.error || 'Error al cargar direcciones');
+        }
+    } catch (error) {
+        console.error('Error al cargar direcciones:', error);
+        if (loading) loading.innerHTML = '<p style="color: #ef4444;">Error al cargar direcciones</p>';
+    }
+}
+
+// Cargar facturas
+async function loadAccountInvoices() {
+    const loading = document.querySelector('#account-tab-invoices .account-loading');
+    const content = document.getElementById('account-invoices-content');
+    const list = document.getElementById('invoices-list');
+    
+    if (loading) loading.style.display = 'block';
+    if (content) content.style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/cuenta/facturas');
+        const data = await response.json();
+        
+        if (data.success) {
+            if (data.facturas && data.facturas.length > 0) {
+                list.innerHTML = data.facturas.map(factura => `
+                    <div class="invoice-item">
+                        <h4>Factura #${factura.id || 'N/A'}</h4>
+                        <p><strong>Orden PayPal:</strong> ${factura.paypal_order_id || 'N/A'}</p>
+                        <p><strong>Monto:</strong> $${parseFloat(factura.monto_total || 0).toFixed(2)}</p>
+                        <p><strong>Fecha:</strong> ${new Date(factura.creado_en).toLocaleDateString()}</p>
+                        <p><strong>Estado:</strong> ${factura.estado_pago || 'pagado'}</p>
+                        <button class="btn-download" onclick="downloadInvoice(${factura.id})" style="background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-top: 0.5rem;">Descargar Factura</button>
+                    </div>
+                `).join('');
+            } else {
+                list.innerHTML = '<p>No tienes facturas disponibles.</p>';
+            }
+            
+            if (loading) loading.style.display = 'none';
+            if (content) content.style.display = 'block';
+        } else {
+            throw new Error(data.error || 'Error al cargar facturas');
+        }
+    } catch (error) {
+        console.error('Error al cargar facturas:', error);
+        if (loading) loading.innerHTML = '<p style="color: #ef4444;">Error al cargar facturas</p>';
+    }
+}
+
+// Funciones auxiliares
+function showAddAddressForm() {
+    document.getElementById('add-address-form').style.display = 'block';
+}
+
+function hideAddAddressForm() {
+    document.getElementById('add-address-form').style.display = 'none';
+    document.getElementById('new-address-form').reset();
+}
+
+// Formulario de nueva dirección
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('new-address-form');
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch('/api/cuenta/direcciones/agregar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Dirección agregada correctamente');
+                    hideAddAddressForm();
+                    loadAccountAddresses();
+                } else {
+                    alert(result.error || 'Error al agregar dirección');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al agregar dirección');
+            }
+        });
+    }
+    
+    // Formulario de cambio de contraseña
+    const passwordForm = document.getElementById('change-password-form');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(passwordForm);
+            const data = Object.fromEntries(formData);
+            
+            if (data.new_password !== data.confirm_password) {
+                alert('Las contraseñas no coinciden');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/cuenta/cambiar-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        current_password: data.current_password,
+                        new_password: data.new_password
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Contraseña cambiada correctamente');
+                    passwordForm.reset();
+                } else {
+                    alert(result.error || 'Error al cambiar contraseña');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cambiar contraseña');
+            }
+        });
+    }
+});
+
+
+// Cerrar sesión
+function logout() {
+    if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+        fetch('/api/cuenta/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '{{ url_for("index") }}';
+            } else {
+                alert(data.error || 'Error al cerrar sesión');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al cerrar sesión');
+        });
+    }
+}
+
+function deleteAddress(addressId) {
+    if (confirm('¿Estás seguro de eliminar esta dirección?')) {
+        fetch(`/api/cuenta/direcciones/eliminar/${addressId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Dirección eliminada correctamente');
+                loadAccountAddresses();
+            } else {
+                alert(data.error || 'Error al eliminar dirección');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al eliminar dirección');
+        });
+    }
+}
+
+function downloadInvoice(invoiceId) {
+    window.open(`/api/cuenta/facturas/descargar/${invoiceId}`, '_blank');
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const productId = (params.get('producto') || params.get('producto_id') || '').trim();
+    if (!productId) return;
+
+    const btn = document.querySelector(
+        '.product-card.exclusive .view-more-btn[data-product-id="' + productId + '"]'
+    );
+    if (!btn) return;
+
+    setTimeout(() => {
+        window.__skipAffiliateTrackOnce = productId;
+        btn.click();
+    }, 150);
+});
+</script>
+
+</body>
+</html>

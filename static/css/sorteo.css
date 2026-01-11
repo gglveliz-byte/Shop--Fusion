@@ -1,0 +1,129 @@
+/* Estilos específicos para sorteos */
+
+#sorteo-card {
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.sorteo-card-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 3rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 3rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sorteo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  min-height: 300px;
+}
+
+.sorteo-info {
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+#sorteo-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.sorteo-text {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.sorteo-text .highlight {
+  background: var(--neon-orange, #ff5f1f);
+  padding: 0.25rem 0.75rem;
+  border-radius: 8px;
+  font-weight: 700;
+  color: white;
+}
+
+.sorteo-desc {
+  font-size: 1.125rem;
+  line-height: 1.8;
+  opacity: 0.95;
+}
+
+.sorteo-precio {
+  font-size: 1.25rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 1rem;
+  border-radius: 12px;
+}
+
+.sorteo-precio strong {
+  color: var(--neon-orange, #ff5f1f);
+}
+
+#registro-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+}
+
+#registro-modal.active {
+  display: flex;
+}
+
+.sorteo-form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.sorteo-input {
+  padding: 0.75rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+}
+
+.sorteo-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.sorteo-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+@media (max-width: 768px) {
+  .sorteo-card-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .sorteo-img {
+    min-height: 250px;
+  }
+  
+  #sorteo-title {
+    font-size: 1.5rem;
+  }
+}
+

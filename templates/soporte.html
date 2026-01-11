@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soporte al Cliente - ShopFusion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegant_styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        .ticket-form {
+            max-width: 800px;
+            margin: 40px auto;
+            background: var(--bg-elegant-white);
+            border: 1px solid var(--border-elegant-light);
+            border-radius: var(--radius-elegant-xl);
+            padding: 40px;
+            box-shadow: var(--shadow-elegant-lg);
+        }
+        .form-group {
+            margin-bottom: 24px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-elegant-dark);
+            margin-bottom: 8px;
+            font-size: 0.9375rem;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-elegant-medium);
+            border-radius: var(--radius-elegant-md);
+            font-size: 0.9375rem;
+            font-family: inherit;
+            background: var(--bg-elegant-gray-50);
+            color: var(--text-elegant-dark);
+            transition: var(--transition-elegant);
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--elegant-primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: var(--elegant-accent);
+            color: white;
+            border: none;
+            border-radius: var(--radius-elegant-lg);
+            font-weight: 700;
+            font-size: 1.0625rem;
+            cursor: pointer;
+            transition: var(--transition-elegant);
+            box-shadow: var(--shadow-elegant-md);
+        }
+        .btn-submit:hover {
+            background: var(--elegant-accent-light);
+            box-shadow: var(--shadow-elegant-lg);
+            transform: translateY(-2px);
+        }
+        .info-section {
+            background: var(--bg-elegant-gray-50);
+            border-radius: var(--radius-elegant-lg);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .info-section h3 {
+            color: var(--text-elegant-dark);
+            margin-bottom: 15px;
+            font-size: 1.25rem;
+        }
+        .info-section ul {
+            list-style: none;
+            padding: 0;
+        }
+        .info-section ul li {
+            padding: 10px 0;
+            color: var(--text-elegant-light);
+            border-bottom: 1px solid var(--border-elegant-light);
+        }
+        .info-section ul li:last-child {
+            border-bottom: none;
+        }
+        .info-section ul li strong {
+            color: var(--text-elegant-dark);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('index') }}">ShopFusion</a>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                <li><a href="{{ url_for('contacto') }}">Contacto</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main style="padding-top: 100px; max-width: 1200px; margin: 0 auto; padding: 100px 20px 60px;">
+        <section style="text-align: center; margin-bottom: 60px;">
+            <h1 style="font-size: 2.5rem; font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 20px;">
+                <i class="fas fa-headset"></i> Soporte al Cliente
+            </h1>
+            <p style="font-size: 1.25rem; color: var(--text-elegant-light); max-width: 800px; margin: 0 auto;">
+                ¿Tienes alguna pregunta o necesitas ayuda? Estamos aquí para ayudarte. Crea un ticket de soporte y te responderemos lo antes posible.
+            </p>
+        </section>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 60px;">
+            <div class="info-section" id="envios">
+                <h3><i class="fas fa-shipping-fast"></i> Información de Envíos</h3>
+                <ul>
+                    <li><strong>Tiempo de entrega - Productos Nacionales:</strong> 5-10 días hábiles</li>
+                    <li><strong>Tiempo de entrega - Productos Internacionales:</strong> 20 días a 1 mes</li>
+                    <li><strong>Costo de envío:</strong> <span style="color: #10b981; font-weight: 700;">Todos los envíos son gratis</span></li>
+                    <li><strong>Zonas de entrega:</strong> Ecuador (todas las provincias)</li>
+                    <li><strong>Disponibilidad:</strong> La mayoría de lugares disponibles</li>
+                    <li><strong>Seguimiento:</strong> Recibirás un código de seguimiento por email</li>
+                </ul>
+            </div>
+
+            <div class="info-section" id="preguntas">
+                <h3><i class="fas fa-question-circle"></i> Preguntas Frecuentes</h3>
+                <ul>
+                    <li><strong>¿Cómo rastrear mi pedido?</strong><br>
+                    Recibirás un email con el código de seguimiento una vez que tu pedido sea enviado</li>
+                    <li><strong>¿Puedo cancelar mi pedido?</strong><br>
+                    Sí, contacta con nosotros dentro de las primeras 24 horas. En casos urgentes, responderemos en menos de 12 horas.</li>
+                    <li><strong>¿Qué métodos de pago aceptan?</strong><br>
+                    Aceptamos PayPal y tarjetas de crédito/débito</li>
+                    <li><strong>¿Ofrecen garantía?</strong><br>
+                    Sí, pero con condiciones. Todos nuestros productos tienen garantía del fabricante según sus términos y condiciones.</li>
+                    <li><strong>¿Cómo hago un reclamo?</strong><br>
+                    Crea un ticket de soporte con los detalles de tu compra o contáctanos directamente</li>
+                    <li><strong>¿Los envíos tienen costo?</strong><br>
+                    No, todos los envíos son gratis sin importar el monto de tu compra</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="ticket-form">
+            <h2 style="text-align: center; color: var(--text-elegant-dark); margin-bottom: 20px; font-size: 1.75rem;">
+                <i class="fas fa-ticket-alt"></i> Crear Ticket de Soporte
+            </h2>
+            <p style="text-align: center; color: var(--text-elegant-light); margin-bottom: 30px;">
+                <i class="fas fa-info-circle"></i> 
+                Sí, contactamos contigo dentro de las primeras 24 horas. En casos urgentes, responderemos en menos de 12 horas.
+            </p>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}" style="padding: 1rem; margin-bottom: 25px; border-radius: var(--radius-elegant-md);">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form action="{{ url_for('contacto') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="form-group">
+                    <label for="nombre">
+                        <i class="fas fa-user"></i> Nombre Completo *
+                    </label>
+                    <input type="text" id="nombre" name="nombre" required autocomplete="name" placeholder="Tu nombre completo">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">
+                        <i class="fas fa-envelope"></i> Email *
+                    </label>
+                    <input type="email" id="email" name="email" required autocomplete="email" placeholder="tu@email.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="mensaje">
+                        <i class="fas fa-comment"></i> Mensaje / Descripción del Problema *
+                    </label>
+                    <textarea id="mensaje" name="mensaje" required placeholder="Describe tu consulta, problema, reclamo o solicitud en detalle. Incluye número de pedido si aplica..."></textarea>
+                    <small style="color: var(--text-elegant-light); font-size: 0.9rem; display: block; margin-top: 5px;">
+                        <i class="fas fa-info-circle"></i> Este ticket será enviado a la base de datos y será visto por el administrador.
+                    </small>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-paper-plane"></i> Enviar Ticket de Soporte
+                </button>
+            </form>
+        </div>
+
+        <div style="text-align: center; margin-top: 60px; background: var(--bg-elegant-gray-50); border-radius: var(--radius-elegant-xl); padding: 40px;">
+            <h3 style="color: var(--text-elegant-dark); margin-bottom: 20px; font-size: 1.5rem;">
+                <i class="fas fa-phone-alt"></i> Otras Formas de Contacto
+            </h3>
+            <p style="color: var(--text-elegant-light); margin-bottom: 20px;">
+                También puedes contactarnos directamente:
+            </p>
+            <div style="display: flex; justify-content: center; gap: 40px; flex-wrap: wrap;">
+                <div>
+                    <i class="fas fa-envelope" style="font-size: 2rem; color: var(--elegant-primary); margin-bottom: 10px;"></i>
+                    <p style="color: var(--text-elegant-dark); font-weight: 600;">Email</p>
+                    <a href="mailto:info@shopfusion.com" style="color: var(--elegant-primary); text-decoration: none;">
+                        info@shopfusion.com
+                    </a>
+                </div>
+                <div>
+                    <i class="fas fa-map-marker-alt" style="font-size: 2rem; color: var(--elegant-accent); margin-bottom: 10px;"></i>
+                    <p style="color: var(--text-elegant-dark); font-weight: 600;">Ubicación</p>
+                    <p style="color: var(--text-elegant-light);">Milagro, Ecuador</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>ShopFusion</h3>
+                <p style="color: var(--text-elegant-light);">Tu tienda online de confianza</p>
+            </div>
+            <div class="footer-section">
+                <h3>Enlaces</h3>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                    <li><a href="{{ url_for('contacto') }}">Contacto</a></li>
+                    <li><a href="{{ url_for('privacidad') }}">Privacidad</a></li>
+                    <li><a href="{{ url_for('terminos') }}">Términos</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; <span id="current-year"></span> ShopFusion. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+    <script>
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>

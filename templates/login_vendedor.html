@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Iniciar sesión | Vendedor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/registro_vendedor.css') }}">
+  <style>
+    .lv-container { max-width: 720px; margin: 2rem auto; padding: 1.25rem; }
+    .lv-card { background: #fff; border-radius: 16px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,.06); }
+    .field { display: grid; gap: .5rem; margin-bottom: 1rem; }
+    .field label { font-weight: 600; }
+    .form-actions { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; margin-top:.5rem; }
+    .btn-primary { background:#1f6feb; color:#fff; border:0; padding:.75rem 1rem; border-radius:10px; cursor:pointer; }
+    .btn-ghost { border:1px solid #d0d7de; color:#24292f; padding:.65rem .9rem; border-radius:10px; text-decoration:none; display:inline-block; }
+    .alerts { margin: 1rem 0; }
+    .alert { padding:.75rem 1rem; border-radius:10px; margin-bottom:.5rem; }
+    .alert-success{ background:#e7f5ee; color:#0b6b3a; }
+    .alert-danger{ background:#fdeaea; color:#b42318; }
+    .alert-warning{ background:#fff7e6; color:#7a4d00; }
+    .fx-gradient-text { background: linear-gradient(90deg,#0ea5e9,#6366f1); }
+    a { text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <header class="lv-container">
+    <h1 class="fx-gradient-text">🔐 Inicio de sesión — Vendedor</h1>
+    <p>Accede a tu cuenta de vendedor para gestionar tus ventas.</p>
+  </header>
+
+  <main class="lv-container">
+    {% with messages = get_flashed_messages(with_categories=True) %}
+      {% if messages %}
+        <div class="alerts">
+          {% for category, msg in messages %}
+            <div class="alert alert-{{ category }}">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <section class="lv-card">
+      <form action="{{ url_for('login_vendedor') }}" method="POST" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="field">
+          <label for="identificador">Usuario o correo</label>
+          <input id="identificador" name="identificador" type="text" required placeholder="tu_usuario o correo@dominio.com">
+        </div>
+
+        <div class="field">
+          <label for="password">Contraseña</label>
+          <input id="password" name="password" type="password" required placeholder="••••••••">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Iniciar sesión</button>
+          <a class="btn-ghost" href="{{ url_for('registro_vendedor') }}">Crear cuenta de vendedor</a>
+          <a class="btn-ghost" href="{{ url_for('index') }}">← Volver al inicio</a>
+        </div>
+      </form>
+    </section>
+  </main>
+
+</body>
+</html>

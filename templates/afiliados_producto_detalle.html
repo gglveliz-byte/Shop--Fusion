@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalle de producto</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 1.5rem;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+
+    .detail-card {
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+      padding: 1.5rem;
+    }
+
+    .detail-header h1 {
+      margin: 0 0 0.35rem;
+      font-size: 1.6rem;
+    }
+
+    .detail-header p {
+      margin: 0;
+      color: #64748b;
+      font-size: 0.95rem;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .detail-image {
+      width: 100%;
+      border-radius: 14px;
+      object-fit: cover;
+      background: #e2e8f0;
+    }
+
+    .detail-desc {
+      margin: 0 0 1rem;
+      color: #475569;
+      line-height: 1.6;
+      white-space: pre-line;
+    }
+
+    .price-grid {
+      display: grid;
+      gap: 0.6rem;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 1rem;
+    }
+
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 0.5rem;
+    }
+
+    .price-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .price-row strong {
+      color: #0f172a;
+    }
+
+    .price-row.highlight {
+      background: rgba(255, 95, 31, 0.1);
+      border-radius: 10px;
+      padding: 0.6rem;
+      border-bottom: none;
+    }
+
+    .price-row.success {
+      background: rgba(16, 185, 129, 0.12);
+      border-radius: 10px;
+      padding: 0.6rem;
+      border-bottom: none;
+    }
+
+    .error-card {
+      background: #fee2e2;
+      color: #991b1b;
+      border-radius: 12px;
+      padding: 1rem;
+      font-weight: 600;
+    }
+
+    @media (max-width: 900px) {
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  {% if error %}
+    <div class="error-card">{{ error }}</div>
+  {% else %}
+    <div class="detail-card">
+      <div class="detail-header">
+        <h1>{{ producto.titulo }}</h1>
+        <p>Categoria: {{ producto.categoria or 'General' }}</p>
+      </div>
+
+      <div class="detail-grid">
+        <div>
+          <img
+            src="{{ producto.imagenes[0] if producto.imagenes and producto.imagenes|length > 0 else 'https://via.placeholder.com/500x400?text=Sin+imagen' }}"
+            alt="{{ producto.titulo }}"
+            class="detail-image"
+            onerror="this.src='https://via.placeholder.com/500x400?text=Sin+imagen'">
+        </div>
+        <div>
+          <p class="detail-desc">{{ producto.descripcion }}</p>
+
+          <div class="price-grid">
+            <div class="price-row">
+              <span>Precio cliente:</span>
+              <strong>${{ '%.2f'|format(precio_final) }}</strong>
+            </div>
+            <div class="price-row">
+              <span>Precio proveedor:</span>
+              <strong>${{ '%.2f'|format(precio_proveedor) }}</strong>
+            </div>
+            <div class="price-row">
+              <span>Margen:</span>
+              <strong>${{ '%.2f'|format(margen) }}</strong>
+            </div>
+            <div class="price-row highlight">
+              <span>Tu comision ({{ '%.1f'|format(comision_pct) }}%):</span>
+              <strong>${{ '%.2f'|format(comision_ganada) }}</strong>
+            </div>
+            <div class="price-row success">
+              <span>Tu pagas (afiliado):</span>
+              <strong>${{ '%.2f'|format(precio_afiliado) }}</strong>
+            </div>
+            {% if descuento_disponible and descuento_disponible > 0 %}
+              <div class="price-row success">
+                <span>Con descuento extra:</span>
+                <strong>${{ '%.2f'|format(precio_con_descuento) }}</strong>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  {% endif %}
+
+  
+</body>
+</html>

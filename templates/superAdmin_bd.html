@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Super Administrador BD - ShopFusion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_bd.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <script>
+      (function() {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (!token || window.__csrfFetchPatched) {
+          return;
+        }
+        window.__csrfFetchPatched = true;
+        const originalFetch = window.fetch;
+        window.fetch = function(resource, init) {
+          init = init || {};
+          const method = (init.method || 'GET').toUpperCase();
+          if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+            const headers = new Headers(init.headers || {});
+            if (!headers.has('X-CSRFToken')) {
+              headers.set('X-CSRFToken', token);
+            }
+            init.headers = headers;
+          }
+          if (!init.credentials) {
+            init.credentials = 'same-origin';
+          }
+          return originalFetch(resource, init);
+        };
+      })();
+    </script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="header-left">
+            <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a href="{{ url_for('index') }}" class="logo-link">
+                <svg id="logo" width="140" height="60" viewBox="0 0 140 60" role="img" aria-label="Logo de ShopFusion">
+                    <title>Logo de ShopFusion</title>
+                    <rect width="140" height="60" fill="#1C1C1C" rx="8"/>
+                    <text x="10" y="40" fill="#FFD700" font-size="20" font-family="Inter, sans-serif">ShopFusion</text>
+                </svg>
+            </a>
+        </div>
+        <div class="header-right">
+            <div class="user-info">
+                <i class="fas fa-user-shield"></i>
+                <span>{{ nombre }}</span>
+                <span class="badge badge-warning" style="margin-left: 0.5rem;">SUPER ADMIN BD</span>
+            </div>
+            <a href="{{ url_for('logout') }}" class="btn-logout">
+                <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+            </a>
+        </div>
+    </header>
+
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-section="dashboard">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-section="finanzas">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Finanzas</span>
+                </a>
+                <a href="#" class="nav-item" data-section="pedidos">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Pedidos</span>
+                </a>
+                <a href="#" class="nav-item" data-section="pagos-pendientes">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Pagos Pendientes</span>
+                </a>
+                <a href="#" class="nav-item" data-section="tablas">
+                    <i class="fas fa-database"></i>
+                    <span>Gestión de Tablas</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">
+                                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' or category == 'error' else 'info-circle' if category == 'info' else 'exclamation-triangle' }}"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Dashboard Section -->
+            <section class="content-section active" id="dashboard">
+                <div class="section-header">
+                    <h1><i class="fas fa-home"></i> Dashboard Super Admin</h1>
+                    <p>Panel de control del Super Administrador de Base de Datos</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>${{ '%.2f'|format(estadisticas.total_ventas) }}</h3>
+                            <p>Total Ventas</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>${{ '%.2f'|format(estadisticas.total_ganancia_neta) }}</h3>
+                            <p>Ganancia Neta</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>${{ '%.2f'|format(estadisticas.total_comisiones_afiliados) }}</h3>
+                            <p>Comisiones Afiliados</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>${{ '%.2f'|format(estadisticas.total_pagos_pendientes) }}</h3>
+                            <p>Pagos Pendientes</p>
+                            <small style="color: var(--panel-text-light);">{{ estadisticas.cantidad_pagos_pendientes }} pendiente(s)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-card" style="margin-top: 2rem;">
+                    <h3>Resumen Financiero</h3>
+                    <div class="financial-breakdown">
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Total Vendido (Cliente Paga):</span>
+                            <span class="breakdown-value positive">${{ '%.2f'|format(estadisticas.total_ventas) }}</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Pago a Proveedores:</span>
+                            <span class="breakdown-value negative">-${{ '%.2f'|format(estadisticas.total_pago_proveedor) }}</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Margen Total:</span>
+                            <span class="breakdown-value neutral">${{ '%.2f'|format(estadisticas.total_margen) }}</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <span class="breakdown-label">Comisiones a Afiliados:</span>
+                            <span class="breakdown-value negative">-${{ '%.2f'|format(estadisticas.total_comisiones_afiliados) }}</span>
+                        </div>
+                        <div class="breakdown-item total">
+                            <span class="breakdown-label"><strong>Ganancia Neta ShopFusion:</strong></span>
+                            <span class="breakdown-value positive" style="font-size: 1.5rem;"><strong>${{ '%.2f'|format(estadisticas.total_ganancia_neta) }}</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Finanzas Section -->
+            <section class="content-section" id="finanzas">
+                <div class="section-header">
+                    <h1><i class="fas fa-chart-line"></i> Análisis Financiero Detallado</h1>
+                    <p>Desglose completo de finanzas por venta</p>
+                </div>
+
+                {% if pedidos_financieros %}
+                    <div class="content-card">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Factura #</th>
+                                        <th>Producto</th>
+                                        <th>Cant.</th>
+                                        <th style="text-align: right;">Cliente Paga</th>
+                                        <th style="text-align: right;">Pago Proveedor</th>
+                                        <th style="text-align: right;">Margen</th>
+                                        <th style="text-align: right;">Comisión Afiliado</th>
+                                        <th style="text-align: right;">Ganancia Neta</th>
+                                        <th>Afiliado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for pedido in pedidos_financieros %}
+                                        {% set cliente_paga_total = pedido.cliente_paga or 0 %}
+                                        {% set precio_proveedor = pedido.precio_proveedor or 0 %}
+                                        {% set cantidad = pedido.cantidad or 1 %}
+                                        {% set precio_final_unitario = pedido.precio_final or (cliente_paga_total / cantidad if cantidad > 0 else cliente_paga_total) %}
+                                        
+                                        {% set cliente_paga = precio_final_unitario * cantidad %}
+                                        {% set pago_proveedor_total = precio_proveedor * cantidad %}
+                                        {% set margen_total = (precio_final_unitario - precio_proveedor) * cantidad %}
+                                        
+                                        {% if pedido.afiliado_id %}
+                                            {% set comision_pct = pedido.comision_manual_activa or pedido.comision_afiliado_pct or 50.0 %}
+                                            {% set comision_afiliado = (margen_total * comision_pct) / 100 %}
+                                        {% else %}
+                                            {% set comision_afiliado = 0.0 %}
+                                            {% set comision_pct = 0.0 %}
+                                        {% endif %}
+                                        
+                                        {% set ganancia_neta = margen_total - comision_afiliado %}
+                                        
+                                        <tr>
+                                            <td><strong>#{{ pedido.numero_factura }}</strong></td>
+                                            <td>
+                                                <div style="display: flex; flex-direction: column;">
+                                                    <strong>{{ pedido.producto_titulo }}</strong>
+                                                    <small style="color: var(--panel-text-light);">ID: {{ pedido.producto_id }}</small>
+                                                </div>
+                                            </td>
+                                            <td style="text-align: center;">{{ cantidad }}</td>
+                                            <td style="text-align: right; color: var(--panel-success); font-weight: 600;">
+                                                ${{ '%.2f'|format(cliente_paga) }}
+                                            </td>
+                                            <td style="text-align: right; color: var(--panel-danger);">
+                                                -${{ '%.2f'|format(pago_proveedor_total) }}
+                                            </td>
+                                            <td style="text-align: right; color: var(--panel-info); font-weight: 600;">
+                                                ${{ '%.2f'|format(margen_total) }}
+                                            </td>
+                                            <td style="text-align: right; color: var(--panel-warning);">
+                                                {% if comision_afiliado > 0 %}
+                                                    -${{ '%.2f'|format(comision_afiliado) }}
+                                                    <small style="display: block; color: var(--panel-text-light); font-size: 0.8rem;">
+                                                        ({{ '%.1f'|format(comision_pct) }}%)
+                                                    </small>
+                                                {% else %}
+                                                    <span style="color: var(--panel-text-light);">Sin afiliado</span>
+                                                {% endif %}
+                                            </td>
+                                            <td style="text-align: right; color: var(--panel-success); font-weight: 700; font-size: 1.1rem;">
+                                                ${{ '%.2f'|format(ganancia_neta) }}
+                                            </td>
+                                            <td>
+                                                {% if pedido.afiliado_codigo %}
+                                                    <span class="badge badge-info">
+                                                        <i class="fas fa-user-tag"></i> {{ pedido.afiliado_codigo }}
+                                                    </span>
+                                                {% else %}
+                                                    <span style="color: var(--panel-text-light);">-</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); font-weight: 700;">
+                                        <td colspan="3" style="text-align: right;"><strong>TOTALES:</strong></td>
+                                        <td style="text-align: right; color: var(--panel-success);">${{ '%.2f'|format(estadisticas.total_ventas) }}</td>
+                                        <td style="text-align: right; color: var(--panel-danger);">-${{ '%.2f'|format(estadisticas.total_pago_proveedor) }}</td>
+                                        <td style="text-align: right; color: var(--panel-info);">${{ '%.2f'|format(estadisticas.total_margen) }}</td>
+                                        <td style="text-align: right; color: var(--panel-warning);">-${{ '%.2f'|format(estadisticas.total_comisiones_afiliados) }}</td>
+                                        <td style="text-align: right; color: var(--panel-success); font-size: 1.2rem;">${{ '%.2f'|format(estadisticas.total_ganancia_neta) }}</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="content-card">
+                        <p>No hay pedidos para mostrar.</p>
+                    </div>
+                {% endif %}
+            </section>
+
+            <!-- Pedidos Section -->
+            <section class="content-section" id="pedidos">
+                <div class="section-header">
+                    <h1><i class="fas fa-shopping-cart"></i> Todos los Pedidos</h1>
+                    <p>Vista completa de todos los pedidos realizados</p>
+                </div>
+
+                {% if pedidos_financieros %}
+                    <div class="content-card">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Factura #</th>
+                                        <th>Cliente</th>
+                                        <th>Producto</th>
+                                        <th style="text-align: center;">Cant.</th>
+                                        <th style="text-align: right;">Total</th>
+                                        <th>Estado</th>
+                                        <th>Fecha</th>
+                                        <th>PayPal Info</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for pedido in pedidos_financieros %}
+                                    <tr>
+                                        <td><strong>#{{ pedido.numero_factura }}</strong></td>
+                                        <td>
+                                            <div style="display: flex; flex-direction: column;">
+                                                <strong>{{ pedido.nombre }} {{ pedido.apellido }}</strong>
+                                                <small style="color: var(--panel-text-light);">{{ pedido.email }}</small>
+                                            </div>
+                                        </td>
+                                        <td>{{ pedido.producto_titulo }}</td>
+                                        <td style="text-align: center;">{{ pedido.cantidad or 1 }}</td>
+                                        <td style="text-align: right; color: var(--panel-success); font-weight: 600;">
+                                            ${{ '%.2f'|format(pedido.cliente_paga or 0) }}
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-{{ 'success' if pedido.estado_pago == 'pagado' else 'danger' }}">
+                                                {{ pedido.estado_pago|title if pedido.estado_pago else 'N/A' }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small>{{ pedido.creado_en.strftime('%d/%m/%Y') if pedido.creado_en else 'N/A' }}</small>
+                                            <small style="display: block; color: var(--panel-text-light);">{{ pedido.creado_en.strftime('%H:%M') if pedido.creado_en else '' }}</small>
+                                        </td>
+                                        <td>
+                                            <div style="display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.85rem;">
+                                                {% if pedido.paypal_order_id %}
+                                                    <div>
+                                                        <strong style="color: var(--panel-primary);">Order ID:</strong>
+                                                        <code style="background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 4px; display: block; margin-top: 0.25rem; word-break: break-all; font-size: 0.75rem;">{{ pedido.paypal_order_id }}</code>
+                                                    </div>
+                                                {% endif %}
+                                                {% if pedido.paypal_capture_id %}
+                                                    <div>
+                                                        <strong style="color: var(--panel-success);">Capture ID:</strong>
+                                                        <code style="background: #f1f5f9; padding: 0.25rem 0.5rem; border-radius: 4px; display: block; margin-top: 0.25rem; word-break: break-all; font-size: 0.75rem;">{{ pedido.paypal_capture_id }}</code>
+                                                    </div>
+                                                {% endif %}
+                                                {% if not pedido.paypal_order_id and not pedido.paypal_capture_id %}
+                                                    <span style="color: var(--panel-text-light);">Sin info PayPal</span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="content-card">
+                        <p>No hay pedidos registrados aún.</p>
+                    </div>
+                {% endif %}
+            </section>
+
+            <!-- Pagos Pendientes Section -->
+            <section class="content-section" id="pagos-pendientes">
+                <div class="section-header">
+                    <h1><i class="fas fa-money-bill-wave"></i> Pagos Pendientes a Afiliados</h1>
+                    <p>Gestiona los pagos pendientes de comisiones a afiliados</p>
+                </div>
+
+                {% if pagos_pendientes %}
+                    <div class="content-card">
+                        <div class="summary-box" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left: 4px solid var(--panel-warning); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+                            <h3 style="margin: 0 0 1rem 0; color: #92400e;">
+                                <i class="fas fa-exclamation-triangle"></i> Total Pendiente de Pago
+                            </h3>
+                            <p style="font-size: 2rem; font-weight: 700; color: #92400e; margin: 0;">
+                                ${{ '%.2f'|format(estadisticas.total_pagos_pendientes) }}
+                            </p>
+                            <p style="color: #78350f; margin: 0.5rem 0 0 0;">
+                                {{ estadisticas.cantidad_pagos_pendientes }} comisión(es) pendiente(s) de pago
+                            </p>
+                        </div>
+
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Afiliado</th>
+                                        <th>Producto Vendido</th>
+                                        <th style="text-align: right;">Monto Venta</th>
+                                        <th style="text-align: center;">Comisión %</th>
+                                        <th style="text-align: right;">Comisión a Pagar</th>
+                                        <th>Factura</th>
+                                        <th>Fecha Comisión</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for pago in pagos_pendientes %}
+                                    <tr>
+                                        <td><strong>#{{ pago.id }}</strong></td>
+                                        <td>
+                                            <div style="display: flex; flex-direction: column;">
+                                                <strong>{{ pago.afiliado_nombre }}</strong>
+                                                <small style="color: var(--panel-text-light);">{{ pago.afiliado_email }}</small>
+                                                <span class="badge badge-info" style="margin-top: 0.25rem;">
+                                                    <i class="fas fa-tag"></i> {{ pago.codigo_afiliado }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="display: flex; flex-direction: column;">
+                                                <strong>{{ pago.producto_titulo }}</strong>
+                                                <small style="color: var(--panel-text-light);">Compra #{{ pago.compra_id }}</small>
+                                            </div>
+                                        </td>
+                                        <td style="text-align: right; color: var(--panel-success); font-weight: 600;">
+                                            ${{ '%.2f'|format(pago.monto_venta or 0) }}
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <span class="badge badge-info">{{ '%.1f'|format(pago.comision_porcentaje or 0) }}%</span>
+                                        </td>
+                                        <td style="text-align: right; color: var(--panel-warning); font-weight: 700; font-size: 1.1rem;">
+                                            ${{ '%.2f'|format(pago.monto_comision or 0) }}
+                                        </td>
+                                        <td>
+                                            <a href="#" onclick="alert('Factura #{{ pago.compra_id }}'); return false;" style="color: var(--panel-primary);">
+                                                Ver Factura #{{ pago.compra_id }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <small>{{ pago.fecha_comision.strftime('%d/%m/%Y') if pago.fecha_comision else 'N/A' }}</small>
+                                            <small style="display: block; color: var(--panel-text-light);">{{ pago.fecha_comision.strftime('%H:%M') if pago.fecha_comision else '' }}</small>
+                                        </td>
+                                        <td>
+                                            <button class="btn-sm btn-success" onclick="marcarComoPagado({{ pago.id }})">
+                                                <i class="fas fa-check"></i> Marcar Pagado
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="content-card">
+                        <div style="text-align: center; padding: 3rem;">
+                            <i class="fas fa-check-circle" style="font-size: 4rem; color: var(--panel-success); margin-bottom: 1rem;"></i>
+                            <p style="color: var(--panel-text-light); font-size: 1.1rem;">No hay pagos pendientes. ¡Todo está al día!</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </section>
+
+            <!-- Gestión de Tablas Section -->
+            <section class="content-section" id="tablas">
+                <div class="section-header">
+                    <h1><i class="fas fa-database"></i> Gestión de Base de Datos</h1>
+                    <p>Administra las tablas y registros de la base de datos</p>
+                </div>
+
+                <div class="content-card">
+                    <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem;">
+                        <div>
+                            <h3>Tablas Disponibles</h3>
+                            <div id="lista-tablas" style="background: #f8fafc; border: 1px solid var(--panel-border); border-radius: 8px; padding: 1rem; max-height: 600px; overflow-y: auto;">
+                                <p style="color: var(--panel-text-light);">Cargando...</p>
+                            </div>
+                            <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                                <button class="btn-primario" onclick="crearTabla()">
+                                    <i class="fas fa-plus"></i> Crear Tabla
+                                </button>
+                                <button class="btn-sm btn-danger" onclick="eliminarTabla()">
+                                    <i class="fas fa-trash"></i> Eliminar Tabla
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <div id="tabla-contenido">
+                                <div style="text-align: center; padding: 3rem; color: var(--panel-text-light);">
+                                    <i class="fas fa-database" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                                    <p>Selecciona una tabla para ver y editar los registros.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let paginaActual = 1;
+        let tablaSeleccionada = '';
+
+        // Sidebar toggle
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+            });
+        }
+
+        // Navigation
+        const navItems = document.querySelectorAll('.nav-item');
+        const sections = document.querySelectorAll('.content-section');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                navItems.forEach(ni => ni.classList.remove('active'));
+                sections.forEach(s => s.classList.remove('active'));
+                
+                item.classList.add('active');
+                
+                const sectionId = item.getAttribute('data-section');
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.classList.add('active');
+                }
+
+                // Si es la sección de tablas, cargar tablas
+                if (sectionId === 'tablas') {
+                    cargarTablas();
+                }
+
+                // Close sidebar on mobile
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.add('collapsed');
+                }
+            });
+        });
+
+        // Cargar lista de tablas
+        async function cargarTablas() {
+            const res = await fetch('/api/get_tables');
+            const data = await res.json();
+            const cont = document.getElementById('lista-tablas');
+            cont.innerHTML = '';
+            if (data.error) return cont.innerHTML = `<p style="color:red">${data.error}</p>`;
+
+            data.tablas.forEach(t => {
+                const div = document.createElement('div');
+                div.textContent = t;
+                div.className = 'tabla-item';
+                div.onclick = () => { 
+                    tablaSeleccionada = t; 
+                    paginaActual = 1; 
+                    cargarTabla(t, 1); 
+                };
+                cont.appendChild(div);
+            });
+        }
+
+        // Mostrar datos de una tabla con paginación
+        async function cargarTabla(nombre, page = 1) {
+            const cont = document.getElementById('tabla-contenido');
+            cont.style.opacity = 0.3;
+            try {
+                const res = await fetch(`/api/get_table/${nombre}?page=${page}`);
+                const data = await res.json();
+                if (data.error) return cont.innerHTML = `<p style="color:red">${data.error}</p>`;
+
+                let html = `
+                    <h2>${nombre}</h2>
+                    <p style="color:#aaa;">Mostrando página ${data.pagina_actual} de ${data.paginas_totales} (${data.total_registros} registros)</p>
+                    <button class='btn-primario' onclick="nuevoRegistro('${nombre}')" style="margin-bottom: 1rem;">
+                        <i class="fas fa-plus"></i> Agregar nuevo
+                    </button>
+                    <div style="overflow:auto; border:1px solid var(--panel-border); border-radius:8px; padding:10px; background: white;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>${data.columnas.map(c => `<th>${c}</th>`).join('')}<th>Acciones</th></tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                data.registros.forEach(row => {
+                    html += `<tr>${data.columnas.map(c=>{
+                        let val = row[c] ?? '';
+                        return `<td contenteditable='true' data-col='${c}' data-id='${row[data.columnas[0]]}'>${val}</td>`;
+                    }).join('')}
+                    <td>
+                        <button class='btn-sm btn-primary' onclick="guardarCambios('${nombre}', ${row[data.columnas[0]]}, this)">
+                            <i class="fas fa-save"></i>
+                        </button>
+                        <button class='btn-sm btn-danger' onclick="eliminarRegistro('${nombre}', ${row[data.columnas[0]]})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td></tr>`;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top:15px; display:flex; justify-content:center; align-items:center; gap:15px;">
+                        <button class="btn-sm btn-secondary" onclick="cambiarPagina(${data.pagina_actual - 1})" ${data.pagina_actual <= 1 ? 'disabled' : ''}>
+                            <i class="fas fa-chevron-left"></i> Anterior
+                        </button>
+                        <span>Página ${data.pagina_actual} / ${data.paginas_totales}</span>
+                        <button class="btn-sm btn-secondary" onclick="cambiarPagina(${data.pagina_actual + 1})" ${data.pagina_actual >= data.paginas_totales ? 'disabled' : ''}>
+                            Siguiente <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                `;
+
+                cont.innerHTML = html;
+                cont.style.transition = 'opacity 0.4s ease-in-out';
+                cont.style.opacity = 1;
+            } catch (error) {
+                cont.innerHTML = `<p style="color:red">Error al cargar tabla: ${error}</p>`;
+            }
+        }
+
+        // Cambiar de página
+        function cambiarPagina(nuevaPagina) {
+            if (nuevaPagina < 1) return;
+            paginaActual = nuevaPagina;
+            cargarTabla(tablaSeleccionada, paginaActual);
+        }
+
+        // Guardar cambios
+        async function guardarCambios(tabla, id, btn) {
+            const fila = btn.closest('tr');
+            const celdas = fila.querySelectorAll('td[data-col]');
+            const cambios = {};
+            celdas.forEach(td => cambios[td.dataset.col] = td.innerText.trim());
+
+            const res = await fetch(`/api/update_record/${tabla}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id_col: Object.keys(cambios)[0], id_val: id, cambios})
+            });
+
+            const data = await res.json();
+            if (data.error) alert(`⚠️ Error: ${data.error}`);
+            else alert('✅ Registro actualizado correctamente');
+        }
+
+        // Eliminar registro
+        async function eliminarRegistro(tabla, id) {
+            if (!confirm('¿Seguro que quieres eliminar este registro?')) return;
+            const res = await fetch(`/api/delete_record/${tabla}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id_col: 'id', id_val: id})
+            });
+            const data = await res.json();
+            if (data.error) alert(`⚠️ Error: ${data.error}`);
+            else {
+                alert('🗑️ Registro eliminado');
+                cargarTabla(tabla, paginaActual);
+            }
+        }
+
+        // Nuevo registro
+        async function nuevoRegistro(tabla) {
+            const entrada = prompt("Introduce los campos y valores (JSON):", '{"columna":"valor"}');
+            if (!entrada) return;
+            try {
+                const obj = JSON.parse(entrada);
+                const res = await fetch(`/api/insert_record/${tabla}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(obj)
+                });
+                const data = await res.json();
+                if (data.error) alert(`⚠️ Error: ${data.error}`);
+                else {
+                    alert('✅ Registro agregado');
+                    cargarTabla(tabla, 1);
+                }
+            } catch {
+                alert('⚠️ Formato JSON inválido');
+            }
+        }
+
+        // Crear tabla
+        async function crearTabla() {
+            const nombre = prompt("Nombre de la nueva tabla:");
+            if (!nombre) return;
+            const columnas = prompt("Define las columnas (JSON):", '{"id":"SERIAL PRIMARY KEY","nombre":"VARCHAR(255)","descripcion":"TEXT"}');
+            if (!columnas) return;
+            try {
+                const obj = JSON.parse(columnas);
+                const res = await fetch('/api/create_table', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({nombre, columnas: obj})
+                });
+                const data = await res.json();
+                if (data.error) alert(`⚠️ Error: ${data.error}`);
+                else {
+                    alert('✅ Tabla creada correctamente');
+                    cargarTablas();
+                }
+            } catch {
+                alert('⚠️ Formato JSON inválido');
+            }
+        }
+
+        // Eliminar tabla completa
+        async function eliminarTabla() {
+            const nombre = prompt("Nombre de la tabla a eliminar:");
+            if (!nombre) return;
+            if (!confirm(`⚠️ Esto eliminará completamente la tabla '${nombre}'. ¿Continuar?`)) return;
+
+            const res = await fetch('/api/drop_table', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({nombre})
+            });
+            const data = await res.json();
+            if (data.error) alert(`⚠️ Error: ${data.error}`);
+            else {
+                alert('🗑️ Tabla eliminada correctamente');
+                cargarTablas();
+                document.getElementById('tabla-contenido').innerHTML = '<p>Selecciona una tabla para ver y editar los registros.</p>';
+            }
+        }
+
+        // Marcar comisión como pagada
+        async function marcarComoPagado(comision_id) {
+            if (!confirm('¿Marcar esta comisión como pagada?')) return;
+            try {
+                const res = await fetch(`/api/comisiones/${comision_id}/marcar_pagado`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                const data = await res.json();
+                if (data.error) {
+                    alert(`⚠️ Error: ${data.error}`);
+                } else {
+                    alert('✅ Comisión marcada como pagada');
+                    location.reload();
+                }
+            } catch (error) {
+                alert(`⚠️ Error: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

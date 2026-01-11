@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplicaciones - {{ vacante.titulo }} | ShopFusion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/panel.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        .aplicaciones-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        .vacante-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        .aplicacion-item {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+            border-left: 4px solid #3b82f6;
+        }
+        .aplicacion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+        .aplicacion-info {
+            flex: 1;
+        }
+        .aplicacion-info h4 {
+            margin: 0 0 0.5rem 0;
+            color: #1f2937;
+        }
+        .aplicacion-info p {
+            margin: 0.25rem 0;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        .badge-estado {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .badge-pendiente {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .badge-revisado {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .badge-contactado {
+            background: #d1fae5;
+            color: #065f46;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('index') }}">ShopFusion</a>
+        <nav>
+            <a href="{{ url_for('admin_vacantes') }}">← Volver a Vacantes</a>
+            <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+        </nav>
+    </header>
+
+    <main class="aplicaciones-container">
+        <div class="vacante-header">
+            <h1><i class="fas fa-briefcase"></i> {{ vacante.titulo }}</h1>
+            <p style="opacity: 0.95; margin-top: 0.5rem;">Aplicaciones recibidas</p>
+        </div>
+
+        {% if aplicaciones %}
+            <div style="margin-bottom: 1rem;">
+                <strong>Total de aplicaciones: {{ aplicaciones|length }}</strong>
+            </div>
+            
+            {% for aplicacion in aplicaciones %}
+            <div class="aplicacion-item">
+                <div class="aplicacion-header">
+                    <div class="aplicacion-info">
+                        <h4><i class="fas fa-user"></i> {{ aplicacion.nombre_completo }}</h4>
+                        <p><i class="fas fa-envelope"></i> {{ aplicacion.email }}</p>
+                        {% if aplicacion.telefono %}
+                        <p><i class="fas fa-phone"></i> {{ aplicacion.telefono }}</p>
+                        {% endif %}
+                        <p style="font-size: 0.85rem; color: #9ca3af; margin-top: 0.5rem;">
+                            <i class="fas fa-calendar"></i> Aplicó el {{ aplicacion.creado_en.strftime('%d/%m/%Y a las %H:%M') if aplicacion.creado_en else 'N/A' }}
+                        </p>
+                    </div>
+                    <span class="badge-estado badge-{{ aplicacion.estado }}">
+                        {{ aplicacion.estado|title }}
+                    </span>
+                </div>
+                
+                {% if aplicacion.hoja_vida %}
+                <div style="margin-top: 1rem; padding: 1rem; background: #f9fafb; border-radius: 8px;">
+                    <strong style="display: block; margin-bottom: 0.5rem;">Hoja de Vida:</strong>
+                    <p style="white-space: pre-line; color: #374151; line-height: 1.6;">{{ aplicacion.hoja_vida }}</p>
+                </div>
+                {% endif %}
+                
+                {% if aplicacion.mensaje %}
+                <div style="margin-top: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 8px;">
+                    <strong style="display: block; margin-bottom: 0.5rem;">Mensaje:</strong>
+                    <p style="white-space: pre-line; color: #374151; line-height: 1.6;">{{ aplicacion.mensaje }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align: center; padding: 3rem; background: white; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <i class="fas fa-inbox" style="font-size: 3rem; color: #9ca3af; margin-bottom: 1rem;"></i>
+                <p style="color: #6b7280; font-size: 1.125rem;">No hay aplicaciones para esta vacante aún.</p>
+            </div>
+        {% endif %}
+    </main>
+</body>
+</html>
+
+

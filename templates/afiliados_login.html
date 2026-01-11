@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login de Afiliado | ShopFusion</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <style>
+    .afiliado-container {
+      max-width: 500px;
+      margin: 3rem auto;
+      padding: 2rem;
+    }
+    .afiliado-card {
+      background: var(--bg-card, #ffffff);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      border: 2px solid var(--border-subtle, #e5e7eb);
+    }
+    .afiliado-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .afiliado-header h1 {
+      background: linear-gradient(135deg, #ff5f1f 0%, #ff0080 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    .field {
+      display: grid;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .field label {
+      font-weight: 600;
+      color: var(--text-light, #1a1a1a);
+    }
+    .field input {
+      padding: 0.75rem 1rem;
+      border: 2px solid var(--border-subtle, #e5e7eb);
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    .field input:focus {
+      outline: none;
+      border-color: #ff5f1f;
+      box-shadow: 0 0 0 3px rgba(255, 95, 31, 0.1);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #ff5f1f 0%, #ff0080 100%);
+      color: #ffffff;
+      border: 0;
+      padding: 0.75rem 2rem;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      width: 100%;
+      transition: transform 0.2s ease;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(255, 95, 31, 0.3);
+    }
+    .form-actions {
+      margin-top: 1.5rem;
+      text-align: center;
+    }
+    .form-actions a {
+      display: inline-block;
+      margin-top: 1rem;
+      color: #ff5f1f;
+      text-decoration: none;
+    }
+    .alerts {
+      margin-bottom: 1.5rem;
+    }
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      margin-bottom: 0.5rem;
+    }
+    .alert-success {
+      background: #e7f5ee;
+      color: #0b6b3a;
+    }
+    .alert-danger {
+      background: #fdeaea;
+      color: #b42318;
+    }
+    .alert-warning {
+      background: #fff7e6;
+      color: #7a4d00;
+    }
+  </style>
+</head>
+<body>
+  <div class="afiliado-container">
+    <div class="afiliado-card">
+      <div class="afiliado-header">
+        <h1>🔐 Iniciar Sesión</h1>
+        <p>Accede a tu panel de afiliado</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+          <div class="alerts">
+            {% for category, msg in messages %}
+              <div class="alert alert-{{ category }}">{{ msg }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <form action="{{ url_for('afiliados_login') }}" method="POST" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="field">
+          {{ form.email.label }}
+          {{ form.email(class="form-control", type="email") }}
+          {% if form.email.errors %}
+            <small style="color: #b42318;">{{ form.email.errors[0] }}</small>
+          {% endif %}
+        </div>
+
+        <div class="field">
+          {{ form.password.label }}
+          {{ form.password(class="form-control") }}
+          {% if form.password.errors %}
+            <small style="color: #b42318;">{{ form.password.errors[0] }}</small>
+          {% endif %}
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">{{ form.submit.label.text }}</button>
+          <a href="{{ url_for('afiliados_registro') }}">¿No tienes cuenta? Regístrate</a>
+          <br>
+          <a href="{{ url_for('index') }}">← Volver al inicio</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
+
+
+
+
+
+

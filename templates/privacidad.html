@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Política de Privacidad - ShopFusion</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegant_styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        body {
+            background: var(--bg-elegant-gray-50);
+            color: var(--text-elegant-dark);
+            line-height: 1.7;
+            padding: 0;
+            margin: 0;
+        }
+
+        .legal-header {
+            background: linear-gradient(135deg, var(--elegant-primary) 0%, var(--elegant-accent) 100%);
+            color: white;
+            padding: 60px 20px 40px;
+            text-align: center;
+        }
+
+        .legal-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .legal-header p {
+            font-size: 1.125rem;
+            opacity: 0.95;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--bg-elegant-white);
+            padding: 50px 40px;
+            box-shadow: var(--shadow-elegant-md);
+            border-radius: var(--radius-elegant-xl);
+            margin-top: -30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            color: var(--elegant-primary);
+            margin-top: 35px;
+            margin-bottom: 15px;
+            font-weight: 700;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-elegant-light);
+        }
+
+        p {
+            margin-bottom: 18px;
+            color: var(--text-elegant-gray);
+            line-height: 1.8;
+        }
+
+        ul {
+            margin-left: 25px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 12px;
+            color: var(--text-elegant-light);
+            line-height: 1.7;
+        }
+
+        li strong {
+            color: var(--text-elegant-dark);
+        }
+
+        a {
+            color: var(--elegant-primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition-elegant);
+        }
+
+        a:hover {
+            color: var(--elegant-accent);
+            text-decoration: underline;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 40px;
+            padding: 12px 24px;
+            background: var(--elegant-primary);
+            color: white;
+            border-radius: var(--radius-elegant-md);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition-elegant);
+        }
+
+        .back-link:hover {
+            background: var(--elegant-primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-elegant-md);
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+                margin: -20px 20px 40px;
+            }
+
+            .legal-header h1 {
+                font-size: 1.75rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header style="background: var(--bg-elegant-gray-900); padding: 20px; margin-bottom: 40px;">
+        <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
+            <a href="{{ url_for('index') }}" style="color: white; text-decoration: none; font-weight: 700; font-size: 1.25rem;">
+                <i class="fas fa-store"></i> ShopFusion
+            </a>
+            <nav>
+                <a href="{{ url_for('index') }}" style="color: var(--text-elegant-light); text-decoration: none; margin-left: 20px;">
+                    <i class="fas fa-home"></i> Volver al Inicio
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="legal-header">
+        <h1><i class="fas fa-shield-alt"></i> Política de Privacidad</h1>
+        <p>Última actualización: Enero 2025</p>
+    </div>
+
+    <div class="container">
+        <p style="font-size: 1.125rem; color: var(--text-elegant-dark); font-weight: 600; margin-bottom: 25px;">
+            En <strong>ShopFusion</strong> respetamos tu privacidad y nos comprometemos a proteger tus datos personales. Esta política explica cómo recopilamos, usamos y protegemos la información que nos proporcionas al usar nuestra página web y nuestros servicios.
+        </p>
+
+        <h2>1. Quiénes somos</h2>
+        <p><strong>ShopFusion</strong> es una plataforma que muestra ofertas y productos de diferentes tiendas y plataformas de afiliados (por ejemplo, Amazon, AliExpress u otras). No somos los fabricantes ni los vendedores directos de la mayoría de los productos mostrados, sino un intermediario que te redirige a las páginas oficiales de los comercios.</p>
+        <p>No trabajamos con productos exportados directamente y ofrecemos a nuestros clientes acceso a una amplia variedad de productos a través de nuestros programas de afiliación. También contamos con programas de afiliación propios donde los afiliados pueden promocionar productos y ganar comisiones.</p>
+
+        <h2>2. Información que recopilamos</h2>
+        <p>Podemos recopilar la siguiente información:</p>
+        <ul>
+            <li><strong>Datos de contacto</strong>: nombre y correo electrónico cuando nos contactas voluntariamente.</li>
+            <li><strong>Información de uso</strong>: páginas visitadas, botones clicados, enlaces de afiliados en los que haces clic, tiempo de permanencia y estadísticas de navegación.</li>
+            <li><strong>Datos técnicos</strong>: dirección IP aproximada, tipo de navegador, dispositivo y sistema operativo (estos datos suelen ser anónimos o se usan de forma agregada).</li>
+            <li><strong>Cookies y tecnologías similares</strong> para recordar tus preferencias y mejorar tu experiencia de usuario.</li>
+        </ul>
+
+        <h2>3. Cómo usamos tu información</h2>
+        <p>Utilizamos la información recopilada para:</p>
+        <ul>
+            <li>Ofrecer, mantener y mejorar nuestros servicios y el contenido mostrado.</li>
+            <li>Mostrar productos y ofertas relevantes para ti.</li>
+            <li>Realizar análisis internos y estadísticas de uso de la página.</li>
+            <li>Responder a tus consultas o solicitudes cuando nos contactas.</li>
+            <li>Enviarte información sobre productos y promociones, solo si tú lo has autorizado.</li>
+        </ul>
+
+        <h2>4. Enlaces de afiliado y compras en otras plataformas</h2>
+        <p>En ShopFusion utilizamos enlaces de afiliado que te redirigen a páginas externas (por ejemplo, Amazon u otras tiendas). Cuando haces clic en estos enlaces:</p>
+        <ul>
+            <li>Serás dirigido a la página oficial del proveedor del producto.</li>
+            <li>La compra se realiza directamente en la plataforma externa, bajo sus propias políticas de privacidad y términos de uso.</li>
+            <li>ShopFusion no tiene acceso a los datos de tu tarjeta de crédito, dirección completa ni otros datos de pago que introduces en esas plataformas.</li>
+            <li>En algunos casos, la plataforma externa puede notificarnos que se ha realizado una compra para calcular la comisión de afiliado, pero esa información es básica y no incluye tus datos bancarios completos.</li>
+        </ul>
+        <p>Te recomendamos revisar la política de privacidad de cada tienda o plataforma donde realices la compra.</p>
+
+        <h2>5. Pagos y procesamiento mediante PayPal</h2>
+        <p>En algunos casos, podemos ofrecerte la opción de realizar pagos directamente desde nuestra página a través de <strong>PayPal</strong> (por ejemplo, para servicios, donaciones o productos propios de ShopFusion).</p>
+        <p>Es importante que sepas lo siguiente:</p>
+        <ul>
+            <li>El botón de pago de PayPal te redirige a un entorno seguro gestionado por PayPal.</li>
+            <li><strong>ShopFusion no recibe ni almacena datos sensibles de pago</strong> como el número completo de tu tarjeta, fecha de vencimiento, código de seguridad (CVV) o tus credenciales de acceso a PayPal.</li>
+            <li>La información de tu tarjeta o cuenta se procesa directamente en los servidores de PayPal, bajo sus propias normas de seguridad y política de privacidad.</li>
+            <li>Lo que nosotros recibimos es información limitada sobre la transacción, como el estado del pago (aprobado, rechazado, pendiente), la fecha y el importe, para poder confirmar tu pedido o activar el servicio correspondiente.</li>
+        </ul>
+        <p>Para más detalles sobre cómo PayPal trata tus datos, puedes consultar la política de privacidad disponible en su sitio oficial.</p>
+
+        <h2>6. Compartir información con terceros</h2>
+        <p>No vendemos tus datos personales a terceros. Sin embargo, podemos compartir información con:</p>
+        <ul>
+            <li><strong>Plataformas de afiliados</strong> para poder calcular comisiones y realizar reportes de ventas.</li>
+            <li><strong>Proveedores de servicios</strong> que nos ayudan a operar la página web (por ejemplo, servicios de hosting, analítica web o herramientas de correo electrónico).</li>
+        </ul>
+        <p>Estos proveedores solo tienen acceso a la información necesaria para realizar sus funciones y están obligados a proteger tus datos.</p>
+
+        <h2>7. Cookies y tecnologías similares</h2>
+        <p>Utilizamos cookies y tecnologías similares para:</p>
+        <ul>
+            <li>Recordar tus preferencias básicas (por ejemplo, idioma).</li>
+            <li>Analizar el tráfico de la web y mejorar la experiencia de usuario.</li>
+            <li>Medir el rendimiento de campañas y enlaces de afiliado.</li>
+        </ul>
+        <p>Puedes configurar tu navegador para rechazar cookies, aunque esto puede afectar el correcto funcionamiento de algunas partes de la página.</p>
+
+        <h2>8. Seguridad de los datos</h2>
+        <p>Implementamos medidas técnicas y organizativas razonables para proteger tu información personal frente a accesos no autorizados, pérdida, uso indebido o modificación. Sin embargo, ningún sistema es 100% seguro, por lo que no podemos garantizar una seguridad absoluta.</p>
+
+        <h2>9. Tus derechos</h2>
+        <p>Dependiendo de la normativa aplicable en tu país, puedes tener derecho a:</p>
+        <ul>
+            <li>Acceder a los datos personales que tenemos sobre ti.</li>
+            <li>Solicitar la corrección de datos inexactos o incompletos.</li>
+            <li>Solicitar la eliminación de tus datos cuando ya no sean necesarios o cuando retires tu consentimiento.</li>
+            <li>Oponerte a ciertos tipos de tratamiento de datos.</li>
+        </ul>
+        <p>Si deseas ejercer alguno de estos derechos, puedes contactarnos por WhatsApp al <strong>+593987865420</strong>.</p>
+
+        <h2>10. Cambios en esta política</h2>
+        <p>Podemos actualizar esta política de privacidad de vez en cuando para reflejar cambios en la ley o en nuestros servicios. Publicaremos la versión actualizada en esta misma página e indicaremos la fecha de la última actualización.</p>
+
+        <h2>11. Contacto</h2>
+        <p>Si tienes preguntas, comentarios o solicitudes relacionadas con esta política de privacidad, puedes comunicarte con nosotros a través de WhatsApp al <strong>+593987865420</strong>.</p>
+
+        <p style="margin-top: 30px; padding: 20px; background: var(--bg-elegant-gray-50); border-left: 4px solid var(--elegant-primary); border-radius: var(--radius-elegant-md); font-size: 0.9375rem; color: var(--text-elegant-light);">
+            <i class="fas fa-info-circle" style="color: var(--elegant-primary); margin-right: 8px;"></i>
+            <strong>Nota:</strong> Este texto es informativo y general. Para garantizar el cumplimiento total de la normativa de protección de datos aplicable en tu país, te recomendamos revisarlo con un profesional legal.
+        </p>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="{{ url_for('index') }}" class="back-link">
+                <i class="fas fa-arrow-left"></i> Volver al Inicio
+            </a>
+        </div>
+    </div>
+
+    <footer style="background: var(--bg-elegant-gray-900); color: var(--text-elegant-light); padding: 40px 20px; text-align: center; margin-top: 60px;">
+        <p>&copy; 2025 ShopFusion. Todos los derechos reservados.</p>
+        <p style="margin-top: 10px; font-size: 0.875rem;">
+            <a href="{{ url_for('terminos') }}" style="color: var(--text-elegant-light); margin: 0 10px;">Términos y Condiciones</a> |
+            <a href="{{ url_for('contacto') }}" style="color: var(--text-elegant-light); margin: 0 10px;">Contacto</a>
+        </p>
+    </footer>
+</body>
+</html>

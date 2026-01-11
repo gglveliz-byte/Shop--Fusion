@@ -1,0 +1,112 @@
+/* Estilos elegantes profesionales para ShopFusion */
+
+:root {
+  --elegant-primary: #3b82f6;
+  --elegant-secondary: #64748b;
+  --elegant-accent: #ff5f1f;
+  --elegant-success: #10b981;
+  --elegant-danger: #ef4444;
+  --elegant-warning: #f59e0b;
+  
+  --bg-elegant-gray-50: #f9fafb;
+  --bg-elegant-gray-100: #f3f4f6;
+  --bg-elegant-white: #ffffff;
+  
+  --text-elegant-dark: #1f2937;
+  --text-elegant-gray: #4b5563;
+  --text-elegant-light: #6b7280;
+  
+  --border-elegant-light: #e5e7eb;
+  --border-elegant-medium: #d1d5db;
+  
+  --shadow-elegant-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-elegant-md: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --shadow-elegant-lg: 0 20px 40px rgba(0, 0, 0, 0.15);
+  
+  --radius-elegant-sm: 8px;
+  --radius-elegant-md: 12px;
+  --radius-elegant-lg: 16px;
+  --radius-elegant-xl: 20px;
+  
+  --transition-elegant: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fx-gradient-text {
+  background: linear-gradient(135deg, var(--elegant-primary) 0%, var(--elegant-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+.section-header {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-elegant-dark);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.elegant-card {
+  background: var(--bg-elegant-white);
+  border-radius: var(--radius-elegant-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow-elegant-md);
+  transition: var(--transition-elegant);
+}
+
+.elegant-card:hover {
+  box-shadow: var(--shadow-elegant-lg);
+  transform: translateY(-4px);
+}
+
+.highlight {
+  color: var(--elegant-accent);
+  font-weight: 600;
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.fade-in-right {
+  animation: fadeInRight 0.6s ease-out;
+}
+
+.fade-in-left {
+  animation: fadeInLeft 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+

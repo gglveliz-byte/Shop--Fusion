@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Productos exclusivos - Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+  <header class="admin-header">
+    <h1>Productos exclusivos ShopFusion</h1>
+    <a href="{{ url_for('panel') }}" class="btn-volver">← Volver al panel general</a>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <p class="flash flash-{{ category }}">{{ message }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main>
+
+    <!-- ============================
+         FORMULARIO: NUEVO PRODUCTO
+         ============================ -->
+    <section class="bloque-formulario">
+      <h2>➕ Agregar nuevo producto exclusivo</h2>
+
+      <form
+        method="POST"
+        action="{{ url_for('listar_productos_exclusivos') }}"
+        class="form-admin"
+      >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <!-- Título -->
+        <div class="form-group">
+          <label for="titulo">Título</label>
+          <input
+            type="text"
+            id="titulo"
+            name="titulo"
+            value="{{ request.form.get('titulo', '') }}"
+            required
+          >
+        </div>
+
+        <!-- Descripción -->
+        <div class="form-group">
+          <label for="descripcion">Descripción</label>
+          <textarea
+            id="descripcion"
+            name="descripcion"
+            rows="4"
+            required
+          >{{ request.form.get('descripcion', '') }}</textarea>
+        </div>
+
+        <!-- Precio -->
+        <div class="form-group">
+          <label for="precio">Precio</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            id="precio"
+            name="precio"
+            value="{{ request.form.get('precio', '') }}"
+            required
+          >
+        </div>
+
+        <!-- Precio oferta (opcional) -->
+        <div class="form-group">
+          <label for="precio_oferta">Precio oferta (opcional)</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            id="precio_oferta"
+            name="precio_oferta"
+            value="{{ request.form.get('precio_oferta', '') }}"
+          >
+        </div>
+
+        <!-- Categoría -->
+        <div class="form-group">
+          <label for="categoria">Categoría</label>
+          <select id="categoria" name="categoria">
+            <option value="">Selecciona una categoría</option>
+            {% if categorias %}
+              {% for cat in categorias %}
+                <option value="{{ cat }}" {% if request.form.get('categoria') == cat %}selected{% endif %}>
+                  {{ cat }}
+                </option>
+              {% endfor %}
+            {% endif %}
+          </select>
+        </div>
+
+        <!-- Stock -->
+        <div class="form-group">
+          <label for="stock">Stock</label>
+          <input
+            type="number"
+            min="0"
+            id="stock"
+            name="stock"
+            value="{{ request.form.get('stock', '0') }}"
+          >
+        </div>
+
+        <!-- Imágenes (URLs) -->
+        <div class="form-group">
+          <label for="imagenes">Imágenes (URLs separadas por comas)</label>
+          <textarea
+            id="imagenes"
+            name="imagenes"
+            rows="3"
+            placeholder="https://ejemplo1.jpg, https://ejemplo2.png"
+          >{{ request.form.get('imagenes', '') }}</textarea>
+          <p class="help-text">
+            Escribe una o varias URLs completas separadas por comas.
+            La primera se usará como imagen principal en la web.
+          </p>
+        </div>
+
+        <!-- Estado -->
+        <div class="form-group">
+          <label for="estado">Estado</label>
+          <select id="estado" name="estado">
+            {% set estado_form = request.form.get('estado', 'activo') %}
+            <option value="activo"   {% if estado_form == 'activo' %}selected{% endif %}>Activo</option>
+            <option value="inactivo" {% if estado_form == 'inactivo' %}selected{% endif %}>Inactivo</option>
+            <option value="borrador" {% if estado_form == 'borrador' %}selected{% endif %}>Borrador</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-primario">Crear producto</button>
+      </form>
+    </section>
+
+    <!-- ============================
+         LISTADO DE PRODUCTOS
+         ============================ -->
+    <section class="bloque-listado">
+      <h2>Listado de productos exclusivos</h2>
+
+      {% if productos %}
+        <table class="tabla-admin">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Título</th>
+              <th>Categoría</th>
+              <th>Precio</th>
+              <th>Oferta</th>
+              <th>Stock</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in productos %}
+              <tr>
+                <td>{{ p.id }}</td>
+                <td>{{ p.titulo }}</td>
+                <td>{{ p.categoria or '—' }}</td>
+                <td>${{ '%.2f'|format(p.precio) }}</td>
+                <td>
+                  {% if p.precio_oferta %}
+                    ${{ '%.2f'|format(p.precio_oferta) }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td>{{ p.stock }}</td>
+                <td>{{ p.estado }}</td>
+                <td>
+                  <a
+                    href="{{ url_for('editar_producto_exclusivo', producto_id=p.id) }}"
+                    class="btn-accion"
+                  >
+                    Editar
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p>No hay productos exclusivos registrados todavía.</p>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

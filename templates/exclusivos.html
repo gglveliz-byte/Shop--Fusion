@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ofertas exclusivas ShopFusion</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Ofertas exclusivas de ShopFusion: productos seleccionados con stock limitado, precios especiales y beneficios únicos.">
+    <meta name="author" content="ShopFusion">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <link rel="icon" href="{{ url_for('static', filename='videos_imagenes/shop.png') }}" type="image/png">
+
+    <!-- Íconos -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+          integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <script>
+      (function() {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (!token || window.__csrfFetchPatched) {
+          return;
+        }
+        window.__csrfFetchPatched = true;
+        const originalFetch = window.fetch;
+        window.fetch = function(resource, init) {
+          init = init || {};
+          const method = (init.method || 'GET').toUpperCase();
+          if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+            const headers = new Headers(init.headers || {});
+            if (!headers.has('X-CSRFToken')) {
+              headers.set('X-CSRFToken', token);
+            }
+            init.headers = headers;
+          }
+          if (!init.credentials) {
+            init.credentials = 'same-origin';
+          }
+          return originalFetch(resource, init);
+        };
+      })();
+    </script>
+
+    <!-- Estilos del sorteo (mismos del index) -->
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sorteo.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/exclusivos.css') }}">
+
+</head>
+
+<body class="exclusives-page">
+    <header class="sf-header">
+        <a href="{{ url_for('index') }}" aria-label="Ir a página principal de ShopFusion">
+            <svg id="logo" width="140" height="60" viewBox="0 0 140 60" role="img" aria-label="Logo de ShopFusion">
+                <title>Logo de ShopFusion</title>
+                <rect width="140" height="60" fill="#1C1C1C" rx="8"/>
+                <text x="10" y="40" fill="#FFD700" font-size="20" font-family="Inter, sans-serif">ShopFusion</text>
+            </svg>
+        </a>
+
+        <nav aria-label="Menú principal">
+            <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Abrir menú de navegación">
+                <span class="hamburger" aria-hidden="true"></span>
+            </button>
+            <ul id="nav-menu">
+                <li><a href="{{ url_for('index') }}" class="nav-link">Inicio</a></li>
+                <li><a href="{{ url_for('exclusivos') }}" class="nav-link" aria-current="page">Exclusivos ShopFusion</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="page-wrapper">
+        {% if productos_exclusivos %}
+        <!-- CARRUSEL INFINITO DE TODOS LOS PRODUCTOS EXCLUSIVOS -->
+        <section id="exclusivos-marquee" class="section exclusivos-marquee-section" aria-label="Catálogo completo en carrusel continuo">
+            <div class="container">
+                <p class="section-label">Deslizando sin parar</p>
+                <h2>Catálogo exclusivo en movimiento</h2>
+                <p>
+                    Todos los productos exclusivos de ShopFusion.
+                    Solo mira, relájate y descubre algo nuevo en cada pasada.
+                </p>
+
+                <div class="infinite-carousel" role="list" aria-hidden="false">
+                    <div class="infinite-carousel-track">
+                        {# Primera pasada de productos #}
+                        {% for producto in productos_exclusivos %}
+                            {% set precio_final = producto.precio_oferta if (producto.precio_oferta and producto.precio_oferta < producto.precio) else producto.precio %}
+                            <article class="infinite-carousel-item" role="listitem" data-product-id="{{ producto.id }}">
+                                <div class="infinite-carousel-image-wrap">
+                                    {% if producto.imagenes and producto.imagenes[0] %}
+                                        <img src="{{ producto.imagenes[0] }}"
+                                             alt="Imagen de {{ producto.titulo }}">
+                                    {% else %}
+                                        <img src="https://via.placeholder.com/300x200?text=Sin+imagen"
+                                             alt="Sin imagen disponible">
+                                    {% endif %}
+                                </div>
+                                <div class="infinite-carousel-info">
+                                    <p class="marquee-name">{{ producto.titulo }}</p>
+                                    <p class="marquee-category">
+                                        {{ producto.categoria or 'Otros' }}
+                                    </p>
+                                    {% if producto.precio_oferta and producto.precio_oferta < producto.precio %}
+                                        <p class="marquee-price">
+                                            ${{ '%.2f' | format(precio_final) }} USD
+                                        </p>
+                                    {% else %}
+                                        <p class="marquee-price marquee-price--normal">
+                                            ${{ '%.2f' | format(precio_final) }} USD
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </article>
+                        {% endfor %}
+
+                        {# Segunda pasada de productos (duplicamos para que el scroll sea infinito) #}
+                        {% for producto in productos_exclusivos %}
+                            {% set precio_final = producto.precio_oferta if (producto.precio_oferta and producto.precio_oferta < producto.precio) else producto.precio %}
+                            <article class="infinite-carousel-item" role="listitem" data-product-id="{{ producto.id }}">
+                                <div class="infinite-carousel-image-wrap">
+                                    {% if producto.imagenes and producto.imagenes[0] %}
+                                        <img src="{{ producto.imagenes[0] }}"
+                                             alt="Imagen de {{ producto.titulo }}">
+                                    {% else %}
+                                        <img src="https://via.placeholder.com/300x200?text=Sin+imagen"
+                                             alt="Sin imagen disponible">
+                                    {% endif %}
+                                </div>
+                                <div class="infinite-carousel-info">
+                                    <p class="marquee-name">{{ producto.titulo }}</p>
+                                    <p class="marquee-category">
+                                        {{ producto.categoria or 'Otros' }}
+                                    </p>
+                                    {% if producto.precio_oferta and producto.precio_oferta < producto.precio %}
+                                        <p class="marquee-price">
+                                            ${{ '%.2f' | format(precio_final) }} USD
+                                        </p>
+                                    {% else %}
+                                        <p class="marquee-price marquee-price--normal">
+                                            ${{ '%.2f' | format(precio_final) }} USD
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+
+        <!-- BUSCADOR IA (copiado del index) -->
+        <section id="search-section" aria-labelledby="search-title">
+            <p class="search-info">
+                Nuestro motor de búsqueda impulsado por IA entiende lo que necesitas.
+                Busca productos con frases naturales como "zapatos cómodos para caminar"
+                o "algo para estudiar y jugar", categorías como: salud, tecnología...
+                ¡incluso si no sabes el nombre exacto!
+            </p>
+
+            <h2 id="search-title">Busca Productos</h2>
+            <div class="search-container">
+                <form id="search-form" action="{{ url_for('buscar_inteligente') }}" method="POST">
+                    <input type="text" id="search-input" placeholder="Busca productos... Impulsado por IA" aria-label="Busca productos en ShopFusion">
+                    <button type="submit" class="search-btn" aria-label="Buscar"><i class="fas fa-search"></i></button>
+                </form>
+                <div id="search-results" class="search-results">
+                    <button id="close-search" class="close-btn" aria-label="Cerrar resultados de búsqueda"><i class="fas fa-times"></i></button>
+                    <div id="search-loading" class="search-loading">
+                        <div class="loader"></div>
+                        <p>Buscando...</p>
+                    </div>
+                    <div id="search-results-content" class="search-results-content"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FLASH MESSAGES -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-container">
+              {% for category, message in messages %}
+                {% if category in ['success', 'error', 'warning'] %}
+                  <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+    <!-- SORTEO -->
+    {% if sorteo %}
+    <section id="sorteo-card" aria-labelledby="sorteo-title">
+      <div class="sorteo-card-container">
+        <img src="{{ sorteo.imagen }}" alt="Premio del sorteo" class="sorteo-img">
+
+        <div class="sorteo-info">
+          <h2 id="sorteo-title">🎉 ¡Gran Sorteo ShopFusion! 🎁</h2>
+          <p class="sorteo-text">
+            Gana <span class="highlight">{{ sorteo.titulo }}</span>
+          </p>
+          <p class="sorteo-desc">{{ sorteo.descripcion }}</p>
+          <p class="sorteo-precio">
+            🎟️ Participa por solo <strong>$1</strong> y podrías ser el próximo ganador.
+          </p>
+
+          <!-- 🟡 Botón de PayPal -->
+          <div id="paypal-button-container"></div>
+        </div>
+      </div>
+
+      <!-- Modal registro -->
+      <!-- 👇 importante: hidden para que arranque oculto -->
+      <div id="registro-modal" hidden>
+        <div class="modal-content">
+          <button class="btn-cerrar" id="cerrarModal">X</button>
+          <h2>Registro de Participante</h2>
+          <form id="registro-form" method="POST" action="/registrar_boleto">
+            <div class="form-group">
+              <label for="nombre">Nombre completo</label>
+              <input type="text" id="nombre" name="nombre" required>
+            </div>
+            <div class="form-group">
+              <label for="contacto">Correo o teléfono</label>
+              <input type="text" id="contacto" name="contacto" required>
+            </div>
+            <input type="hidden" name="sorteo_id" value="{{ sorteo.id }}">
+            <button type="submit" class="btn-enviar">Obtener número de boleto</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Bandera de pago confirmado para JS -->
+      <script id="pago-data" type="application/json">
+        {{ 'true' if pago_confirmado else 'false' }}
+      </script>
+
+      <!-- Script extra para abrir el modal automáticamente cuando se confirma el pago -->
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const pagoScript = document.getElementById('pago-data');
+          if (!pagoScript) return;
+
+          let pagoConfirmado = false;
+          try {
+            pagoConfirmado = JSON.parse(pagoScript.textContent.trim());
+          } catch (e) {
+            console.warn('No se pudo leer pago-data:', e);
+          }
+
+          // Si en la sesión había pago confirmado: abrir el modal
+          if (pagoConfirmado) {
+            const modal = document.getElementById('registro-modal');
+            if (!modal) return;
+
+            modal.classList.add('active');
+            modal.removeAttribute('hidden');
+            document.body.style.overflow = 'hidden';
+          }
+        });
+      </script>
+    </section>
+    {% endif %}
+
+        <!-- PRODUCTOS EXCLUSIVOS -->
+        <section id="shopfusion-exclusives" aria-labelledby="shopfusion-exclusives-title" class="section">
+            <div class="container" style="position:relative;">
+                <h2 id="shopfusion-exclusives-title">Productos exclusivos</h2>
+
+                <button class="carousel-nav prev" aria-label="Productos exclusivos anteriores" tabindex="0">&#9664;</button>
+
+                <div class="products-container">
+                    {% if productos_exclusivos %}
+                        {% for producto in productos_exclusivos %}
+                            {% set precio_final = producto.precio_oferta if (producto.precio_oferta and producto.precio_oferta < producto.precio) else producto.precio %}
+                            <div class="product-card exclusive">
+                                <div class="product-content">
+                                    <div class="exclusive-badge">Exclusivo ShopFusion</div>
+
+                                    <div class="carousel">
+                                        {% if producto.imagenes %}
+                                            {% for img in producto.imagenes %}
+                                                <img src="{{ img or 'https://via.placeholder.com/300x200?text=Sin+imagen' }}"
+                                                     alt="Imagen de {{ producto.titulo }}"
+                                                     class="product-media">
+                                            {% endfor %}
+                                        {% else %}
+                                            <img src="https://via.placeholder.com/300x200?text=Sin+imagen"
+                                                 alt="Sin imagen"
+                                                 class="product-media">
+                                        {% endif %}
+                                    </div>
+
+                                    <h3 class="product-name">{{ producto.titulo }}</h3>
+<p class="product-desc">
+  {{ producto.descripcion | replace('\n', '<br>') | safe }}
+</p>
+                                    <p class="categoria">Categoría: {{ producto.categoria or 'Otros' }}</p>
+
+                                    <div class="price-block">
+                                        {% if producto.precio_oferta and producto.precio_oferta < producto.precio %}
+                                            <span class="old-price">
+                                                ${{ '%.2f' | format(producto.precio) }}
+                                            </span>
+                                            <span class="offer-price">
+                                                ${{ '%.2f' | format(producto.precio_oferta) }}
+                                            </span>
+                                            <span class="discount-badge">
+                                                -{{ ((1 - (producto.precio_oferta / producto.precio)) * 100)
+                                                     | round(0, 'floor') }}%
+                                            </span>
+                                        {% else %}
+                                            <span class="price">
+                                                ${{ '%.2f' | format(producto.precio) }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+
+                                    <p class="stock">
+                                        {% if producto.stock > 0 %}
+                                            Stock: {{ producto.stock }} unidades
+                                        {% else %}
+                                            <span class="out-of-stock">Sin stock</span>
+                                        {% endif %}
+                                    </p>
+
+                                    <div class="button-container">
+                                        <!-- Ver detalles (abre modal de detalle) -->
+                                        <button class="btn view-more-btn"
+                                                type="button"
+                                                data-product-id="{{ producto.id }}">
+                                            Ver detalles
+                                        </button>
+
+                                        <!-- Comprar ahora (abre modal de PayPal) -->
+                                        {% if producto.stock > 0 %}
+                                        <button class="btn buy-exclusive-btn"
+                                                type="button"
+                                                data-product-id="{{ producto.id }}"
+                                                data-product-titulo="{{ producto.titulo }}"
+                                                data-product-precio="{{ '%.2f' | format(precio_final) }}">
+                                            <i class="fa-solid fa-cart-shopping"></i>
+                                            Comprar ahora
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p id="no-exclusivos">
+                            No hay productos exclusivos de ShopFusion disponibles por el momento. 😅
+                        </p>
+                    {% endif %}
+                </div>
+
+                <button class="carousel-nav next" aria-label="Productos exclusivos siguientes" tabindex="0">&#9654;</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL DETALLE EXCLUSIVOS -->
+    <div id="product-modal" class="product-modal" aria-hidden="true">
+      <div class="product-modal__backdrop" data-modal-close></div>
+
+      <div class="product-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
+        <button class="product-modal__close" type="button" aria-label="Cerrar detalle de producto" data-modal-close>
+          &times;
+        </button>
+
+        <div class="product-modal__content">
+          <div class="product-modal__media">
+            <button class="modal-nav modal-nav--prev" type="button" aria-label="Imagen anterior">
+              &#9664;
+            </button>
+
+            <img id="modal-image" src="" alt="Producto ShopFusion" class="product-modal__image">
+
+            <button class="modal-nav modal-nav--next" type="button" aria-label="Imagen siguiente">
+              &#9654;
+            </button>
+          </div>
+
+          <div class="product-modal__info">
+            <h3 id="product-modal-title" class="product-modal__title"></h3>
+            <p id="product-modal-category" class="product-modal__category"></p>
+            <p id="product-modal-desc" class="product-modal__desc"></p>
+
+            <div id="product-modal-prices" class="product-modal__prices"></div>
+
+            <p id="product-modal-stock" class="product-modal__stock"></p>
+
+            <div class="product-modal__actions">
+              <button class="btn buy-exclusive-btn-modal" type="button">
+                Comprar ahora
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de compra exclusiva con PayPal -->
+    <div class="product-modal" id="exclusive-modal" aria-hidden="true">
+        <div class="product-modal__backdrop"></div>
+        <div class="product-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-product-title">
+            <button type="button" class="product-modal__close" aria-label="Cerrar ventana">
+                &times;
+            </button>
+
+            <div class="payment-safety-note">
+              <i class="fa-solid fa-lock"></i>
+              <span>
+                Pagos únicos procesados directamente por <strong>PayPal de forma segura</strong>. ShopFusion
+                <strong>no guarda datos de tu tarjeta ni credenciales de pago</strong>. Esto se hace
+                para ofrecerte mayor seguridad en cada compra.
+              </span>
+            </div>
+
+            <h2 id="modal-product-title" class="modal-title">Producto exclusivo</h2>
+            <p id="modal-product-price" class="modal-price">
+              Total a pagar: <span>$0.00</span> USD
+            </p>
+
+            <form id="exclusive-checkout-form" class="exclusive-checkout-form">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="ccp-nombre">
+                            Nombre
+                        </label>
+                        <input type="text" id="ccp-nombre" name="nombre" placeholder="Tu nombre">
+                    </div>
+                    <div class="form-field">
+                        <label for="ccp-apellido">
+                            Apellido
+                        </label>
+                        <input type="text" id="ccp-apellido" name="apellido" placeholder="Tu apellido">
+                    </div>
+                    <div class="form-field">
+                        <label for="ccp-email">
+                            Correo electrónico
+                            <button type="button" class="info-icon"
+                                    data-tooltip="Usamos tu correo solo para enviarte la confirmación de compra y los detalles del pedido.">
+                                ?
+                            </button>
+                        </label>
+                        <input type="email" id="ccp-email" name="email" placeholder="tucorreo@ejemplo.com">
+                    </div>
+                    <div class="form-field">
+                        <label for="ccp-telefono">
+                            Teléfono
+                            <button type="button" class="info-icon"
+                                    data-tooltip="Solo lo usamos si necesitamos contactarte por algún detalle de entrega.">
+                                ?
+                            </button>
+                        </label>
+                        <input type="text" id="ccp-telefono" name="telefono" placeholder="Número de contacto">
+                    </div>
+                    <div class="form-field">
+                        <label for="ccp-pais">
+                            País
+                            <button type="button" class="info-icon"
+                                    data-tooltip="Nos ayuda a calcular tiempos de envío y restricciones de tu zona.">
+                                ?
+                            </button>
+                        </label>
+                        <input type="text" id="ccp-pais" name="pais" placeholder="Ecuador, Perú, etc.">
+                    </div>
+                    <div class="form-field form-field--full">
+                        <label for="ccp-direccion">
+                            Dirección completa
+                            <button type="button" class="info-icon"
+                                    data-tooltip="Necesaria para que tu pedido llegue correctamente. Puedes pegar la dirección desde Google Maps.">
+                                ?
+                            </button>
+                        </label>
+                        <textarea id="ccp-direccion" name="direccion" rows="3" placeholder="Dirección exacta de entrega"></textarea>
+                    </div>
+                </div>
+            </form>
+
+            <!-- ⚠️ IMPORTANTE: ID distinto al de sorteo -->
+            <div id="exclusive-paypal-button-container" class="paypal-button-wrap"></div>
+            <p id="exclusive-checkout-message" class="checkout-message"></p>
+        </div>
+    </div>
+
+    <!-- Nav móvil + carrusel scroll -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const navToggle = document.querySelector('.nav-toggle');
+        const navMenu = document.getElementById('nav-menu');
+
+        if (navToggle && navMenu) {
+          navToggle.addEventListener('click', function () {
+            const expanded = navToggle.getAttribute('aria-expanded') === 'true';
+            navToggle.setAttribute('aria-expanded', String(!expanded));
+            navMenu.classList.toggle('is-open', !expanded);
+          });
+
+          navMenu.addEventListener('click', function (e) {
+            if (e.target.classList.contains('nav-link')) {
+              navToggle.setAttribute('aria-expanded', 'false');
+              navMenu.classList.remove('is-open');
+            }
+          });
+        }
+
+        // Carrusel horizontal de tarjetas
+        const section = document.querySelector('#shopfusion-exclusives');
+        if (section) {
+          const track = section.querySelector('.products-container');
+          const prev = section.querySelector('.carousel-nav.prev');
+          const next = section.querySelector('.carousel-nav.next');
+
+          if (track && prev && next) {
+            const getStep = () => {
+              const card = track.querySelector('.product-card');
+              return card ? card.getBoundingClientRect().width + 18 : 320;
+            };
+
+            prev.addEventListener('click', () => {
+              track.scrollBy({ left: -getStep(), behavior: 'smooth' });
+            });
+
+            next.addEventListener('click', () => {
+              track.scrollBy({ left: getStep(), behavior: 'smooth' });
+            });
+          }
+        }
+      });
+    </script>
+
+    <!-- MODAL DETALLE EXCLUSIVOS (JS) -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const modal = document.getElementById('product-modal');
+      if (!modal) return;
+
+      const modalImage = document.getElementById('modal-image');
+      const modalTitle = document.getElementById('product-modal-title');
+      const modalCategory = document.getElementById('product-modal-category');
+      const modalDesc = document.getElementById('product-modal-desc');
+      const modalPrices = document.getElementById('product-modal-prices');
+      const modalStock = document.getElementById('product-modal-stock');
+      const buyBtnModal = modal.querySelector('.buy-exclusive-btn-modal');
+
+      const btnPrev = modal.querySelector('.modal-nav--prev');
+      const btnNext = modal.querySelector('.modal-nav--next');
+
+      let currentImages = [];
+      let currentIndex = 0;
+
+      function openModal() {
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeModal() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        currentImages = [];
+        currentIndex = 0;
+      }
+
+      function updateModalImage() {
+        if (!currentImages.length) return;
+        const img = currentImages[currentIndex];
+        modalImage.src = img.src;
+        modalImage.alt = img.alt || modalTitle.textContent || 'Imagen de producto ShopFusion';
+      }
+
+      function showNextImage() {
+        if (!currentImages.length) return;
+        currentIndex = (currentIndex + 1) % currentImages.length;
+        updateModalImage();
+      }
+
+      function showPrevImage() {
+        if (!currentImages.length) return;
+        currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+        updateModalImage();
+      }
+
+      const exclusiveButtons = document.querySelectorAll('.product-card.exclusive .view-more-btn');
+
+      exclusiveButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const card = btn.closest('.product-card.exclusive');
+          if (!card) return;
+
+          const titleEl = card.querySelector('.product-name');
+          const descEl = card.querySelector('.product-desc');
+          const catEl = card.querySelector('.categoria');
+          const stockEl = card.querySelector('.stock');
+
+          modalTitle.textContent = titleEl ? titleEl.textContent.trim() : '';
+          modalDesc.innerHTML = descEl ? descEl.innerHTML.trim() : '';
+          modalCategory.textContent = catEl ? catEl.textContent.trim() : '';
+          modalStock.textContent = stockEl ? stockEl.textContent.trim() : '';
+
+          const priceBlock = card.querySelector('.price-block');
+          modalPrices.innerHTML = priceBlock ? priceBlock.innerHTML : '';
+
+          const buyBtnInCard = card.querySelector('.buy-exclusive-btn');
+
+          if (buyBtnModal) {
+            if (buyBtnInCard) {
+              const pid = buyBtnInCard.dataset.productId || '';
+              const titulo = buyBtnInCard.dataset.productTitulo || '';
+              const precio = buyBtnInCard.dataset.productPrecio || '';
+
+              buyBtnModal.dataset.productId = pid;
+              buyBtnModal.dataset.productTitulo = titulo;
+              buyBtnModal.dataset.productPrecio = precio;
+              buyBtnModal.style.display = '';
+            } else {
+              buyBtnModal.dataset.productId = '';
+              buyBtnModal.dataset.productTitulo = '';
+              buyBtnModal.dataset.productPrecio = '';
+              buyBtnModal.style.display = 'none';
+            }
+          }
+
+          const imgs = card.querySelectorAll('.carousel img');
+          currentImages = Array.from(imgs).map(img => ({
+            src: img.getAttribute('src'),
+            alt: img.getAttribute('alt')
+          }));
+
+          if (!currentImages.length) {
+            currentImages = [{
+              src: 'https://via.placeholder.com/300x200?text=Sin+imagen',
+              alt: 'Sin imagen'
+            }];
+          }
+
+          currentIndex = 0;
+          updateModalImage();
+          openModal();
+        });
+      });
+
+      if (btnNext) btnNext.addEventListener('click', showNextImage);
+      if (btnPrev) btnPrev.addEventListener('click', showPrevImage);
+
+      if (buyBtnModal) {
+        buyBtnModal.addEventListener('click', () => {
+          const pid = buyBtnModal.dataset.productId;
+          const titulo = buyBtnModal.dataset.productTitulo;
+          const precio = buyBtnModal.dataset.productPrecio;
+
+          if (!pid || !precio) return;
+
+          closeModal();
+
+          const originalBtn = document.querySelector(
+            '.product-card.exclusive .buy-exclusive-btn[data-product-id="' + pid + '"]'
+          );
+          if (originalBtn) {
+            originalBtn.click();
+          }
+        });
+      }
+
+      modal.addEventListener('click', (e) => {
+        if (e.target.matches('[data-modal-close]') || e.target === modal) {
+          closeModal();
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('is-open')) {
+          closeModal();
+        }
+      });
+    });
+    </script>
+
+    <!-- SDK GLOBAL DE PAYPAL (sorteo + exclusivos) -->
+    <script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD"></script>
+
+    <!-- Lógica del checkout exclusivos (ajustada para usar otro contenedor) -->
+    <script>
+    (function() {
+        const modal = document.getElementById('exclusive-modal');
+        if (!modal) return;
+
+        const backdrop = modal.querySelector('.product-modal__backdrop');
+        const closeBtn = modal.querySelector('.product-modal__close');
+        const titleEl = document.getElementById('modal-product-title');
+        const priceEl = document.getElementById('modal-product-price').querySelector('span');
+        const form = document.getElementById('exclusive-checkout-form');
+        const paypalContainer = document.getElementById('exclusive-paypal-button-container');
+        const messageEl = document.getElementById('exclusive-checkout-message');
+
+        let selectedProductId = null;
+        let selectedProductTitle = '';
+        let selectedProductPrice = 0;
+
+                function showFlashMessage(type, text) {
+            // Reusar contenedor si existe (por si el backend ya puso mensajes)
+            let container = document.querySelector('.flash-container');
+
+            // Si no existe, lo creamos y lo pegamos al body
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'flash-container';
+                document.body.appendChild(container);
+            }
+
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-' + type;  // success, error, warning
+            alert.textContent = text;
+
+            container.appendChild(alert);
+
+            // Se oculta solo después de unos segundos
+            setTimeout(() => {
+                alert.remove();
+            }, 9000);
+        }
+
+
+        function openModal(productId, titulo, precio) {
+            selectedProductId = productId;
+            selectedProductTitle = titulo;
+            selectedProductPrice = parseFloat(precio || 0);
+
+            titleEl.textContent = titulo;
+            priceEl.textContent = '$' + selectedProductPrice.toFixed(2);
+            messageEl.textContent = '';
+            form.reset();
+
+            document.body.style.overflow = 'hidden';
+
+            paypalContainer.innerHTML = '';
+
+            if (!(window.paypal && paypal.Buttons)) {
+                messageEl.textContent = '⚠️ No se pudo cargar PayPal. Actualiza la página.';
+            } else {
+                paypal.Buttons({
+                    onClick: function(data, actions) {
+                        const required = ['nombre','apellido','email','telefono','pais','direccion'];
+                        let valid = true;
+
+                        required.forEach(function(name) {
+                            const input = form.querySelector('[name="' + name + '"]');
+                            if (!input) return;
+                            if (!input.value.trim()) {
+                                valid = false;
+                                input.classList.add('field-error');
+                            } else {
+                                input.classList.remove('field-error');
+                            }
+                        });
+
+                        if (!valid) {
+                            messageEl.textContent = 'Por favor completa todos los datos antes de pagar.';
+                            return actions.reject();
+                        }
+
+                        messageEl.textContent = '';
+                        return actions.resolve();
+                    },
+                    createOrder: function(data, actions) {
+                        return actions.order.create({
+                            purchase_units: [{
+                                description: selectedProductTitle,
+                                amount: {
+                                    currency_code: 'USD',
+                                    value: selectedProductPrice.toFixed(2)
+                                }
+                            }]
+                        });
+                    },
+                    onApprove: function(data, actions) {
+                        // ❌ Ya NO llamamos a actions.order.capture()
+                        const payload = {
+                            orderID: data.orderID,
+                            producto_id: selectedProductId,
+                            cantidad: 1,
+                            nombre: form.nombre.value.trim(),
+                            apellido: form.apellido.value.trim(),
+                            email: form.email.value.trim(),
+                            telefono: form.telefono.value.trim(),
+                            pais: form.pais.value.trim(),
+                            direccion: form.direccion.value.trim()
+                        };
+
+                        return fetch('/api/exclusivos/checkout', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload)
+                        })
+                        .then(function(res) { return res.json(); })
+                        .then(function(resp) {
+    if (resp.status === 'success') {
+        const okText = '✅ Pago completado. Tus datos se guardaron correctamente. Tu producto se enviará pronto.';
+        messageEl.textContent = okText;                 // mensaje dentro del modal
+        showFlashMessage('success', okText);            // mensaje flotante arriba de todo
+        setTimeout(closeModal, 3000);
+    } else {
+        const errText = '⚠️ Hubo un problema registrando la compra: ' + (resp.error || '');
+        messageEl.textContent = errText;
+        showFlashMessage('error', errText);
+    }
+})
+                        .catch(function(err) {
+                            console.error(err);
+                            messageEl.textContent = '⚠️ Ocurrió un error al registrar la compra. Revisa tu correo o contáctanos.';
+                        });
+                    },
+
+                    onError: function(err) {
+                        console.error(err);
+                        messageEl.textContent = '⚠️ Ocurrió un error con PayPal. Intenta nuevamente.';
+                    }
+                }).render('#exclusive-paypal-button-container');
+            }
+
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeModal() {
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            selectedProductId = null;
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeModal);
+        }
+        if (backdrop) {
+            backdrop.addEventListener('click', function(e) {
+                if (e.target === backdrop) {
+                    closeModal();
+                }
+            });
+        }
+
+        const buyButtons = document.querySelectorAll('.product-card.exclusive .buy-exclusive-btn');
+        buyButtons.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                const titulo = this.getAttribute('data-product-titulo');
+                const precio = this.getAttribute('data-product-precio');
+                if (!productId || !precio) return;
+                openModal(parseInt(productId, 10), titulo, precio);
+            });
+        });
+
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && modal.classList.contains('is-open')) {
+            closeModal();
+          }
+        });
+    })();
+    </script>
+
+    <!-- Lógica del BUSCADOR IA + autodesaparición de alerts -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchForm = document.getElementById('search-form');
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        const searchResultsContent = document.getElementById('search-results-content');
+        const searchLoading = document.getElementById('search-loading');
+        const closeSearchBtn = document.getElementById('close-search');
+
+        if (searchForm && searchInput && searchResults && searchResultsContent && searchLoading && closeSearchBtn) {
+            searchForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const query = searchInput.value.trim();
+                if (!query) return;
+
+                searchResults.classList.add('active');
+                searchLoading.style.display = 'flex';
+                searchResultsContent.innerHTML = '';
+
+                try {
+                    const response = await fetch('/buscar_inteligente', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ query }),
+                    });
+                    const data = await response.json();
+
+                    searchLoading.style.display = 'none';
+
+                    if (data.error) {
+                        searchResultsContent.innerHTML = `<p class="search-error">${data.error}</p>`;
+                        return;
+                    }
+
+                    if (!data.productos || data.productos.length === 0) {
+                        searchResultsContent.innerHTML = `<p class="search-message">${data.mensaje}</p>`;
+                        return;
+                    }
+
+                    const resultsContainer = document.createElement('div');
+                    resultsContainer.classList.add('search-results-container');
+                    data.productos.forEach(producto => {
+                        const productDiv = document.createElement('div');
+                        productDiv.classList.add('search-result-item');
+                        productDiv.innerHTML = `
+                            <img src="${(producto.imagenes && producto.imagenes[0]) || 'https://via.placeholder.com/100x100?text=Sin+imagen'}" alt="Imagen de ${producto.nombre}" class="search-result-img">
+                            <div class="search-result-content">
+                                <h3>${producto.nombre}</h3>
+                                <p>${producto.descripcion}</p>
+                                <p>Categoría: ${producto.categoria}</p>
+                                <p>Afiliación: ${producto.afiliacion}</p>
+                                <a href="${producto.link}" class="btn view-more-btn" target="_blank" rel="noopener noreferrer">Conocer más</a>
+                            </div>
+                        `;
+                        resultsContainer.appendChild(productDiv);
+                    });
+                    searchResultsContent.appendChild(resultsContainer);
+                } catch (error) {
+                    searchLoading.style.display = 'none';
+                    searchResultsContent.innerHTML = `<p class="search-error">Error al realizar la búsqueda (intenta nuevamente).</p>`;
+                    console.error('Error en la búsqueda:', error);
+                }
+            });
+
+            closeSearchBtn.addEventListener('click', () => {
+                searchResults.classList.remove('active');
+                searchResultsContent.innerHTML = '';
+                searchLoading.style.display = 'none';
+            });
+        }
+
+        // Ocultar alertas automáticamente
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(a => a.remove());
+        }, 9000);
+    });
+    </script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const marqueeSection = document.getElementById('exclusivos-marquee');
+  if (!marqueeSection) return;
+
+  const carousel = marqueeSection.querySelector('.infinite-carousel');
+  const track = marqueeSection.querySelector('.infinite-carousel-track');
+  if (!carousel || !track) return;
+
+  let autoScrollId = null;
+  let idleTimeoutId = null;
+
+  const SCROLL_STEP = 1.2;      // píxeles por tick
+  const INTERVAL_MS = 20;       // cada cuánto se mueve
+  const IDLE_TIMEOUT = 2500;    // ms sin tocar -> vuelve auto
+
+  function contentIsScrollable() {
+    return track.scrollWidth > carousel.clientWidth + 5;
+  }
+
+  function startAutoScroll() {
+    // si no hay contenido suficiente para scroll, no hacemos nada
+    if (autoScrollId || !contentIsScrollable()) return;
+
+    autoScrollId = setInterval(() => {
+      const maxScroll = track.scrollWidth - carousel.clientWidth;
+
+      if (maxScroll <= 0) return; // nada que desplazar
+
+      if (carousel.scrollLeft >= maxScroll - 1) {
+        // llegamos al final -> volvemos al inicio (loop)
+        carousel.scrollLeft = 0;
+      } else {
+        carousel.scrollLeft += SCROLL_STEP;
+      }
+    }, INTERVAL_MS);
+  }
+
+  function stopAutoScroll() {
+    if (autoScrollId) {
+      clearInterval(autoScrollId);
+      autoScrollId = null;
+    }
+  }
+
+  function queueAutoRestart() {
+    if (idleTimeoutId) {
+      clearTimeout(idleTimeoutId);
+    }
+    idleTimeoutId = setTimeout(() => {
+      startAutoScroll();
+    }, IDLE_TIMEOUT);
+  }
+
+  function userInteractionStart() {
+    stopAutoScroll();
+    if (idleTimeoutId) {
+      clearTimeout(idleTimeoutId);
+      idleTimeoutId = null;
+    }
+  }
+
+  /* 🖱️ / 📱 Eventos que indican que el usuario está tocando el carrusel */
+  carousel.addEventListener('pointerdown', userInteractionStart);
+  carousel.addEventListener('touchstart', userInteractionStart, { passive: true });
+  carousel.addEventListener('wheel', userInteractionStart, { passive: true });
+  carousel.addEventListener('mouseenter', userInteractionStart);
+
+  /* Cuando deja de tocar, programamos que luego de un rato se reactive solo */
+  carousel.addEventListener('pointerup', queueAutoRestart);
+  carousel.addEventListener('mouseleave', queueAutoRestart);
+  carousel.addEventListener('touchend', queueAutoRestart, { passive: true });
+
+  /* Mientras se hace scroll manual, mantenemos pausado
+     y solo cuando se detiene por un rato vuelve el auto-scroll */
+  let scrollTimer = null;
+  carousel.addEventListener('scroll', () => {
+    userInteractionStart();
+    if (scrollTimer) clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      queueAutoRestart();
+    }, IDLE_TIMEOUT);
+  });
+
+  /* 👉 Click en un ítem del carrusel: abrir modal de detalles */
+  carousel.addEventListener('click', (e) => {
+    const item = e.target.closest('.infinite-carousel-item');
+    if (!item) return;
+
+    const pid = item.dataset.productId;
+    if (!pid) return;
+
+    // Buscar el botón "Ver detalles" original de ese producto
+    const detailBtn = document.querySelector(
+      '.product-card.exclusive .view-more-btn[data-product-id="' + pid + '"]'
+    );
+
+    if (detailBtn) {
+      detailBtn.click();
+    }
+  });
+
+  // Arrancamos el auto-scroll un poquito después de que cargue todo
+  setTimeout(startAutoScroll, 800);
+});
+</script>
+
+
+    <!-- Script del sorteo (mismo que en index) -->
+    <script defer src="{{ url_for('static', filename='js/sorteo.js') }}"></script>
+</body>
+</html>

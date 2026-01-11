@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Categorías - Admin ShopFusion</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+  <header class="admin-header">
+    <h1>📂 Gestión de Categorías</h1>
+    <a href="{{ url_for('panel') }}" class="btn-volver">← Volver al panel</a>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <p class="flash flash-{{ category }}">{{ message }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main>
+    <!-- Formulario para crear nueva categoría -->
+    <section class="bloque-formulario">
+      <h2>➕ Crear Nueva Categoría</h2>
+      <form method="POST" action="{{ url_for('admin_crear_categoria') }}" class="form-admin">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        
+        <div class="form-group">
+          <label for="nombre">Nombre de la categoría *</label>
+          <input type="text" id="nombre" name="nombre" required placeholder="Ej: Tecnología">
+        </div>
+
+        <div class="form-group">
+          <label for="slug">Slug (URL-friendly, opcional)</label>
+          <input type="text" id="slug" name="slug" placeholder="Ej: tecnologia (se genera automáticamente si se deja vacío)">
+        </div>
+
+        <div class="form-group">
+          <label for="descripcion">Descripción</label>
+          <textarea id="descripcion" name="descripcion" rows="3" placeholder="Descripción de la categoría"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="icono">Icono (FontAwesome, ej: fa-microchip)</label>
+            <input type="text" id="icono" name="icono" placeholder="fa-microchip">
+          </div>
+
+          <div class="form-group">
+            <label for="color">Color (hex, ej: #3b82f6)</label>
+            <input type="color" id="color" name="color" value="#3b82f6">
+          </div>
+
+          <div class="form-group">
+            <label for="orden">Orden</label>
+            <input type="number" id="orden" name="orden" value="0" min="0">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primario">Crear Categoría</button>
+      </form>
+    </section>
+
+    <!-- Listado de categorías -->
+    <section class="bloque-listado">
+      <h2>📋 Listado de Categorías</h2>
+
+      {% if categorias %}
+        <table class="tabla-admin">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Slug</th>
+              <th>Icono</th>
+              <th>Color</th>
+              <th>Orden</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cat in categorias %}
+              <tr {% if not cat.activa %}style="opacity: 0.6;"{% endif %}>
+                <td>{{ cat.id }}</td>
+                <td><strong>{{ cat.nombre }}</strong></td>
+                <td><code>{{ cat.slug }}</code></td>
+                <td>
+                  {% if cat.icono %}
+                    <i class="fas {{ cat.icono }}"></i> {{ cat.icono }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td>
+                  {% if cat.color %}
+                    <span style="display: inline-block; width: 20px; height: 20px; background: {{ cat.color }}; border-radius: 3px; border: 1px solid #ccc;"></span>
+                    {{ cat.color }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td>{{ cat.orden }}</td>
+                <td>
+                  {% if cat.activa %}
+                    <span style="color: green;">✓ Activa</span>
+                  {% else %}
+                    <span style="color: red;">✗ Inactiva</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <button onclick="editarCategoria({{ cat.id }}, '{{ cat.nombre }}', '{{ cat.slug or '' }}', '{{ cat.descripcion or '' }}', '{{ cat.icono or '' }}', '{{ cat.color or '#3b82f6' }}', {{ cat.orden }}, {{ 'true' if cat.activa else 'false' }})" class="btn-accion">
+                    Editar
+                  </button>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p>No hay categorías registradas.</p>
+      {% endif %}
+    </section>
+  </main>
+
+  <!-- Modal para editar categoría -->
+  <div id="modal-editar" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 8px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+      <h2>✏️ Editar Categoría</h2>
+      <form method="POST" action="" id="form-editar" class="form-admin">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" id="edit-id" name="id" value="">
+        
+        <div class="form-group">
+          <label for="edit-nombre">Nombre *</label>
+          <input type="text" id="edit-nombre" name="nombre" required>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-slug">Slug</label>
+          <input type="text" id="edit-slug" name="slug">
+        </div>
+
+        <div class="form-group">
+          <label for="edit-descripcion">Descripción</label>
+          <textarea id="edit-descripcion" name="descripcion" rows="3"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-icono">Icono</label>
+            <input type="text" id="edit-icono" name="icono">
+          </div>
+
+          <div class="form-group">
+            <label for="edit-color">Color</label>
+            <input type="color" id="edit-color" name="color" value="#3b82f6">
+          </div>
+
+          <div class="form-group">
+            <label for="edit-orden">Orden</label>
+            <input type="number" id="edit-orden" name="orden" min="0">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="edit-activa" name="activa" value="true" checked>
+            Categoría activa
+          </label>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+          <button type="submit" class="btn-primario">Guardar Cambios</button>
+          <button type="button" onclick="cerrarModal()" class="btn-secundario">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function editarCategoria(id, nombre, slug, descripcion, icono, color, orden, activa) {
+      document.getElementById('edit-id').value = id;
+      document.getElementById('edit-nombre').value = nombre;
+      document.getElementById('edit-slug').value = slug || '';
+      document.getElementById('edit-descripcion').value = descripcion || '';
+      document.getElementById('edit-icono').value = icono || '';
+      document.getElementById('edit-color').value = color || '#3b82f6';
+      document.getElementById('edit-orden').value = orden || 0;
+      document.getElementById('edit-activa').checked = activa === 'true' || activa === true;
+      
+      document.getElementById('form-editar').action = `/admin/categorias/${id}/editar`;
+      document.getElementById('modal-editar').style.display = 'block';
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal-editar').style.display = 'none';
+    }
+
+    // Cerrar modal al hacer click fuera
+    document.getElementById('modal-editar').addEventListener('click', function(e) {
+      if (e.target === this) {
+        cerrarModal();
+      }
+    });
+  </script>
+</body>
+</html>
+

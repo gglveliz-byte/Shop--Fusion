@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vende tus productos en ShopFusion</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/vendedores_info.css') }}">
+  <script defer src="{{ url_for('static', filename='js/vendedores_info.js') }}"></script>
+</head>
+<body>
+
+  <header>
+    <h1 class="fx-gradient-text">💼 Vende tus productos en ShopFusion</h1>
+    <p>Llega a todo el Ecuador. Nosotros te damos la vitrina, tú pones el talento.</p>
+  </header>
+
+  <main class="vendedores-page">
+    <section class="fade-in-up">
+      <h2 class="fx-gradient-text">🌟 ¿Qué es ShopFusion?</h2>
+      <p>
+        <strong>ShopFusion</strong> es un marketplace híbrido e inteligente que conecta productos internacionales y marcas ecuatorianas.
+        Ofrecemos a los emprendedores locales una plataforma profesional para <span class="highlight">vender, promocionar y cobrar</span> sus productos en todo el país, 
+        con visibilidad garantizada y administración completa desde un panel de control.
+      </p>
+    </section>
+
+    <section class="fade-in-right">
+      <h2 class="fx-gradient-text">💰 Comisiones y costos</h2>
+      <ul>
+        <li><strong>10%</strong> de comisión por venta realizada.</li>
+        <li>El precio final mostrado al comprador incluye un <span class="highlight">5% adicional</span> sobre el precio propuesto por el vendedor.</li>
+        <li><span class="highlight">Tarifa mensual fija: $15</span> por uso del sistema y mantenimiento de la cuenta.</li>
+        <li>Sin cargos ocultos. Todo claro desde el inicio.</li>
+        <li>Puedes optar por <strong>planes de publicidad</strong> para aumentar la visibilidad de tus productos dentro de ShopFusion.</li>
+      </ul>
+    </section>
+
+    <section class="fade-in-left">
+      <h2 class="fx-gradient-text">🚚 Envíos nacionales</h2>
+      <p>
+        Tus productos estarán disponibles para todo el país 🇪🇨. 
+        Tú decides si ofrecer <strong>envío gratuito</strong> a partir de cierto monto o si el costo lo asume el comprador.
+      </p>
+      <p>
+        Métodos disponibles: <strong>Servientrega, Tramaco, envío propio u otro courier nacional autorizado.</strong>
+        También podrás registrar el número de guía directamente en tu panel para confirmar la entrega.
+      </p>
+    </section>
+
+    <section class="fade-in-up">
+      <h2 class="fx-gradient-text">📦 Responsabilidad y cumplimiento</h2>
+      <p>
+        Por seguridad y confianza entre compradores y vendedores, <strong>ShopFusion retiene temporalmente el pago</strong> 
+        hasta confirmar el envío y la factura correspondiente. 
+        Una vez verificados, el dinero se libera automáticamente para retiro inmediato.
+      </p>
+      <p>
+        El sistema garantiza transparencia, protección y una experiencia profesional tanto para vendedores como para clientes.
+      </p>
+    </section>
+
+    <section class="fade-in-right">
+      <h2 class="fx-gradient-text">🏦 Pagos y retiros</h2>
+      <ul>
+        <li>Transferencias directas a <strong>Pichincha</strong>, <strong>Guayaquil</strong> y <strong>Produbanco</strong>.</li>
+        <li>Transferencias a otros bancos nacionales (pueden tener una comisión adicional).</li>
+        <li>Retiros disponibles de forma <strong>semanal</strong>, <strong>quincenal</strong> o <strong>mensual</strong>.</li>
+        <li><strong>Sin comisión</strong> si el retiro se realiza mediante <strong>PayPal</strong>.</li>
+        <li>Retiros inmediatos pueden tener comisión por servicio de pasarela de pago.</li>
+      </ul>
+    </section>
+
+    <section class="fade-in-left">
+      <h2 class="fx-gradient-text">🧾 Requisitos para afiliarte</h2>
+      <ul>
+        <li>Nombre comercial o razón social <em>(también válido como persona natural)</em>.</li>
+        <li>Cuenta bancaria activa <strong>o cuenta PayPal</strong>.</li>
+        <li>Teléfono o WhatsApp de contacto.</li>
+        <li>Ciudad o dirección de operación.</li>
+        <li>Al menos 2 productos listos para publicar (con fotos y descripción).</li>
+      </ul>
+    </section>
+
+    <section class="fade-in-up">
+      <h2 class="fx-gradient-text">⚖️ Legalidad y transparencia</h2>
+      <p>
+        ShopFusion promueve un entorno comercial justo y responsable. 
+        Todos los vendedores deben cumplir con las políticas de uso y venta establecidas. 
+        Los términos detallados estarán disponibles próximamente en:
+      </p>
+      <ul>
+        <li><a href="{{ url_for('terminos') }}">Términos y Condiciones</a></li>
+        <li><a href="{{ url_for('privacidad') }}">Política de Privacidad</a></li>
+        <li><a href="#">Política de uso de vendedores (en desarrollo)</a></li>
+      </ul>
+    </section>
+
+    <section class="cta fx-shimmer fade-in-up">
+      <h2 class="fx-glow">¿Listo para comenzar?</h2>
+      <p>Publica tus productos y empieza a vender en todo el Ecuador desde hoy.</p>
+      <a href="{{ url_for('registro_vendedor') }}" class="btn-hero">Registrarme como vendedor</a>
+    </section>
+  </main>
+
+</body>
+</html>

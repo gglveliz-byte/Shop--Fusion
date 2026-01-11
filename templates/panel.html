@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>Panel de Administración - ShopFusion</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/panel.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="admin-header">
+    <div class="header-left">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+        <i class="fas fa-bars"></i>
+      </button>
+      <a href="{{ url_for('index') }}" class="logo-link">
+        <svg id="logo" width="140" height="60" viewBox="0 0 140 60" role="img" aria-label="Logo de ShopFusion">
+          <title>Logo de ShopFusion</title>
+          <rect width="140" height="60" fill="#1C1C1C" rx="8"/>
+          <text x="10" y="40" fill="#FFD700" font-size="20" font-family="Inter, sans-serif">ShopFusion</text>
+        </svg>
+      </a>
+    </div>
+    <div class="header-right">
+      <div class="user-info">
+        <i class="fas fa-user-circle"></i>
+        <span>{{ session.nombre }}</span>
+      </div>
+      <a href="{{ url_for('logout') }}" class="btn-logout">
+        <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+      </a>
+    </div>
+  </header>
+
+  <div class="admin-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-section="dashboard">
+          <i class="fas fa-home"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-section="categorias">
+          <i class="fas fa-folder"></i>
+          <span>Categorías</span>
+        </a>
+        <a href="#" class="nav-item" data-section="productos">
+          <i class="fas fa-shopping-bag"></i>
+          <span>Productos Exclusivos</span>
+        </a>
+        <a href="#" class="nav-item" data-section="comisiones">
+          <i class="fas fa-cog"></i>
+          <span>Comisiones</span>
+        </a>
+        <a href="#" class="nav-item" data-section="afiliados">
+          <i class="fas fa-users"></i>
+          <span>Afiliados</span>
+        </a>
+        <a href="#" class="nav-item" data-section="pedidos">
+          <i class="fas fa-shopping-cart"></i>
+          <span>Pedidos</span>
+        </a>
+        <a href="#" class="nav-item" data-section="vacantes">
+          <i class="fas fa-briefcase"></i>
+          <span>Vacantes</span>
+        </a>
+        <a href="#" class="nav-item" data-section="sugerencias">
+          <i class="fas fa-comments"></i>
+          <span>Sugerencias</span>
+        </a>
+        <a href="#" class="nav-item" data-section="sorteos">
+          <i class="fas fa-gift"></i>
+          <span>Sorteos</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-messages">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">
+                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' or category == 'error' else 'info-circle' if category == 'info' else 'exclamation-triangle' }}"></i>
+                <span>{{ message }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- Dashboard Section -->
+      <section class="content-section active" id="dashboard">
+        <div class="section-header">
+          <h1><i class="fas fa-home"></i> Dashboard</h1>
+          <p>Bienvenido al panel de administración de ShopFusion</p>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-info">
+              <h3>{{ afiliados|length if afiliados else 0 }}</h3>
+              <p>Afiliados Registrados</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+              <i class="fas fa-shopping-bag"></i>
+            </div>
+            <div class="stat-info">
+              <h3>{{ productos_exclusivos|length if productos_exclusivos else 0 }}</h3>
+              <p>Productos Exclusivos</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+              <i class="fas fa-comments"></i>
+            </div>
+            <div class="stat-info">
+              <h3>{{ sugerencias|length if sugerencias else 0 }}</h3>
+              <p>Sugerencias Pendientes</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+              <i class="fas fa-gift"></i>
+            </div>
+            <div class="stat-info">
+              <h3>{{ sorteos|length if sorteos else 0 }}</h3>
+              <p>Sorteos Activos</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">
+              <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="stat-info">
+              <h3>{{ pedidos|length if pedidos else 0 }}</h3>
+              <p>Pedidos Totales</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+              <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="stat-info">
+              <h3>${{ '%.0f'|format(pedidos|sum(attribute='monto_total') or 0) if pedidos else 0 }}</h3>
+              <p>Total Ventas</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Categorías Section -->
+      <section class="content-section" id="categorias">
+        <div class="section-header">
+          <h1><i class="fas fa-folder"></i> Gestión de Categorías</h1>
+          <p>Administra las categorías de productos disponibles en el sistema</p>
+        </div>
+        <div class="content-card">
+          <p>Gestiona las categorías desde aquí.</p>
+          <a href="{{ url_for('admin_categorias') }}" class="btn-primario" data-panel-modal="true">
+            <i class="fas fa-external-link-alt"></i> Gestionar Categorías
+          </a>
+        </div>
+      </section>
+
+            <!-- Productos Exclusivos Section -->
+      <section class="content-section" id="productos">
+        <div class="section-header">
+          <h1><i class="fas fa-shopping-bag"></i> Productos Exclusivos ShopFusion</h1>
+          <p>Gestiona los productos exclusivos de ShopFusion</p>
+        </div>
+
+        <div class="productos-layout">
+          <div class="content-card productos-main">
+            <form id="producto-exclusivo-form" method="POST" action="{{ url_for('panel_crear_exclusivo') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="titulo">Titulo del producto *</label>
+                  <input type="text" id="titulo" name="titulo" required placeholder="Ej: Smartphone Premium">
+                </div>
+
+                <div class="form-group full-width">
+                  <label for="descripcion">Descripcion *</label>
+                  <textarea id="descripcion" name="descripcion" rows="4" required placeholder="Describe el producto..."></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="categoria">Categoria</label>
+                  <select id="categoria" name="categoria">
+                    <option value="">Selecciona una categoria</option>
+                    {% for cat in categorias %}
+                      <option value="{{ cat }}">{{ cat }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="precio_proveedor">Precio Proveedor *</label>
+                  <input type="number" id="precio_proveedor" name="precio_proveedor" step="0.01" min="0" required placeholder="0.00">
+                  <small>Precio al que compras el producto al proveedor</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="precio">Precio de Venta *</label>
+                  <input type="number" id="precio" name="precio" step="0.01" min="0" required placeholder="0.00">
+                  <small>Precio al que vendes el producto</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="precio_oferta">Precio con Descuento (opcional)</label>
+                  <input type="number" id="precio_oferta" name="precio_oferta" step="0.01" min="0" placeholder="0.00">
+                  <small>Precio final con descuento (si hay oferta)</small>
+                </div>
+
+                <div class="form-group full-width">
+                  <label for="link_proveedor">
+                    <i class="fas fa-link"></i> Link del Producto Proveedor (Solo Admin)
+                  </label>
+                  <input type="url" id="link_proveedor" name="link_proveedor" placeholder="https://ejemplo.com/producto-proveedor">
+                  <small style="color: var(--panel-warning);">
+                    <i class="fas fa-lock"></i> Este link es solo visible para administradores. Usalo para comprar el producto al proveedor y enviarlo al cliente.
+                  </small>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn-primario">
+                  <i class="fas fa-plus"></i> Crear Producto
+                </button>
+              </div>
+            </form>
+
+            {% if productos_exclusivos %}
+              <div class="productos-filtros">
+                <h3>Buscar y filtrar productos</h3>
+                <div class="form-grid filtros-grid">
+                  <div class="form-group">
+                    <label for="productos-buscador">Buscador</label>
+                    <input type="text" id="productos-buscador" placeholder="Buscar por titulo, categoria o estado">
+                  </div>
+                  <div class="form-group">
+                    <label for="productos-filtro-categoria">Categoria</label>
+                    <select id="productos-filtro-categoria">
+                      <option value="">Todas</option>
+                      {% for cat in categorias %}
+                        <option value="{{ cat|lower }}">{{ cat }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="productos-filtro-estado">Estado</label>
+                    <select id="productos-filtro-estado">
+                      <option value="">Todos</option>
+                      <option value="activo">Activo</option>
+                      <option value="inactivo">Inactivo</option>
+                      <option value="borrador">Borrador</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="productos-filtro-stock">Stock</label>
+                    <select id="productos-filtro-stock">
+                      <option value="">Todos</option>
+                      <option value="bajo">Stock bajo (<= {{ stock_bajo_umbral }})</option>
+                      <option value="sin">Sin stock</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="filtros-meta">
+                  <span id="productos-count"></span>
+                  <button type="button" id="productos-reset" class="btn-sm btn-primary">
+                    <i class="fas fa-broom"></i> Limpiar filtros
+                  </button>
+                </div>
+              </div>
+
+              <div class="table-container" style="margin-top: 2rem;">
+                <h3>Productos Exclusivos Existentes</h3>
+                <table class="data-table" id="productos-exclusivos-table" data-stock-umbral="{{ stock_bajo_umbral }}">
+                  <thead>
+                    <tr>
+                      <th>Titulo</th>
+                      <th>Categoria</th>
+                      <th>Precio</th>
+                      <th>Precio Oferta</th>
+                      <th>Precio Proveedor</th>
+                      <th>Stock</th>
+                      <th>Estado</th>
+                      <th>Link Proveedor</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for producto in productos_exclusivos %}
+                    <tr data-producto-row="true"
+                        data-id="{{ producto.id }}"
+                        data-titulo="{{ producto.titulo|lower }}"
+                        data-categoria="{{ (producto.categoria or '')|lower }}"
+                        data-estado="{{ (producto.estado or '')|lower }}"
+                        data-stock="{{ producto.stock or 0 }}"
+                        class="{% if (producto.stock or 0) <= stock_bajo_umbral %}row-low-stock{% endif %}">
+                      <td><strong>{{ producto.titulo }}</strong></td>
+                      <td>{{ producto.categoria or 'N/A' }}</td>
+                      <td>${{ '%.2f'|format(producto.precio or 0) }}</td>
+                      <td>${{ '%.2f'|format(producto.precio_oferta or 0) if producto.precio_oferta else 'N/A' }}</td>
+                      <td>${{ '%.2f'|format(producto.precio_proveedor or 0) }}</td>
+                      <td>{{ producto.stock or 0 }}</td>
+                      <td>
+                        <span class="badge badge-{{ 'success' if producto.estado == 'activo' else 'danger' }}">
+                          {{ producto.estado|title }}
+                        </span>
+                      </td>
+                      <td>
+                        {% if producto.link_proveedor %}
+                          <a href="{{ producto.link_proveedor }}" class="btn-sm btn-primary" style="text-decoration: none;">
+                            <i class="fas fa-external-link-alt"></i> Ver Link Proveedor
+                          </a>
+                        {% else %}
+                          <span style="color: var(--panel-text-light); font-style: italic;">Sin link</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                          <a href="{{ url_for('editar_producto_exclusivo', producto_id=producto.id) }}" class="btn-sm btn-primary" data-panel-modal="true">
+                            <i class="fas fa-edit"></i> Editar
+                          </a>
+                          <form method="POST" action="{{ url_for('eliminar_producto_exclusivo', producto_id=producto.id) }}" class="inline-form" onsubmit="return confirm('Inactivar producto? Esto pondra el stock en 0.');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="btn-sm btn-danger">
+                              <i class="fas fa-ban"></i> Inactivar
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p style="margin-top: 1.5rem; color: var(--panel-text-light);">No hay productos exclusivos registrados.</p>
+            {% endif %}
+          </div>
+
+          <div class="productos-side">
+            <div class="content-card productos-side-card">
+              <h3>Stock bajo</h3>
+              <p style="margin-top: 0.5rem; color: #64748b; font-size: 0.9rem;">
+                Productos con stock menor o igual a {{ stock_bajo_umbral }}.
+              </p>
+              {% if productos_bajo_stock %}
+                <ul class="stock-bajo-list">
+                  {% for producto in productos_bajo_stock %}
+                    <li class="stock-bajo-item">
+                      <div class="stock-bajo-info">
+                        <strong>{{ producto.titulo }}</strong>
+                        <span>Stock: {{ producto.stock or 0 }}</span>
+                      </div>
+                      <div class="stock-bajo-actions">
+                        <a href="{{ url_for('editar_producto_exclusivo', producto_id=producto.id) }}" class="btn-sm btn-primary" data-panel-modal="true">Editar</a>
+                        <form method="POST" action="{{ url_for('eliminar_producto_exclusivo', producto_id=producto.id) }}" class="inline-form" onsubmit="return confirm('Inactivar producto? Esto pondra el stock en 0.');">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                          <button type="submit" class="btn-sm btn-danger">Inactivar</button>
+                        </form>
+                      </div>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p style="color: var(--panel-text-light);">Sin alertas de stock bajo.</p>
+              {% endif %}
+            </div>
+
+            <div class="content-card productos-side-card">
+              <h3>Acciones rapidas</h3>
+              <p style="margin-top: 0.5rem; color: #64748b; font-size: 0.9rem;">
+                Edita e inactiva productos desde la tabla principal o la lista de stock bajo.
+              </p>
+              <div class="acciones-rapidas">
+                <a href="{{ url_for('listar_productos_exclusivos') }}" class="btn-sm btn-primary" data-panel-modal="true">
+                  <i class="fas fa-list"></i> Vista completa
+                </a>
+                <a href="#producto-exclusivo-form" class="btn-sm btn-success">
+                  <i class="fas fa-plus"></i> Crear producto
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+<!-- Comisiones Section -->
+      <section class="content-section" id="comisiones">
+        <div class="section-header">
+          <h1><i class="fas fa-cog"></i> Configuración de Comisiones del Sistema</h1>
+          <p>Gestiona las comisiones predeterminadas y ajustes manuales</p>
+        </div>
+
+        <div class="content-card">
+          <h3>Comisión Predeterminada para Usuarios Nuevos</h3>
+          <p class="info-text">
+            <strong>Comisión actual:</strong> 
+            <span class="highlight">{{ '%.2f'|format(comision_predeterminada) }}%</span>
+          </p>
+          <p style="margin-bottom: 1.5rem; color: #64748b; font-size: 0.9rem;">
+            Esta es la comisión que se aplica automáticamente a todos los usuarios nuevos al registrarse.
+          </p>
+          <form method="POST" action="{{ url_for('ajustar_comision_predeterminada') }}" style="margin-bottom: 2rem;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="comision_predeterminada">Nueva Comisión Predeterminada (%)</label>
+                <input type="number" id="comision_predeterminada" name="comision" value="{{ '%.2f'|format(comision_predeterminada) }}" step="0.1" min="0" max="100" required>
+              </div>
+              <div class="form-group" style="display: flex; align-items: end;">
+                <button type="submit" class="btn-primario">
+                  <i class="fas fa-save"></i> Actualizar Predeterminada
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <h3 style="margin-top: 2rem;">Ajustar Comisión de Todos los Afiliados</h3>
+          <p style="margin-bottom: 1.5rem; color: #64748b; font-size: 0.9rem;">
+            Aplica una comisión a todos los afiliados activos. Puedes establecer un tiempo límite (días) para que sea temporal, o dejarlo vacío para que sea permanente.
+          </p>
+          <form method="POST" action="{{ url_for('ajustar_comision_todos_afiliados') }}" style="margin-bottom: 2rem;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="comision_todos">Comisión (%)</label>
+                <input type="number" id="comision_todos" name="comision" step="0.1" min="0" max="100" required>
+              </div>
+              <div class="form-group">
+                <label for="tiempo_limite_todos">Tiempo Límite (días, opcional)</label>
+                <input type="number" id="tiempo_limite_todos" name="tiempo_limite" min="0" placeholder="Vacío = permanente">
+                <small>Si se especifica, la comisión será temporal. Después volverá al sistema automático.</small>
+              </div>
+              <div class="form-group" style="display: flex; align-items: end;">
+                <button type="submit" class="btn-primario">
+                  <i class="fas fa-users"></i> Aplicar a Todos
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="content-card" style="margin-top: 1.5rem;">
+          <h3>Sistema de Comisiones Automático</h3>
+          <p style="margin-bottom: 1rem; color: #64748b; font-size: 0.9rem;">
+            El sistema ajusta automáticamente las comisiones según las ventas mensuales. Las comisiones manuales temporales (con tiempo límite) tienen prioridad.
+          </p>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Ventas en el Mes</th>
+                  <th>Comisión</th>
+                  <th>Beneficios Adicionales</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Usuario Nuevo</strong></td>
+                  <td><strong>{{ '%.0f'|format(comision_predeterminada) }}%</strong></td>
+                  <td>Comisión inicial predeterminada</td>
+                </tr>
+                <tr>
+                  <td>3 ventas</td>
+                  <td>50%</td>
+                  <td>✓ Descuentos exclusivos activados (15 días)</td>
+                </tr>
+                <tr>
+                  <td>4 ventas</td>
+                  <td>55%</td>
+                  <td>✓ Descuentos exclusivos activados</td>
+                </tr>
+                <tr>
+                  <td>5 ventas</td>
+                  <td>60%</td>
+                  <td>✓ Descuentos exclusivos activados</td>
+                </tr>
+                <tr>
+                  <td>7+ ventas</td>
+                  <td>70%</td>
+                  <td>✓ Descuentos exclusivos activados</td>
+                </tr>
+                <tr>
+                  <td>9 ventas</td>
+                  <td>80%</td>
+                  <td>✓ Descuentos exclusivos activados</td>
+                </tr>
+                <tr style="background: #f0fdf4;">
+                  <td>11+ ventas</td>
+                  <td><strong>90% (Máximo)</strong></td>
+                  <td>✓ Descuentos exclusivos activados<br>✓ Se mantiene si las ventas son constantes</td>
+                </tr>
+                <tr style="background: #fff7ed;">
+                  <td>No cumple 3 ventas en el mes</td>
+                  <td>40%</td>
+                  <td>Comisión se reduce</td>
+                </tr>
+                <tr style="background: #fff7ed;">
+                  <td>No vende en el segundo mes</td>
+                  <td>30%</td>
+                  <td>Comisión se reduce</td>
+                </tr>
+                <tr style="background: #fee2e2;">
+                  <td>No vende nada</td>
+                  <td><strong>20% (Mínimo)</strong></td>
+                  <td>Comisión mínima. Al comenzar a vender, sube automáticamente</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="info-box" style="margin-top: 1.5rem;">
+            <i class="fas fa-info-circle"></i>
+            <p>
+              <strong>Información Importante:</strong> Cuando ajustas manualmente una comisión con tiempo límite, esa comisión será aplicada durante el tiempo especificado (1 día, 2 días, etc.). Después de ese tiempo, el sistema volverá a calcular automáticamente la comisión según las ventas mensuales.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Afiliados Section -->
+      <section class="content-section" id="afiliados">
+        <div class="section-header">
+          <h1><i class="fas fa-users"></i> Gestión de Afiliados</h1>
+          <p>Administra los afiliados registrados y sus comisiones</p>
+        </div>
+        {% if afiliados %}
+          <div class="content-card">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Código</th>
+                    <th style="text-align: center;">Comisión (%)</th>
+                    <th style="text-align: right;">Ganancias</th>
+                    <th style="text-align: center;">Ventas</th>
+                    <th>Pago</th>
+                    <th style="text-align: center;">Frecuencia solicitada</th>
+                    <th style="text-align: center;">Estado</th>
+                    <th style="text-align: center;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for afiliado in afiliados %}
+                  <tr>
+                    <td>{{ afiliado.nombre }}</td>
+                    <td>{{ afiliado.email }}</td>
+                    <td><code>{{ afiliado.codigo_afiliado }}</code></td>
+                    <td style="text-align: center;">
+                      <form method="POST" action="{{ url_for('actualizar_comision_afiliado', afiliado_id=afiliado.id) }}" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: center; flex-wrap: wrap;">
+                          <input type="number" name="comision" value="{{ '%.2f'|format(afiliado.comision_porcentaje) }}" step="0.1" min="0" max="100" required style="width: 80px;">
+                          <input type="number" name="tiempo_limite" min="0" placeholder="Días" style="width: 70px;" title="Dejar vacío para permanente">
+                          <button type="submit" class="btn-sm btn-primary">
+                            <i class="fas fa-save"></i>
+                          </button>
+                        </div>
+                      </form>
+                      {% if afiliado.tiene_comision_manual %}
+                        <small style="display: block; margin-top: 0.25rem; color: #f59e0b; font-weight: 600;">
+                          <i class="fas fa-clock"></i> Temporal hasta {{ afiliado.comision_manual_expiracion.strftime('%d/%m/%Y') if afiliado.comision_manual_expiracion else 'N/A' }}
+                        </small>
+                      {% endif %}
+                    </td>
+                    <td style="text-align: right; color: #10b981; font-weight: 600;">${{ '%.2f'|format(afiliado.total_ganancias or 0) }}</td>
+                    <td style="text-align: center;">{{ afiliado.total_ventas or 0 }}</td>
+                    <td>
+                      {% if afiliado.metodo_pago %}
+                        <div style="font-size: 0.85rem; color: var(--panel-text-light);">
+                          <div><strong>País:</strong> {{ afiliado.pais or 'N/A' }}</div>
+                          <div><strong>Método:</strong> {{ afiliado.metodo_pago|title }}</div>
+                          {% if afiliado.metodo_pago == 'transferencia' %}
+                            <div><strong>Banco:</strong> {{ afiliado.banco or 'N/A' }}</div>
+                            <div><strong>Cuenta:</strong> {{ afiliado.numero_cuenta or 'N/A' }}</div>
+                            <div><strong>Titular:</strong> {{ afiliado.titular_cuenta or 'N/A' }}</div>
+                          {% elif afiliado.metodo_pago == 'paypal' %}
+                            <div><strong>PayPal:</strong> {{ afiliado.paypal_email or 'N/A' }}</div>
+                          {% elif afiliado.metodo_pago == 'skrill' %}
+                            <div><strong>Skrill:</strong> {{ afiliado.skrill_email or 'N/A' }}</div>
+                          {% endif %}
+                        </div>
+                      {% else %}
+                        <span style="color: var(--panel-text-light); font-style: italic;">Sin configurar</span>
+                      {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                      <span>{{ afiliado.frecuencia_pago|title if afiliado.frecuencia_pago else 'Pendiente' }}</span>
+                    </td>
+                    <td style="text-align: center;">
+                      <span class="badge badge-{{ 'success' if afiliado.estado == 'activo' else 'danger' }}">
+                        {{ afiliado.estado|title }}
+                      </span>
+                    </td>
+                    <td style="text-align: center;">
+                      <form method="POST" action="{{ url_for('cambiar_estado_afiliado', afiliado_id=afiliado.id) }}" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn-sm btn-{{ 'danger' if afiliado.estado == 'activo' else 'success' }}">
+                          {{ 'Desactivar' if afiliado.estado == 'activo' else 'Activar' }}
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {% else %}
+          <div class="content-card">
+            <p>No hay afiliados registrados aún.</p>
+          </div>
+        {% endif %}
+      </section>
+
+      <!-- Pedidos Section -->
+      <section class="content-section" id="pedidos">
+        <div class="section-header">
+          <h1><i class="fas fa-shopping-cart"></i> Gestión de Pedidos</h1>
+          <p>Administra todos los pedidos y compras realizadas por los clientes</p>
+        </div>
+        {% if pedidos %}
+          <div class="content-card">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Factura #</th>
+                    <th>Cliente</th>
+                    <th>Producto</th>
+                    <th style="text-align: center;">Cantidad</th>
+                    <th style="text-align: right;">Precio Unit.</th>
+                    <th style="text-align: right;">Total</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                    <th>PayPal Info</th>
+                    <th>Afiliado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for pedido in pedidos %}
+                  <tr>
+                    <td><strong>#{{ pedido.numero_factura }}</strong></td>
+                    <td>
+                      <div style="display: flex; flex-direction: column;">
+                        <strong>{{ pedido.nombre }} {{ pedido.apellido }}</strong>
+                        <small style="color: var(--panel-text-light);">{{ pedido.email }}</small>
+                        {% if pedido.telefono %}
+                          <small style="color: var(--panel-text-light);"><i class="fas fa-phone"></i> {{ pedido.telefono }}</small>
+                        {% endif %}
+                        {% if pedido.pais or pedido.direccion %}
+                          <small style="color: var(--panel-text-light); font-size: 0.8rem; margin-top: 0.25rem;">
+                            <i class="fas fa-map-marker-alt"></i> {{ pedido.pais or '' }} {% if pedido.direccion %}- {{ pedido.direccion[:30] }}{% if pedido.direccion|length > 30 %}...{% endif %}{% endif %}
+                          </small>
+                        {% endif %}
+                      </div>
+                    </td>
+                    <td>
+                      <div style="display: flex; flex-direction: column;">
+                        <strong>{{ pedido.producto_titulo }}</strong>
+                        <small style="color: var(--panel-text-light);">ID: {{ pedido.producto_id }}</small>
+                        {% if pedido.link_proveedor %}
+                          <small style="margin-top: 0.25rem;">
+                            <a href="{{ pedido.link_proveedor }}" class="btn-sm btn-primary" style="text-decoration: none;">Link proveedor</a>
+                          </small>
+                        {% else %}
+                          <small style="color: var(--panel-text-light); font-style: italic;">Sin link proveedor</small>
+                        {% endif %}
+                      </div>
+                    </td>
+                    <td style="text-align: center;">{{ pedido.cantidad }}</td>
+                    <td style="text-align: right;">
+                      ${{ '%.2f'|format(pedido.producto_precio or 0) }}
+                      <small style="display: block; color: var(--panel-text-light); font-size: 0.8rem;">{{ pedido.moneda or 'USD' }}</small>
+                    </td>
+                    <td style="text-align: right;">
+                      <strong style="font-size: 1.1rem; color: var(--panel-success);">${{ '%.2f'|format(pedido.monto_total or 0) }}</strong>
+                      <small style="display: block; color: var(--panel-text-light); font-size: 0.8rem;">{{ pedido.moneda or 'USD' }}</small>
+                    </td>
+                    <td>
+                      <span class="badge badge-{{ 'success' if pedido.estado_pago == 'pagado' else 'danger' if pedido.estado_pago == 'pendiente' else 'warning' }}">
+                        <i class="fas fa-{{ 'check-circle' if pedido.estado_pago == 'pagado' else 'clock' if pedido.estado_pago == 'pendiente' else 'exclamation-triangle' }}"></i>
+                        {{ pedido.estado_pago|title if pedido.estado_pago else 'N/A' }}
+                      </span>
+                    </td>
+                    <td>
+                      <div style="display: flex; flex-direction: column;">
+                        <small style="font-weight: 600;">{{ pedido.creado_en.strftime('%d/%m/%Y') if pedido.creado_en else 'N/A' }}</small>
+                        <small style="color: var(--panel-text-light); font-size: 0.85rem;">{{ pedido.creado_en.strftime('%H:%M:%S') if pedido.creado_en else '' }}</small>
+                      </div>
+                    </td>
+                    <td>
+                      <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem; min-width: 200px;">
+                        {% if pedido.paypal_order_id %}
+                          <div style="background: #f0f9ff; padding: 0.5rem; border-radius: 6px; border-left: 3px solid var(--panel-primary);">
+                            <strong style="color: var(--panel-primary); display: block; margin-bottom: 0.25rem;">
+                              <i class="fab fa-paypal"></i> Order ID:
+                            </strong>
+                            <code style="background: white; padding: 0.25rem 0.5rem; border-radius: 4px; display: block; word-break: break-all; font-size: 0.75rem; color: var(--panel-text);">{{ pedido.paypal_order_id }}</code>
+                          </div>
+                        {% endif %}
+                        {% if pedido.paypal_capture_id %}
+                          <div style="background: #f0fdf4; padding: 0.5rem; border-radius: 6px; border-left: 3px solid var(--panel-success);">
+                            <strong style="color: var(--panel-success); display: block; margin-bottom: 0.25rem;">
+                              <i class="fas fa-check-circle"></i> Capture ID:
+                            </strong>
+                            <code style="background: white; padding: 0.25rem 0.5rem; border-radius: 4px; display: block; word-break: break-all; font-size: 0.75rem; color: var(--panel-text);">{{ pedido.paypal_capture_id }}</code>
+                          </div>
+                        {% endif %}
+                        {% if not pedido.paypal_order_id and not pedido.paypal_capture_id %}
+                          <span style="color: var(--panel-text-light); font-style: italic;">
+                            <i class="fas fa-info-circle"></i> Sin información de PayPal
+                          </span>
+                        {% endif %}
+                      </div>
+                    </td>
+                    <td>
+                      {% if pedido.afiliado_codigo %}
+                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                          <span class="badge badge-info">
+                            <i class="fas fa-user-tag"></i> {{ pedido.afiliado_codigo }}
+                          </span>
+                          <small style="color: var(--panel-text-light); font-size: 0.8rem;">Afiliado ID: {{ pedido.afiliado_id }}</small>
+                        </div>
+                      {% else %}
+                        <span style="color: var(--panel-text-light); font-style: italic;">
+                          <i class="fas fa-user-slash"></i> Sin afiliado
+                        </span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="pedidos-summary" style="margin-top: 2rem; padding: 1.5rem; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 2px solid var(--panel-border);">
+              <h3 style="margin-bottom: 1.5rem; color: var(--panel-text); display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-chart-bar"></i> Resumen de Pedidos
+              </h3>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                <div style="background: white; padding: 1.5rem; border-radius: 10px; box-shadow: var(--panel-shadow);">
+                  <strong style="color: var(--panel-text-light); font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">Total de Pedidos</strong>
+                  <p style="font-size: 2.5rem; font-weight: 700; color: var(--panel-primary); margin: 0;">{{ pedidos|length }}</p>
+                </div>
+                <div style="background: white; padding: 1.5rem; border-radius: 10px; box-shadow: var(--panel-shadow);">
+                  <strong style="color: var(--panel-text-light); font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">Total Vendido</strong>
+                  <p style="font-size: 2.5rem; font-weight: 700; color: var(--panel-success); margin: 0;">
+                    ${{ '%.2f'|format(pedidos|sum(attribute='monto_total') or 0) }}
+                  </p>
+                </div>
+                <div style="background: white; padding: 1.5rem; border-radius: 10px; box-shadow: var(--panel-shadow);">
+                  <strong style="color: var(--panel-text-light); font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">Pedidos Pagados</strong>
+                  <p style="font-size: 2.5rem; font-weight: 700; color: var(--panel-success); margin: 0;">
+                    {{ pedidos|selectattr('estado_pago', 'equalto', 'pagado')|list|length }}
+                  </p>
+                </div>
+                <div style="background: white; padding: 1.5rem; border-radius: 10px; box-shadow: var(--panel-shadow);">
+                  <strong style="color: var(--panel-text-light); font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">Con Afiliado</strong>
+                  <p style="font-size: 2.5rem; font-weight: 700; color: var(--panel-info); margin: 0;">
+                    {{ pedidos|selectattr('afiliado_id')|list|length }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <div class="content-card">
+            <div style="text-align: center; padding: 3rem;">
+              <i class="fas fa-shopping-cart" style="font-size: 4rem; color: var(--panel-text-light); margin-bottom: 1rem;"></i>
+              <p style="color: var(--panel-text-light); font-size: 1.1rem;">No hay pedidos registrados aún.</p>
+            </div>
+          </div>
+        {% endif %}
+      </section>
+
+      <!-- Vacantes Section -->
+      <section class="content-section" id="vacantes">
+        <div class="section-header">
+          <h1><i class="fas fa-briefcase"></i> Gestión de Vacantes</h1>
+          <p>Administra las ofertas de empleo disponibles en "Trabaja con Nosotros"</p>
+        </div>
+        <div class="content-card">
+          <a href="{{ url_for('admin_vacantes') }}" class="btn-primario" data-panel-modal="true">
+            <i class="fas fa-external-link-alt"></i> Gestionar Vacantes
+          </a>
+          {% if vacantes %}
+            <div style="margin-top: 2rem;">
+              <h3>Vacantes Activas: {{ vacantes|selectattr('activa', 'equalto', True)|list|length }}</h3>
+              <div class="vacantes-list">
+                {% for vacante in vacantes[:5] %}
+                <div class="vacante-item">
+                  <strong>{{ vacante.titulo }}</strong>
+                  <span class="badge badge-{{ 'success' if vacante.activa else 'danger' }}">
+                    {{ 'Activa' if vacante.activa else 'Inactiva' }}
+                  </span>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+
+      <!-- Sugerencias Section -->
+      <section class="content-section" id="sugerencias">
+        <div class="section-header">
+          <h1><i class="fas fa-comments"></i> Sugerencias</h1>
+          <p>Gestiona las sugerencias y comentarios de los usuarios</p>
+        </div>
+        {% if sugerencias %}
+          <div class="content-card">
+            <div class="sugerencias-list">
+              {% for sug in sugerencias %}
+                <div class="sugerencia-item {% if not sug.leido %}no-leido{% elif sug.atendido %}atendido{% elif sug.urgente %}urgente{% endif %}">
+                  <div class="sugerencia-header">
+                    <strong>{{ sug.nombre }}</strong>
+                    <span class="badge badge-{{ 'danger' if sug.urgente else 'info' if not sug.leido else 'success' }}">
+                      {% if sug.urgente %}Urgente{% elif not sug.leido %}Nuevo{% elif sug.atendido %}Atendido{% else %}Leído{% endif %}
+                    </span>
+                  </div>
+                  <div class="sugerencia-email">{{ sug.email }}</div>
+                  <div class="sugerencia-mensaje">{{ sug.mensaje }}</div>
+                  <div class="sugerencia-footer">
+                    <small>{{ sug.created_at.strftime('%d/%m/%Y %H:%M') if sug.created_at else 'Fecha no disponible' }}</small>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% else %}
+          <div class="content-card">
+            <p>No hay sugerencias aún.</p>
+          </div>
+        {% endif %}
+      </section>
+
+      <!-- Sorteos Section -->
+      <section class="content-section" id="sorteos">
+        <div class="section-header">
+          <h1><i class="fas fa-gift"></i> Gestión de Sorteos</h1>
+          <p>Administra los sorteos disponibles en el sistema</p>
+        </div>
+        <div class="content-card">
+          <h3>Crear Nuevo Sorteo</h3>
+          {% if form_sorteo %}
+            <form method="POST" action="{{ url_for('agregar_sorteo') }}">
+              {{ form_sorteo.hidden_tag() }}
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label for="titulo">Título del sorteo *</label>
+                  {{ form_sorteo.titulo(class="form-control") }}
+                  {% if form_sorteo.titulo.errors %}
+                    <small style="color: var(--panel-danger);">
+                      {% for error in form_sorteo.titulo.errors %}
+                        {{ error }}
+                      {% endfor %}
+                    </small>
+                  {% endif %}
+                </div>
+
+                <div class="form-group full-width">
+                  <label for="descripcion">Descripción del sorteo *</label>
+                  {{ form_sorteo.descripcion(class="form-control", rows="4") }}
+                  {% if form_sorteo.descripcion.errors %}
+                    <small style="color: var(--panel-danger);">
+                      {% for error in form_sorteo.descripcion.errors %}
+                        {{ error }}
+                      {% endfor %}
+                    </small>
+                  {% endif %}
+                </div>
+
+                <div class="form-group full-width">
+                  <label for="imagen">Imagen del premio (URL) *</label>
+                  {{ form_sorteo.imagen(class="form-control", placeholder="https://ejemplo.com/imagen.jpg") }}
+                  {% if form_sorteo.imagen.errors %}
+                    <small style="color: var(--panel-danger);">
+                      {% for error in form_sorteo.imagen.errors %}
+                        {{ error }}
+                      {% endfor %}
+                    </small>
+                  {% endif %}
+                  <small>URL de la imagen del premio del sorteo</small>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                {{ form_sorteo.submit(class="btn-primario") }}
+              </div>
+            </form>
+          {% else %}
+            <form method="POST" action="{{ url_for('agregar_sorteo') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label for="titulo">Título del sorteo *</label>
+                  <input type="text" id="titulo" name="titulo" required placeholder="Ej: Gran Sorteo de Smartphone">
+                </div>
+
+                <div class="form-group full-width">
+                  <label for="descripcion">Descripción del sorteo *</label>
+                  <textarea id="descripcion" name="descripcion" rows="4" required placeholder="Describe el sorteo..."></textarea>
+                </div>
+
+                <div class="form-group full-width">
+                  <label for="imagen">Imagen del premio (URL) *</label>
+                  <input type="url" id="imagen" name="imagen" required placeholder="https://ejemplo.com/imagen.jpg">
+                  <small>URL de la imagen del premio del sorteo</small>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn-primario">
+                  <i class="fas fa-plus"></i> Crear Sorteo
+                </button>
+              </div>
+            </form>
+          {% endif %}
+        </div>
+
+        {% if sorteos %}
+          <div class="content-card" style="margin-top: 1.5rem;">
+            <h3>Sorteos Existentes</h3>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Título</th>
+                    <th>Descripción</th>
+                    <th>Imagen</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for sorteo in sorteos %}
+                  <tr>
+                    <td>{{ sorteo.id }}</td>
+                    <td><strong>{{ sorteo.titulo }}</strong></td>
+                    <td>{{ sorteo.descripcion[:100] }}{% if sorteo.descripcion|length > 100 %}...{% endif %}</td>
+                    <td>
+                      {% if sorteo.imagen %}
+                        <img src="{{ sorteo.imagen }}" alt="{{ sorteo.titulo }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px;">
+                      {% else %}
+                        <span style="color: var(--panel-text-light);">Sin imagen</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <a href="{{ url_for('eliminar_sorteo', id=sorteo.id) }}" class="btn-sm btn-danger" data-panel-action="true" onclick="return confirm('¿Estás seguro de eliminar este sorteo?');">
+                        <i class="fas fa-trash"></i> Eliminar
+                      </a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {% endif %}
+      </section>
+    </main>
+  </div>
+
+
+  <div class="panel-modal" id="panel-modal" aria-hidden="true">
+    <div class="panel-modal-backdrop" data-panel-modal-close></div>
+    <div class="panel-modal-content" role="dialog" aria-modal="true">
+      <button class="panel-modal-close" type="button" data-panel-modal-close aria-label="Cerrar">
+        <i class="fas fa-times"></i>
+      </button>
+      <iframe id="panel-modal-iframe" title="Panel modal"></iframe>
+    </div>
+  </div>
+
+  <script>
+    // Sidebar toggle
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    
+    if (sidebarToggle) {
+      sidebarToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+      });
+    }
+
+    // Navigation
+    const navItems = document.querySelectorAll('.nav-item');
+    const sections = document.querySelectorAll('.content-section');
+
+    navItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        // Remove active class from all items and sections
+        navItems.forEach(ni => ni.classList.remove('active'));
+        sections.forEach(s => s.classList.remove('active'));
+        
+        // Add active class to clicked item
+        item.classList.add('active');
+        
+        // Show corresponding section
+        const sectionId = item.getAttribute('data-section');
+        const section = document.getElementById(sectionId);
+        if (section) {
+          section.classList.add('active');
+        }
+
+        // Close sidebar on mobile after selection
+        if (window.innerWidth <= 768) {
+          sidebar.classList.add('collapsed');
+        }
+      });
+    });
+
+    // Theme toggle (existing functionality)
+    (function() {
+      const root = document.documentElement;
+      const saved = localStorage.getItem('panel-theme');
+      if (saved) root.setAttribute('data-panel-theme', saved);
+      else root.setAttribute('data-panel-theme', 'dark');
+
+      const toggle = document.querySelector('.panel-theme-toggle');
+      const setTheme = (t) => {
+        root.setAttribute('data-panel-theme', t);
+        localStorage.setItem('panel-theme', t);
+      };
+
+      if (toggle) {
+        toggle.addEventListener('click', () => {
+          const current = root.getAttribute('data-panel-theme') || 'dark';
+          setTheme(current === 'light' ? 'dark' : 'light');
+        });
+      }
+
+      if (!saved) {
+        const prefersLight = window.matchMedia('(prefers-color-scheme: light)');
+        if (prefersLight.matches) setTheme('light');
+      }
+    })();
+
+    // Productos exclusivos - filtros y buscador
+    function initProductosFilters() {
+      const table = document.getElementById('productos-exclusivos-table');
+      if (!table || table.dataset.filtersBound == 'true') return;
+      table.dataset.filtersBound = 'true';
+
+      const rows = Array.from(table.querySelectorAll('tbody tr[data-producto-row="true"]'));
+      const buscador = document.getElementById('productos-buscador');
+      const filtroCategoria = document.getElementById('productos-filtro-categoria');
+      const filtroEstado = document.getElementById('productos-filtro-estado');
+      const filtroStock = document.getElementById('productos-filtro-stock');
+      const countLabel = document.getElementById('productos-count');
+      const resetBtn = document.getElementById('productos-reset');
+      const stockThreshold = parseInt(table.getAttribute('data-stock-umbral') || '5', 10);
+
+      const normalize = (value) => (value || '').toString().toLowerCase().trim();
+
+      function applyFilters() {
+        const q = normalize(buscador && buscador.value);
+        const cat = normalize(filtroCategoria && filtroCategoria.value);
+        const estado = normalize(filtroEstado && filtroEstado.value);
+        const stockFilter = (filtroStock && filtroStock.value) || '';
+
+        let visible = 0;
+        rows.forEach(row => {
+          const titulo = normalize(row.dataset.titulo);
+          const categoria = normalize(row.dataset.categoria);
+          const est = normalize(row.dataset.estado);
+          const stock = parseInt(row.dataset.stock || '0', 10);
+          const idValue = normalize(row.dataset.id);
+
+          const matchesSearch = !q || titulo.includes(q) || categoria.includes(q) || est.includes(q) || idValue.includes(q);
+          const matchesCat = !cat || categoria == cat;
+          const matchesEstado = !estado || est == estado;
+
+          let matchesStock = true;
+          if (stockFilter == 'bajo') {
+            matchesStock = stock <= stockThreshold;
+          } else if (stockFilter == 'sin') {
+            matchesStock = stock <= 0;
+          }
+
+          const show = matchesSearch && matchesCat && matchesEstado && matchesStock;
+          row.style.display = show ? '' : 'none';
+          if (show) visible += 1;
+        });
+
+        if (countLabel) {
+          countLabel.textContent = `Mostrando ${visible} de ${rows.length}`;
+        }
+      }
+
+      const bind = (el, event) => { if (el) el.addEventListener(event, applyFilters); };
+      bind(buscador, 'input');
+      bind(filtroCategoria, 'change');
+      bind(filtroEstado, 'change');
+      bind(filtroStock, 'change');
+
+      if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+          if (buscador) buscador.value = '';
+          if (filtroCategoria) filtroCategoria.value = '';
+          if (filtroEstado) filtroEstado.value = '';
+          if (filtroStock) filtroStock.value = '';
+          applyFilters();
+        });
+      }
+
+      applyFilters();
+    }
+
+    function updatePanelFromHtml(html) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      if (!doc) return false;
+      const sections = doc.querySelectorAll('.content-section');
+      if (!sections.length) return false;
+
+      const activeSection = document.querySelector('.content-section.active');
+      const activeId = activeSection ? activeSection.id : null;
+
+      const newFlash = doc.querySelector('.flash-messages');
+      const currentFlash = document.querySelector('.flash-messages');
+      if (newFlash) {
+        if (currentFlash) {
+          currentFlash.replaceWith(newFlash);
+        } else {
+          const main = document.querySelector('.main-content');
+          if (main) {
+            main.insertBefore(newFlash, main.firstChild);
+          }
+        }
+      } else if (currentFlash) {
+        currentFlash.remove();
+      }
+
+      document.querySelectorAll('.content-section').forEach(section => {
+        const fresh = doc.getElementById(section.id);
+        if (fresh) {
+          section.innerHTML = fresh.innerHTML;
+        }
+      });
+
+      if (activeId) {
+        document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+        const current = document.getElementById(activeId);
+        if (current) current.classList.add('active');
+      }
+
+      initProductosFilters();
+      return true;
+    }
+
+    async function submitPanelForm(form) {
+      const action = form.getAttribute('action') || window.location.pathname;
+      const method = (form.getAttribute('method') || 'GET').toUpperCase();
+      const formData = new FormData(form);
+      const csrfToken = formData.get('csrf_token') || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+      let url = action;
+      const options = {
+        method,
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      };
+      if (csrfToken) {
+        options.headers['X-CSRFToken'] = csrfToken;
+      }
+
+      if (method == 'GET') {
+        const urlObj = new URL(url, window.location.origin);
+        formData.forEach((value, key) => urlObj.searchParams.set(key, value));
+        url = urlObj.toString();
+      } else {
+        options.body = formData;
+      }
+
+      try {
+        const response = await fetch(url, options);
+        const html = await response.text();
+        const updated = updatePanelFromHtml(html);
+        if (!updated) {
+          await refreshPanel();
+        }
+      } catch (err) {
+        console.error('Error al enviar formulario:', err);
+      }
+    }
+
+    async function handlePanelActionLink(link) {
+      const url = link.getAttribute('href');
+      if (!url) return;
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          credentials: 'same-origin',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const html = await response.text();
+        const updated = updatePanelFromHtml(html);
+        if (!updated) {
+          await refreshPanel();
+        }
+      } catch (err) {
+        console.error('Error al ejecutar accion:', err);
+      }
+    }
+
+    async function refreshPanel() {
+      try {
+        const response = await fetch(window.location.pathname, {
+          credentials: 'same-origin',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const html = await response.text();
+        updatePanelFromHtml(html);
+      } catch (err) {
+        console.error('Error al refrescar panel:', err);
+      }
+    }
+
+    function openPanelModal(url) {
+      const modal = document.getElementById('panel-modal');
+      const iframe = document.getElementById('panel-modal-iframe');
+      if (!modal || !iframe) return;
+      iframe.src = url;
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closePanelModal() {
+      const modal = document.getElementById('panel-modal');
+      const iframe = document.getElementById('panel-modal-iframe');
+      if (!modal || !iframe) return;
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+      iframe.src = 'about:blank';
+      refreshPanel();
+    }
+
+    function initPanelInteractions() {
+      if (window.__panelInterceptionsInitialized) return;
+      window.__panelInterceptionsInitialized = true;
+
+      document.addEventListener('submit', (event) => {
+        const form = event.target;
+        if (!(form instanceof HTMLFormElement)) return;
+        if (!form.closest('.main-content')) return;
+        if (form.dataset.noAjax == 'true') return;
+        if (event.defaultPrevented) return;
+        event.preventDefault();
+        submitPanelForm(form);
+      });
+
+      document.addEventListener('click', (event) => {
+        const closeTarget = event.target.closest('[data-panel-modal-close]');
+        if (closeTarget) {
+          event.preventDefault();
+          closePanelModal();
+          return;
+        }
+
+        const link = event.target.closest('a');
+        if (!link || event.defaultPrevented) return;
+
+        if (link.dataset.panelModal == 'true') {
+          event.preventDefault();
+          openPanelModal(link.href);
+          return;
+        }
+
+        if (link.dataset.panelAction == 'true') {
+          event.preventDefault();
+          handlePanelActionLink(link);
+        }
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key != 'Escape') return;
+        const modal = document.getElementById('panel-modal');
+        if (modal && modal.classList.contains('is-open')) {
+          closePanelModal();
+        }
+      });
+    }
+
+    initProductosFilters();
+    initPanelInteractions();
+
+  </script>
+</body>
+</html>

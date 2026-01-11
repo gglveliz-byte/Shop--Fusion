@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Panel del Vendedor | ShopFusion</title>
+
+  <!-- En producción: enlaza tu CSS/JS reales -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/panel_vendedor.css') }}">
+  <script defer src="{{ url_for('static', filename='js/panel_vendedor.js') }}"></script>
+
+  <!-- Meta básicos -->
+  <meta name="csrf-token" content="{{ csrf_token() if csrf_token is defined else '' }}">
+</head>
+<body class="vendor-app">
+
+  <!-- Toasts / Flashes -->
+  {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+      <div class="toast-stack" aria-live="polite" aria-atomic="true">
+        {% for category, msg in messages %}
+          <div class="toast toast-{{ category }}" role="status">
+            <span class="toast-msg">{{ msg }}</span>
+            <button class="toast-close" type="button" aria-label="Cerrar">&times;</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Layout: Sidebar + Main -->
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" aria-label="Navegación del panel">
+      <div class="sidebar__brand">
+        <a href="{{ url_for('index') }}" class="brand-link">
+          <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="ShopFusion" class="brand-logo">
+          <span class="brand-name">ShopFusion</span>
+        </a>
+      </div>
+
+      <nav class="sidebar__nav">
+        <ul>
+          <li><a href="#dashboard" class="nav-link is-active" data-view="dashboard">Dashboard</a></li>
+          <li><a href="#productos" class="nav-link" data-view="productos">Productos</a></li>
+          <li><a href="#inventario" class="nav-link" data-view="inventario">Inventario</a></li>
+          <li><a href="#pedidos" class="nav-link" data-view="pedidos">Pedidos</a></li>
+          <li><a href="#envios" class="nav-link" data-view="envios">Envíos</a></li>
+          <li><a href="#ventas" class="nav-link" data-view="ventas">Ventas (gráficas)</a></li>
+          <li><a href="#notificaciones" class="nav-link" data-view="notificaciones">Notificaciones</a></li>
+          <li><a href="#config" class="nav-link" data-view="config">Configuración</a></li>
+        </ul>
+      </nav>
+
+      <div class="sidebar__footer">
+        <a href="{{ url_for('logout') }}" class="btn btn-ghost">Cerrar sesión</a>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Topbar -->
+      <header class="topbar">
+        <button class="btn-icon topbar__toggle" aria-label="Mostrar/ocultar menú" data-action="toggle-sidebar">
+          <!-- ícono hamburguesa -->
+          <span aria-hidden="true">☰</span>
+        </button>
+
+        <form class="topbar__search" role="search" aria-label="Buscar en el panel">
+          <input type="search" name="q" placeholder="Buscar pedidos, productos…" autocomplete="off">
+          <button class="btn" type="submit">Buscar</button>
+        </form>
+
+        <div class="topbar__actions">
+          <button class="btn-icon" aria-label="Notificaciones" data-view="notificaciones">
+            🔔 <span class="badge" id="badge-notif" aria-label="Nuevas notificaciones" hidden>0</span>
+          </button>
+
+          <div class="user-dropdown">
+            <button class="btn-ghost" aria-haspopup="menu" aria-expanded="false">
+              <span class="avatar" aria-hidden="true">👤</span>
+<span class="username">{{ vendedor_nombre or vendedor_username }}</span>
+            </button>
+            <ul class="menu" role="menu" hidden>
+              <li role="menuitem"><a href="#perfil" data-view="config">Perfil & Pagos</a></li>
+              <li role="menuitem"><a href="{{ url_for('logout') }}">Cerrar sesión</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <!-- Vistas -->
+      <section id="view-dashboard" class="view is-active" data-view="dashboard" aria-labelledby="h-dashboard">
+        <h1 id="h-dashboard">Resumen del negocio</h1>
+
+        <div class="kpi-grid">
+          <article class="kpi">
+            <h2>Ventas hoy</h2>
+            <p class="kpi__value" id="kpi-sales-today">—</p>
+          </article>
+          <article class="kpi">
+            <h2>Ventas 7 días</h2>
+            <p class="kpi__value" id="kpi-sales-7d">—</p>
+          </article>
+          <article class="kpi">
+            <h2>Ticket promedio</h2>
+            <p class="kpi__value" id="kpi-aov">—</p>
+          </article>
+          <article class="kpi">
+            <h2>Pedidos pendientes</h2>
+            <p class="kpi__value" id="kpi-pending">—</p>
+          </article>
+        </div>
+
+        <div class="panel">
+          <header class="panel__header">
+            <h3>Rendimiento de ventas</h3>
+            <div class="filters">
+              <select id="sales-range">
+                <option value="7d">Últimos 7 días</option>
+                <option value="30d" selected>Últimos 30 días</option>
+                <option value="custom">Personalizado…</option>
+              </select>
+              <input type="date" id="from-date" hidden>
+              <input type="date" id="to-date" hidden>
+              <button class="btn" id="btn-apply-range" hidden>Aplicar</button>
+            </div>
+          </header>
+          <div class="panel__body">
+            <!-- Gráfica (canvas o contenedor) -->
+            <div id="chart-sales" role="img" aria-label="Gráfica de ventas"></div>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <div class="panel">
+            <header class="panel__header">
+              <h3>Top productos</h3>
+            </header>
+            <div class="panel__body">
+              <table class="table" id="tbl-top-products" aria-label="Top productos">
+                <thead>
+                  <tr><th>Producto</th><th>Ventas</th><th>Ingresos</th></tr>
+                </thead>
+                <tbody><!-- JS --></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <header class="panel__header">
+              <h3>Alertas</h3>
+            </header>
+            <div class="panel__body">
+              <ul id="list-alerts" class="list">
+                <!-- stock bajo, pedidos sin enviar, etc. -->
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-productos" class="view" data-view="productos" aria-labelledby="h-productos">
+        <header class="view__header">
+          <h1 id="h-productos">Productos</h1>
+          <div class="actions">
+            <button class="btn btn-primary" data-action="open-modal" data-target="#modal-producto">Nuevo producto</button>
+          </div>
+        </header>
+
+        <div class="panel">
+          <header class="panel__header">
+            <div class="filters">
+              <input type="search" id="prod-search" placeholder="Buscar por nombre o SKU">
+              <select id="prod-category">
+                <option value="">Todas las categorías</option>
+                {% for c in CATEGORIAS or [] %}
+                  <option value="{{ c }}">{{ c }}</option>
+                {% endfor %}
+              </select>
+              <select id="prod-status">
+                <option value="">Todos</option>
+                <option value="published">Publicado</option>
+                <option value="draft">Borrador</option>
+              </select>
+            </div>
+          </header>
+          <div class="panel__body">
+            <table class="table" id="tbl-productos" aria-label="Listado de productos">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Precio</th>
+                  <th>Categoría</th>
+                  <th>Stock</th>
+                  <th>Estado</th>
+                  <th style="width:1%;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody><!-- JS --></tbody>
+            </table>
+            <nav class="pagination" id="prod-pagination" aria-label="Paginación de productos"></nav>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-inventario" class="view" data-view="inventario" aria-labelledby="h-inventario">
+        <h1 id="h-inventario">Inventario</h1>
+        <div class="panel">
+          <div class="panel__body">
+            <table class="table" id="tbl-inventario" aria-label="Inventario">
+              <thead>
+                <tr><th>SKU</th><th>Producto</th><th>Stock</th><th>Umbral</th><th>Actualizar</th></tr>
+              </thead>
+              <tbody><!-- JS --></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-pedidos" class="view" data-view="pedidos" aria-labelledby="h-pedidos">
+        <h1 id="h-pedidos">Pedidos</h1>
+        <div class="panel">
+          <header class="panel__header">
+            <div class="filters">
+              <select id="order-status">
+                <option value="">Todos</option>
+                <option value="new">Nuevo</option>
+                <option value="preparing">Preparando</option>
+                <option value="shipped">Enviado</option>
+                <option value="completed">Completado</option>
+                <option value="canceled">Cancelado</option>
+              </select>
+              <input type="date" id="order-from">
+              <input type="date" id="order-to">
+              <button class="btn" id="order-filter-apply">Aplicar</button>
+            </div>
+          </header>
+          <div class="panel__body">
+            <table class="table" id="tbl-pedidos" aria-label="Pedidos">
+              <thead>
+                <tr><th>#</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Acciones</th></tr>
+              </thead>
+              <tbody><!-- JS --></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-envios" class="view" data-view="envios" aria-labelledby="h-envios">
+        <h1 id="h-envios">Envíos</h1>
+        <div class="panel">
+          <div class="panel__body">
+            <table class="table" id="tbl-envios" aria-label="Envíos">
+              <thead>
+                <tr><th>Pedido</th><th>Transportista</th><th>Guía</th><th>Estado</th><th>Fecha despacho</th><th>Acciones</th></tr>
+              </thead>
+              <tbody><!-- JS --></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-ventas" class="view" data-view="ventas" aria-labelledby="h-ventas">
+        <h1 id="h-ventas">Gráficas de ventas</h1>
+        <div class="panel">
+          <header class="panel__header">
+            <div class="filters">
+              <select id="series-groupby" aria-label="Agrupar por">
+                <option value="day" selected>Día</option>
+                <option value="category">Categoría</option>
+                <option value="product">Producto</option>
+              </select>
+              <input type="date" id="series-from">
+              <input type="date" id="series-to">
+              <button class="btn" id="series-apply">Aplicar</button>
+            </div>
+          </header>
+          <div class="panel__body">
+            <div id="chart-series" role="img" aria-label="Gráfica de series"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-notificaciones" class="view" data-view="notificaciones" aria-labelledby="h-notificaciones">
+        <h1 id="h-notificaciones">Notificaciones</h1>
+        <div class="panel">
+          <div class="panel__body">
+            <ul class="notif-list" id="notif-list">
+              <!-- JS: items -->
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-config" class="view" data-view="config" aria-labelledby="h-config">
+        <h1 id="h-config">Configuración básica</h1>
+
+        <form id="form-config" method="post" action="{{ url_for('vendedores_info') }}" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+          <fieldset class="panel">
+            <legend class="panel__header">Perfil de tienda</legend>
+            <div class="panel__body grid two">
+              <label>
+                <span>Nombre comercial</span>
+                <input type="text" name="nombre_comercial" maxlength="120" required>
+              </label>
+              <label>
+                <span>Ciudad</span>
+                <input type="text" name="ciudad" required>
+              </label>
+              <label class="full">
+                <span>Dirección</span>
+                <input type="text" name="direccion" required>
+              </label>
+              <label class="full">
+                <span>Logo (URL)</span>
+                <input type="url" name="logo_url" placeholder="https://…">
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="panel">
+            <legend class="panel__header">Pagos & retiros</legend>
+            <div class="panel__body grid two">
+              <label>
+                <span>Método de retiro</span>
+                <select name="metodo_pago" id="cfg-metodo-pago" required>
+                  <option value="" disabled selected>Selecciona…</option>
+                  <option value="banco">Transferencia bancaria</option>
+                  <option value="paypal">PayPal</option>
+                </select>
+              </label>
+
+              <div class="bank-only" hidden>
+                <label>
+                  <span>Banco</span>
+                  <input type="text" name="banco">
+                </label>
+                <label>
+                  <span>Tipo de cuenta</span>
+                  <select name="tipo_cuenta">
+                    <option value="">Selecciona…</option>
+                    <option value="ahorros">Ahorros</option>
+                    <option value="corriente">Corriente</option>
+                  </select>
+                </label>
+                <label class="full">
+                  <span>Número de cuenta</span>
+                  <input type="text" name="numero_cuenta" inputmode="numeric">
+                </label>
+              </div>
+
+              <div class="paypal-only" hidden>
+                <label class="full">
+                  <span>Correo PayPal</span>
+                  <input type="email" name="paypal_email" placeholder="tu-cuenta@paypal.com">
+                </label>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="panel">
+            <legend class="panel__header">Envío & políticas</legend>
+            <div class="panel__body grid two">
+              <label>
+                <span>Zona de envío</span>
+                <select name="zona_envio">
+                  <option value="local">Local</option>
+                  <option value="nacional" selected>Nacional</option>
+                </select>
+              </label>
+              <label>
+                <span>Tiempo promedio de preparación (días)</span>
+                <input type="number" name="tiempo_preparacion" min="0" value="1">
+              </label>
+              <label class="full">
+                <span>Política de devoluciones</span>
+                <textarea name="politica_devoluciones" rows="4" placeholder="Texto visible para clientes…"></textarea>
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Guardar cambios</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- MODALES -->
+
+      <!-- Modal: Crear/Editar Producto -->
+      <dialog id="modal-producto" class="modal" aria-labelledby="h-modal-producto">
+        <form id="form-producto" method="dialog" novalidate>
+          <header class="modal__header">
+            <h2 id="h-modal-producto">Producto</h2>
+            <button class="btn-icon modal__close" type="button" data-action="close-modal" aria-label="Cerrar">&times;</button>
+          </header>
+
+          <div class="modal__body">
+            <input type="hidden" name="id" id="prod-id">
+
+            <div class="grid two">
+              <label>
+                <span>Título</span>
+                <input type="text" name="titulo" id="prod-titulo" maxlength="100" required>
+              </label>
+              <label>
+                <span>Precio</span>
+                <input type="number" step="0.01" min="0" name="precio" id="prod-precio" required>
+              </label>
+              <label>
+                <span>Categoría</span>
+                <select name="categoria" id="prod-categoria" required>
+                  <option value="" disabled selected>Selecciona…</option>
+                  {% for c in CATEGORIAS or [] %}
+                    <option value="{{ c }}">{{ c }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label>
+                <span>Estado</span>
+                <select name="estado" id="prod-estado">
+                  <option value="draft">Borrador</option>
+                  <option value="published" selected>Publicado</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="full">
+              <span>Descripción</span>
+              <textarea name="descripcion" id="prod-descripcion" rows="5"></textarea>
+            </label>
+
+            <fieldset>
+              <legend>Imágenes</legend>
+              <div class="grid two">
+                <label class="full">
+                  <span>URLs (separadas por coma)</span>
+                  <input type="text" name="imagenes" id="prod-imagenes" placeholder="https://img1.jpg, https://img2.jpg">
+                </label>
+                <div class="gallery" id="prod-gallery"><!-- Previews --></div>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>Videos publicitarios</legend>
+              <div class="grid two">
+                <label class="full">
+                  <span>URLs de video (mp4/webm/YouTube/Vimeo)</span>
+                  <input type="text" name="videos" id="prod-videos" placeholder="https://video.mp4, https://youtu.be/...">
+                </label>
+                <div class="video-previews" id="prod-video-previews"><!-- Previews --></div>
+              </div>
+            </fieldset>
+          </div>
+
+          <footer class="modal__footer">
+            <button class="btn" type="button" data-action="close-modal">Cancelar</button>
+            <button class="btn btn-primary" type="submit" data-action="save-product">Guardar</button>
+          </footer>
+        </form>
+      </dialog>
+
+      <!-- Modal: Detalle pedido -->
+      <dialog id="modal-pedido" class="modal" aria-labelledby="h-modal-pedido">
+        <div class="modal__content">
+          <header class="modal__header">
+            <h2 id="h-modal-pedido">Pedido #<span id="pedido-code">—</span></h2>
+            <button class="btn-icon modal__close" type="button" data-action="close-modal" aria-label="Cerrar">&times;</button>
+          </header>
+          <div class="modal__body" id="pedido-detalle"><!-- JS --></div>
+          <footer class="modal__footer">
+            <button class="btn" type="button" data-action="close-modal">Cerrar</button>
+            <button class="btn btn-primary" type="button" id="btn-actualizar-estado">Actualizar estado</button>
+          </footer>
+        </div>
+      </dialog>
+
+    </main>
+  </div>
+
+  <!-- Plantillas (para clonar con JS) -->
+  <template id="tpl-product-row">
+    <tr>
+      <td class="cell-title">
+        <div class="prod">
+          <img class="prod-thumb" alt="">
+          <div class="prod-info">
+            <div class="prod-name"></div>
+            <div class="prod-sku"></div>
+          </div>
+        </div>
+      </td>
+      <td class="cell-price"></td>
+      <td class="cell-category"></td>
+      <td class="cell-stock"></td>
+      <td class="cell-status"></td>
+      <td class="cell-actions">
+        <button class="btn-xxs" data-action="edit">Editar</button>
+        <button class="btn-xxs btn-danger" data-action="delete">Eliminar</button>
+      </td>
+    </tr>
+  </template>
+
+  <template id="tpl-notif-item">
+    <li class="notif">
+      <span class="notif-icon" aria-hidden="true">🔔</span>
+      <div class="notif-body">
+        <div class="notif-title"></div>
+        <div class="notif-meta"></div>
+      </div>
+      <button class="btn-xxs" data-action="mark-read">Marcar leído</button>
+    </li>
+  </template>
+
+</body>
+</html>

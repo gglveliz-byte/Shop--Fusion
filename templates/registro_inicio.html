@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro e Inicio de Sesión | ShopFusion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegant_styles.css') }}">
+    <style>
+        .auth-container {
+            max-width: 450px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: var(--bg-elegant-light, #ffffff);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        .auth-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .auth-tab {
+            flex: 1;
+            padding: 1rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        .auth-tab.active {
+            color: var(--primary-color, #1C1C1C);
+            border-bottom-color: var(--primary-color, #1C1C1C);
+        }
+        .auth-tab:hover {
+            color: var(--primary-color, #1C1C1C);
+        }
+        .auth-form {
+            display: none;
+        }
+        .auth-form.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-elegant-dark, #1C1C1C);
+        }
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color, #1C1C1C);
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--primary-color, #1C1C1C);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn-submit:hover {
+            background: #333;
+        }
+        .alerts {
+            margin-bottom: 1.5rem;
+        }
+        .alert {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .benefits {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(28, 28, 28, 0.05);
+            border-radius: 8px;
+        }
+        .benefits h3 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-elegant-dark, #1C1C1C);
+        }
+        .benefits ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .benefits li {
+            padding: 0.5rem 0;
+            color: #4b5563;
+            font-size: 0.9rem;
+        }
+        .benefits li:before {
+            content: "✓ ";
+            color: #10b981;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        .logo-link {
+            display: block;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('index') }}" class="logo-link">
+        <svg width="140" height="60" viewBox="0 0 140 60">
+            <rect width="140" height="60" fill="#1C1C1C" rx="8"/>
+            <text x="10" y="40" fill="#FFD700" font-size="20" font-family="Inter, sans-serif">ShopFusion</text>
+        </svg>
+    </a>
+
+    <div class="auth-container">
+        <div class="auth-tabs">
+            <button class="auth-tab active" data-tab="login">Iniciar Sesión</button>
+            <button class="auth-tab" data-tab="register">Registrarse</button>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=True) %}
+            {% if messages %}
+                <div class="alerts">
+                    {% for category, msg in messages %}
+                        <div class="alert alert-{{ category }}">{{ msg }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Formulario de Login -->
+        <form id="login-form" class="auth-form active" action="{{ url_for('login') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="correoInput">Correo electrónico</label>
+                <input type="email" id="correoInput" name="correoInput" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="contrasenaInput">Contraseña</label>
+                <input type="password" id="contrasenaInput" name="contrasenaInput" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-submit">Iniciar Sesión</button>
+        </form>
+
+        <!-- Formulario de Registro -->
+        <form id="register-form" class="auth-form" action="{{ url_for('registro') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="nombreInput">Nombre completo</label>
+                <input type="text" id="nombreInput" name="nombreInput" required autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label for="correoRegistro">Correo electrónico</label>
+                <input type="email" id="correoRegistro" name="correoInput" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="contrasenaRegistro">Contraseña</label>
+                <input type="password" id="contrasenaRegistro" name="contrasenaInput" required autocomplete="new-password" minlength="6">
+            </div>
+            <div class="form-group">
+                <label for="confirmarContrasena">Confirmar contraseña</label>
+                <input type="password" id="confirmarContrasena" name="confirmarContrasena" required autocomplete="new-password" minlength="6">
+            </div>
+            <button type="submit" class="btn-submit">Crear Cuenta</button>
+            <div class="benefits">
+                <h3>🎁 Al registrarte obtienes:</h3>
+                <ul>
+                    <li>Descuentos exclusivos en tus compras</li>
+                    <li>Acceso a ofertas especiales</li>
+                    <li>Seguimiento de tus pedidos</li>
+                    <li>Historial de compras</li>
+                    <li>Programa de puntos y recompensas</li>
+                </ul>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.auth-tab');
+            const forms = document.querySelectorAll('.auth-form');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const targetTab = tab.getAttribute('data-tab');
+                    
+                    // Remover active de todos los tabs y forms
+                    tabs.forEach(t => t.classList.remove('active'));
+                    forms.forEach(f => f.classList.remove('active'));
+                    
+                    // Agregar active al tab y form seleccionado
+                    tab.classList.add('active');
+                    document.getElementById(`${targetTab}-form`).classList.add('active');
+                });
+            });
+
+            // Validar que las contraseñas coincidan
+            const registerForm = document.getElementById('register-form');
+            const confirmPassword = document.getElementById('confirmarContrasena');
+            const password = document.getElementById('contrasenaRegistro');
+
+            if (registerForm && confirmPassword && password) {
+                registerForm.addEventListener('submit', (e) => {
+                    if (password.value !== confirmPassword.value) {
+                        e.preventDefault();
+                        alert('Las contraseñas no coinciden');
+                        return false;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+

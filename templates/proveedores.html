@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sé Nuestro Proveedor - ShopFusion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegant_styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('index') }}">ShopFusion</a>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                <li><a href="{{ url_for('vendedores_info') }}">Info para Vendedores</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main style="padding-top: 100px; max-width: 1200px; margin: 0 auto; padding: 100px 20px 60px;">
+        <section style="text-align: center; margin-bottom: 60px;">
+            <h1 style="font-size: 2.5rem; font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 20px;">
+                <i class="fas fa-truck"></i> Sé Nuestro Proveedor
+            </h1>
+            <p style="font-size: 1.25rem; color: var(--text-elegant-light); max-width: 800px; margin: 0 auto;">
+                Vende tus productos a través de ShopFusion. Nosotros nos encargamos de la venta, tú solo provees los productos.
+            </p>
+        </section>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 60px;">
+            <div style="background: var(--bg-elegant-white); border: 1px solid var(--border-elegant-light); border-radius: var(--radius-elegant-lg); padding: 30px; box-shadow: var(--shadow-elegant-md);">
+                <div style="font-size: 3rem; color: var(--elegant-primary); margin-bottom: 20px;">
+                    <i class="fas fa-warehouse"></i>
+                </div>
+                <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 15px;">
+                    Sin Preocuparte por Ventas
+                </h3>
+                <p style="color: var(--text-elegant-light); line-height: 1.6;">
+                    Nosotros nos encargamos de toda la venta online, marketing, atención al cliente y proceso de pago.
+                </p>
+            </div>
+
+            <div style="background: var(--bg-elegant-white); border: 1px solid var(--border-elegant-light); border-radius: var(--radius-elegant-lg); padding: 30px; box-shadow: var(--shadow-elegant-md);">
+                <div style="font-size: 3rem; color: var(--elegant-accent); margin-bottom: 20px;">
+                    <i class="fas fa-shipping-fast"></i>
+                </div>
+                <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 15px;">
+                    Gestión de Envíos
+                </h3>
+                <p style="color: var(--text-elegant-light); line-height: 1.6;">
+                    Tú solo necesitas enviar los productos cuando se realiza una compra. Nosotros coordinamos todo.
+                </p>
+            </div>
+
+            <div style="background: var(--bg-elegant-white); border: 1px solid var(--border-elegant-light); border-radius: var(--radius-elegant-lg); padding: 30px; box-shadow: var(--shadow-elegant-md);">
+                <div style="font-size: 3rem; color: var(--elegant-secondary); margin-bottom: 20px;">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 15px;">
+                    Más Visibilidad
+                </h3>
+                <p style="color: var(--text-elegant-light); line-height: 1.6;">
+                    Tus productos llegarán a miles de clientes a través de nuestra plataforma y marketing.
+                </p>
+            </div>
+        </div>
+
+        <section style="background: linear-gradient(135deg, var(--elegant-primary) 0%, var(--elegant-accent) 100%); border-radius: var(--radius-elegant-xl); padding: 50px 30px; text-align: center; color: white; margin-bottom: 60px;">
+            <h2 style="font-size: 2rem; font-weight: 700; margin-bottom: 20px;">
+                <i class="fas fa-check-circle"></i> ¿Cómo Funciona?
+            </h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px; margin-top: 40px;">
+                <div>
+                    <div style="font-size: 3rem; margin-bottom: 15px;">1️⃣</div>
+                    <h4 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 10px;">Regístrate</h4>
+                    <p style="opacity: 0.9;">Completa tu perfil de proveedor</p>
+                </div>
+                <div>
+                    <div style="font-size: 3rem; margin-bottom: 15px;">2️⃣</div>
+                    <h4 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 10px;">Agrega Productos</h4>
+                    <p style="opacity: 0.9;">Sube tus productos con imágenes y descripciones</p>
+                </div>
+                <div>
+                    <div style="font-size: 3rem; margin-bottom: 15px;">3️⃣</div>
+                    <h4 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 10px;">Recibe Pedidos</h4>
+                    <p style="opacity: 0.9;">Te notificamos cuando alguien compra tu producto</p>
+                </div>
+                <div>
+                    <div style="font-size: 3rem; margin-bottom: 15px;">4️⃣</div>
+                    <h4 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 10px;">Envía y Cobra</h4>
+                    <p style="opacity: 0.9;">Envía el producto y recibe tu pago</p>
+                </div>
+            </div>
+        </section>
+
+        <section style="text-align: center; background: var(--bg-elegant-gray-50); border-radius: var(--radius-elegant-xl); padding: 50px 30px;">
+            <h2 style="font-size: 2rem; font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 20px;">
+                Requisitos para Proveedores
+            </h2>
+            <ul style="list-style: none; padding: 0; max-width: 700px; margin: 30px auto 0; text-align: left;">
+                <li style="padding: 15px; margin-bottom: 10px; background: white; border-radius: var(--radius-elegant-md); border-left: 4px solid var(--elegant-primary);">
+                    <i class="fas fa-check" style="color: var(--elegant-primary); margin-right: 10px;"></i>
+                    <strong>Productos de calidad:</strong> Debes tener productos nuevos o en excelente estado
+                </li>
+                <li style="padding: 15px; margin-bottom: 10px; background: white; border-radius: var(--radius-elegant-md); border-left: 4px solid var(--elegant-accent);">
+                    <i class="fas fa-check" style="color: var(--elegant-accent); margin-right: 10px;"></i>
+                    <strong>Capacidad de envío:</strong> Debes poder enviar productos dentro de 2-5 días hábiles
+                </li>
+                <li style="padding: 15px; margin-bottom: 10px; background: white; border-radius: var(--radius-elegant-md); border-left: 4px solid var(--elegant-secondary);">
+                    <i class="fas fa-check" style="color: var(--elegant-secondary); margin-right: 10px;"></i>
+                    <strong>Precios competitivos:</strong> Tus productos deben tener precios de mercado competitivos
+                </li>
+                <li style="padding: 15px; margin-bottom: 10px; background: white; border-radius: var(--radius-elegant-md); border-left: 4px solid var(--elegant-primary);">
+                    <i class="fas fa-check" style="color: var(--elegant-primary); margin-right: 10px;"></i>
+                    <strong>Disponibilidad:</strong> Debes mantener un stock actualizado en la plataforma
+                </li>
+            </ul>
+        </section>
+
+        <div style="text-align: center; margin-top: 60px;">
+            <a href="{{ url_for('registro_vendedor') }}" 
+               style="display: inline-block; padding: 16px 40px; background: var(--elegant-primary); color: white; text-decoration: none; border-radius: var(--radius-elegant-lg); font-weight: 700; font-size: 1.125rem; transition: var(--transition-elegant); box-shadow: var(--shadow-elegant-lg);">
+                <i class="fas fa-user-plus"></i> Registrarse como Proveedor
+            </a>
+            <p style="margin-top: 20px; color: var(--text-elegant-light);">
+                ¿Ya tienes cuenta? <a href="{{ url_for('login_vendedor') }}" style="color: var(--elegant-primary); text-decoration: none; font-weight: 600;">Inicia sesión aquí</a>
+            </p>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>ShopFusion</h3>
+                <p style="color: var(--text-elegant-light);">Tu tienda online de confianza</p>
+            </div>
+            <div class="footer-section">
+                <h3>Enlaces</h3>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Inicio</a></li>
+                    <li><a href="{{ url_for('vendedores_info') }}">Información para Vendedores</a></li>
+                    <li><a href="{{ url_for('contacto') }}">Contacto</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; <span id="current-year"></span> ShopFusion. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+    <script>
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>
+    </footer>
+</body>
+</html>
+
