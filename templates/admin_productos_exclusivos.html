@@ -136,6 +136,10 @@
             <input type="checkbox" name="importado" {% if request.form.get('importado') %}checked{% endif %}>
             Producto importado (mostrar tiempo de llegada 20-30 días)
           </label>
+          <label style="display:flex; align-items:center; gap:0.4rem;">
+            <input type="checkbox" name="mas_vendido" {% if request.form.get('mas_vendido') %}checked{% endif %}>
+            Marcar como "Más Vendido"
+          </label>
         </div>
 
         <!-- Imágenes (URLs) -->
@@ -199,6 +203,7 @@
               <th>Stock</th>
               <th>Envío gratis</th>
               <th>Importado</th>
+              <th>Más Vendido</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -220,8 +225,13 @@
                 <td>{{ p.stock }}</td>
                 <td>{{ 'Sí' if p.envio_gratis else 'No' }}</td>
                 <td>{{ 'Sí' if p.importado else 'No' }}</td>
+                <td>{{ 'Sí' if p.mas_vendido else 'No' }}</td>
                 <td>{{ p.estado }}</td>
                 <td>
+                  <form method="POST" action="{{ url_for('toggle_mas_vendido_producto_exclusivo', producto_id=p.id) }}" style="display:inline; margin-right:0.5rem;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn-accion">{% if p.mas_vendido %}Desmarcar{% else %}Marcar{% endif %}</button>
+                  </form>
                   <a
                     href="{{ url_for('editar_producto_exclusivo', producto_id=p.id) }}"
                     class="btn-accion"

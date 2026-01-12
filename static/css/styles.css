@@ -65,6 +65,10 @@ body {
   overflow-x: hidden;
 }
 
+/* Utilidad: preserva saltos de línea en texto (respeta \n → salto) */
+.preserve-lines { white-space: pre-line; }
+
+
 body.dark-theme {
   --bg-card: #0f0f1a;
   --bg-elegant-gray-50: #1a1a1a;
@@ -1533,17 +1537,16 @@ nav {
   color: white;
   font-size: 0.95rem;
 }
-
 .form-control,
 .form-input,
 .form-textarea {
   width: 100%;
   padding: 1rem;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--border-elegant-light);
   border-radius: 10px;
   font-size: 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
+  background: var(--bg-card);
+  color: var(--text-dark);
   font-family: var(--font-body);
   transition: all 0.3s ease;
 }
@@ -1551,16 +1554,26 @@ nav {
 .form-control::placeholder,
 .form-input::placeholder,
 .form-textarea::placeholder {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-elegant-light);
+  opacity: 1;
 }
 
 .form-control:focus,
 .form-input:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: white;
-  background: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+  border-color: var(--neon-orange);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 4px rgba(255, 95, 31, 0.08);
+}
+
+/* Asegurar buena visibilidad en modo oscuro aunque use variables */
+body.dark-theme .form-control,
+body.dark-theme .form-input,
+body.dark-theme .form-textarea {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.08);
+  color: var(--text-dark);
 }
 
 .form-textarea {

@@ -48,6 +48,21 @@ def _link_proveedor_column_exists(conn):
         return bool(resultado.get('exists', False)) if resultado else False
 
 
+def _mas_vendido_column_exists(conn):
+    """Verifica si la columna mas_vendido existe en productos_vendedor."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.columns 
+                WHERE table_schema = 'shopfusion'
+                AND table_name = 'productos_vendedor' 
+                AND column_name = 'mas_vendido'
+            );
+        """)
+        resultado = cur.fetchone()
+        return bool(resultado.get('exists', False)) if resultado else False
+
+
 def ensure_link_proveedor_column():
     """Asegura que la columna link_proveedor exista en productos_vendedor"""
     conn = get_db_connection()
@@ -120,6 +135,13 @@ def ensure_extra_product_columns(conn=None):
                     cur.execute("ALTER TABLE shopfusion.productos_vendedor ADD COLUMN link_proveedor TEXT;")
                     conn.commit()
                     cols.add('link_proveedor')
+                except Exception:
+                    conn.rollback()
+            if 'mas_vendido' not in cols:
+                try:
+                    cur.execute("ALTER TABLE shopfusion.productos_vendedor ADD COLUMN mas_vendido BOOLEAN DEFAULT FALSE;")
+                    conn.commit()
+                    cols.add('mas_vendido')
                 except Exception:
                     conn.rollback()
         return cols
@@ -469,6 +491,7 @@ def actualizar_producto_exclusivo(producto_id: int, campos: dict) -> bool:
         "link_proveedor",
         "envio_gratis",
         "importado",
+        "mas_vendido",
     }
 
     try:
@@ -487,6 +510,14 @@ def actualizar_producto_exclusivo(producto_id: int, campos: dict) -> bool:
                 campos = {k: v for k, v in campos.items() if k != "link_proveedor"}
         finally:
             conn_check.close()
+
+    if "mas_vendido" in campos:
+        conn_check2 = get_db_connection()
+        try:
+            if not _mas_vendido_column_exists(conn_check2):
+                campos = {k: v for k, v in campos.items() if k != "mas_vendido"}
+        finally:
+            conn_check2.close()
 
     sets = []
     valores = []
@@ -544,7 +575,7 @@ def crear_producto_exclusivo(campos: dict) -> int:
     permitidos = {
         "titulo", "descripcion", "precio", "precio_oferta", "precio_proveedor",
         "categoria", "stock", "estado", "imagenes", "link_proveedor",
-        "envio_gratis", "importado",
+        "envio_gratis", "importado", "mas_vendido",
     }
 
     datos = {k: v for k, v in campos.items() if k in permitidos}
@@ -555,6 +586,7 @@ def crear_producto_exclusivo(campos: dict) -> int:
     datos.setdefault("estado", "activo")
     datos.setdefault("envio_gratis", False)
     datos.setdefault("importado", False)
+    datos.setdefault("mas_vendido", False)
 
     imagenes_raw = datos.get("imagenes") or []
     datos["imagenes"] = json.dumps(_parse_imagenes(imagenes_raw))
@@ -587,6 +619,10 @@ def crear_producto_exclusivo(campos: dict) -> int:
         if has_link:
             insert_cols.append("link_proveedor")
             valores.append(datos.get("link_proveedor") or None)
+        # Si la columna mas_vendido existe, insertarla también
+        if 'mas_vendido' in cols:
+            insert_cols.append('mas_vendido')
+            valores.append(bool(datos.get('mas_vendido', False)))
 
         placeholders = ", ".join(["%s"] * len(insert_cols))
         cols_sql = ", ".join(insert_cols)
@@ -788,39 +824,85 @@ def obtener_productos_mas_vendidos(limit=10):
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
-            # Intentar obtener productos más vendidos contando las compras
+            productos = []
+            # 1) Primero tomar productos marcados por admin como mas_vendido
             try:
-                cur.execute("""
-                    SELECT 
-                        p.id,
-                        p.titulo,
-                        p.descripcion,
-                        p.precio,
-                        p.precio_oferta,
-                        p.precio_proveedor,
-                        p.categoria,
-                        p.imagenes,
-                        p.stock,
-                        p.estado,
-                        COALESCE(SUM(COALESCE(c.cantidad, 0)), 0)::INTEGER as total_ventas
-                    FROM productos_vendedor p
-                    LEFT JOIN cliente_compraron_productos c ON p.id = c.producto_id 
-                        AND (c.estado_pago = 'pagado' OR c.estado_pago IS NULL)
-                    WHERE p.estado = 'activo' 
-                      AND p.stock > 0
-                    GROUP BY p.id, p.titulo, p.descripcion, p.precio, p.precio_oferta, 
-                             p.precio_proveedor, p.categoria, p.imagenes, p.stock, p.estado
-                    ORDER BY total_ventas DESC, p.id DESC
+                cur.execute(
+                    """
+                    SELECT id, titulo, descripcion, precio, precio_oferta, precio_proveedor,
+                           categoria, imagenes, stock, estado, mas_vendido
+                    FROM productos_vendedor
+                    WHERE mas_vendido = TRUE AND estado = 'activo' AND stock > 0
+                    ORDER BY id DESC
                     LIMIT %s
-                """, (limit,))
+                    """, (limit,)
+                )
                 productos = cur.fetchall()
-            except Exception as sql_error:
-                # Si falla la query, obtener productos recientes
-                import logging
-                logging.getLogger(__name__).warning(f"Error en query más vendidos: {sql_error}")
+            except Exception:
                 productos = []
+
+            # 2) Si aún necesitamos más, completar con los más vendidos según ventas, excluyendo los ya marcados
+            if len(productos) < limit:
+                exclude_ids = tuple([p['id'] for p in productos]) if productos else tuple()
+                try:
+                    if exclude_ids:
+                        cur.execute("""
+                            SELECT 
+                                p.id,
+                                p.titulo,
+                                p.descripcion,
+                                p.precio,
+                                p.precio_oferta,
+                                p.precio_proveedor,
+                                p.categoria,
+                                p.imagenes,
+                                p.stock,
+                                p.estado,
+                                COALESCE(SUM(COALESCE(c.cantidad, 0)), 0)::INTEGER as total_ventas
+                            FROM productos_vendedor p
+                            LEFT JOIN cliente_compraron_productos c ON p.id = c.producto_id 
+                                AND (c.estado_pago = 'pagado' OR c.estado_pago IS NULL)
+                            WHERE p.estado = 'activo' 
+                              AND p.stock > 0
+                              AND p.id NOT IN %s
+                            GROUP BY p.id, p.titulo, p.descripcion, p.precio, p.precio_oferta, 
+                                     p.precio_proveedor, p.categoria, p.imagenes, p.stock, p.estado
+                            ORDER BY total_ventas DESC, p.id DESC
+                            LIMIT %s
+                        """, (exclude_ids, limit - len(productos)))
+                    else:
+                        cur.execute("""
+                            SELECT 
+                                p.id,
+                                p.titulo,
+                                p.descripcion,
+                                p.precio,
+                                p.precio_oferta,
+                                p.precio_proveedor,
+                                p.categoria,
+                                p.imagenes,
+                                p.stock,
+                                p.estado,
+                                COALESCE(SUM(COALESCE(c.cantidad, 0)), 0)::INTEGER as total_ventas
+                            FROM productos_vendedor p
+                            LEFT JOIN cliente_compraron_productos c ON p.id = c.producto_id 
+                                AND (c.estado_pago = 'pagado' OR c.estado_pago IS NULL)
+                            WHERE p.estado = 'activo' 
+                              AND p.stock > 0
+                            GROUP BY p.id, p.titulo, p.descripcion, p.precio, p.precio_oferta, 
+                                     p.precio_proveedor, p.categoria, p.imagenes, p.stock, p.estado
+                            ORDER BY total_ventas DESC, p.id DESC
+                            LIMIT %s
+                        """, (limit - len(productos),))
+                    ventas_rows = cur.fetchall()
+                    # Agregar las filas de ventas a la lista final
+                    productos.extend(ventas_rows)
+                except Exception as sql_error:
+                    import logging
+                    logging.getLogger(__name__).warning(f"Error en query más vendidos (ventas): {sql_error}")
+                    # si falla, seguir con lo que tengamos
             
-            # Si no hay productos vendidos, obtener productos recientes
+            # Si aún no tenemos productos (caso extremo), obtener productos recientes
             if not productos:
                 cur.execute("""
                     SELECT 

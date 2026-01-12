@@ -1,0 +1,35 @@
+<!-- Support bubble partial -->
+<!-- Incluir este partial justo antes de </body> en las plantillas donde quieras el globito -->
+<div id="support-bubble" class="support-bubble" aria-label="Soporte">
+    <button id="support-bubble-btn" class="support-bubble-btn" aria-haspopup="dialog" aria-controls="support-modal">
+        <span class="bubble-icon">💬</span>
+        <span class="bubble-label">Soporte</span>
+    </button>
+
+    <div id="support-modal" class="support-modal" role="dialog" aria-hidden="true" aria-labelledby="support-modal-title">
+        <div class="support-modal-content">
+            <button id="support-modal-close" class="support-modal-close" aria-label="Cerrar">×</button>
+            <h3 id="support-modal-title">¿Necesitas ayuda?</h3>
+            <p class="muted">Abre un ticket y nuestro equipo te contactará.</p>
+
+            <form id="support-modal-form" action="{{ url_for('soporte') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <label for="sb-nombre">Nombre</label>
+                <input id="sb-nombre" name="nombre" type="text" required placeholder="Tu nombre completo">
+
+                <label for="sb-email">Email</label>
+                <input id="sb-email" name="email" type="email" required placeholder="tu@email.com">
+
+                <label for="sb-mensaje">Mensaje</label>
+                <textarea id="sb-mensaje" name="mensaje" required placeholder="Describe tu problema..." rows="4"></textarea>
+
+                <button type="submit" class="support-submit">Enviar ticket</button>
+            </form>
+
+            <div id="sb-feedback" class="sb-feedback" aria-live="polite"></div>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/support_bubble.css') }}">
+<script defer src="{{ url_for('static', filename='js/support_bubble.js') }}"></script>

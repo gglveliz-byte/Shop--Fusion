@@ -137,6 +137,14 @@
         >
       </div>
 
+      <!-- Más vendido -->
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:0.4rem;">
+          <input type="checkbox" id="mas_vendido" name="mas_vendido" {% if producto.mas_vendido %}checked{% endif %}>
+          Marcar como "Más Vendido"
+        </label>
+      </div>
+
       <!-- Imágenes: preview -->
       <div class="form-group">
         <label>Imágenes actuales</label>

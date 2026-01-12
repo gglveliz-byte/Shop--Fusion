@@ -45,11 +45,16 @@
       border-radius: 10px;
       font-size: 1rem;
       transition: all 0.3s ease;
+      /* Asegurar color legible si hay reglas globales que lo cambian */
+      color: var(--text-dark);
+      background: var(--bg-card);
     }
+    .field input::placeholder { color: var(--text-elegant-light); }
     .field input:focus {
       outline: none;
       border-color: #ff5f1f;
       box-shadow: 0 0 0 3px rgba(255, 95, 31, 0.1);
+      background: var(--bg-card);
     }
     .btn-primary {
       background: linear-gradient(135deg, #ff5f1f 0%, #ff0080 100%);
@@ -165,6 +170,7 @@
       </form>
     </div>
   </div>
+  {% include '_support_bubble.html' %}
 </body>
 </html>
 

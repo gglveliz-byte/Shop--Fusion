@@ -257,17 +257,47 @@
 
     .product-prices {
         background: #f8fafc;
-        padding: 10px;
-        border-radius: 8px;
+        padding: 12px;
+        border-radius: 10px;
         margin-bottom: 1rem;
+        border: 1px solid #eef2f7;
     }
 
     .price-row {
         display: flex;
         justify-content: space-between;
         font-size: 0.9rem;
-        margin-bottom: 5px;
+        margin-bottom: 6px;
     }
+
+    /* Comisión resaltada (estilo similar al ejemplo) */
+    .commission-box {
+        background: linear-gradient(135deg, rgba(255,95,31,0.06) 0%, rgba(255,0,128,0.06) 100%);
+        padding: 0.6rem 0.75rem;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .commission-amount { color: #ff2d55; font-weight: 800; }
+
+    /* Input del link y botón de copiar (compacto) */
+    .affiliate-link { display:flex; gap:8px; align-items:center; margin-top:0.6rem; }
+    .affiliate-link-input { padding:8px; border:1px solid #e8eef6; border-radius:6px; width:100%; font-size:0.9rem; }
+    .copy-affiliate-link-btn.btn-primary { background: linear-gradient(135deg, #ff4d6d 0%, #ff0080 100%); border: none; padding: 8px 12px; color: white; }
+
+    /* Tarjetas de ejemplo (compactas) */
+    .sample-grid { display:flex; gap:12px; margin-top:12px; flex-wrap:wrap; }
+    .sample-card { min-width: 200px; max-width: 260px; background: white; padding:12px; border-radius:10px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+    .small-image { height:110px; width:100%; object-fit:cover; border-radius:8px; margin-bottom:8px; }
+    .small-prices { background:#fff; padding:8px; border-radius:8px; margin-top:6px; border:1px solid #f1f5f9; }
+
+    .btn-outline { background: white; border: 1px solid #e2e8f0; color: #64748b; }
+    .btn-outline:hover { transform: translateY(-1px); }
+    .btn-primary:hover { transform: translateY(-1px); }
+
 
     /* Botones */
     .btn {
@@ -405,6 +435,7 @@
           </div>
         </div>
         
+
         <!-- Gráficos -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
           <div class="card">
@@ -449,6 +480,7 @@
             </button>
           </div>
         </div>
+
 
         <div class="search-bar">
           <input type="text" id="search-input-venta" class="search-input" placeholder="Buscar productos...">
@@ -524,6 +556,7 @@
                         <div class="price-row" style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">
                           Esta es tu comisión: ganas esto si vendes este producto.
                         </div>
+                        <div style="font-size:0.75rem;color:#94a3b8;margin-top:6px;">Comisiones: desde 20% hasta {{ '%.1f'|format(afiliado.comision_porcentaje | float(0)) }}%</div>
                         <div class="price-row" style="margin-top:0.35rem; gap:0.5rem; flex-wrap:wrap;">
                           {% if producto.envio_gratis %}
                             <span class="badge badge-success" style="background:#10b981;color:white;">Envío gratis</span>
@@ -804,6 +837,64 @@
   <script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD"></script>
   <script>
     window.ventasMensualesRaw = {{ estadisticas.ventas_mensuales | tojson if estadisticas.ventas_mensuales else '[]' }};
+    window.afiliadoProductos = {{ productos | tojson if productos else '[]' }};
+    
+    // Inicializar opciones de producto para el simulador
+    (function(){
+      var sel = document.getElementById('panel-sim-product');
+      if (sel && window.afiliadoProductos && window.afiliadoProductos.length) {
+        window.afiliadoProductos.forEach(function(p){
+          var opt = document.createElement('option');
+          opt.value = p.id;
+          var title = (p.titulo || 'Producto') + ' — Precio cliente: $' + (p.precio_oferta && p.precio_oferta < p.precio ? p.precio_oferta : p.precio);
+          opt.text = title;
+          opt.dataset.precio_cliente = (p.precio_oferta && p.precio_oferta < p.precio) ? p.precio_oferta : p.precio;
+          opt.dataset.precio_proveedor = p.precio_proveedor || 0;
+          sel.appendChild(opt);
+        });
+      }
+    })();
+
+    function getCommissionBySales(n) {
+      if (n >= 11) return {pct:90, note:'✓ Descuentos exclusivos activados'};
+      if (n >= 9) return {pct:80, note:'✓ Descuentos exclusivos activados'};
+      if (n >= 7) return {pct:70, note:'✓ Descuentos exclusivos activados'};
+      if (n >= 5) return {pct:60, note:'✓ Descuentos exclusivos activados'};
+      if (n >= 4) return {pct:55, note:'✓ Descuentos exclusivos activados'};
+      if (n >= 3) return {pct:50, note:'✓ Descuentos exclusivos activados (15 días)'};
+      if (n === 0) return {pct:20, note:'Comisión mínima'};
+      if (n === 1 || n === 2) return {pct:40, note:'Comisión reducida (no cumplió 3 ventas)'};
+      return {pct:50, note:''};
+    }
+
+    // Calculadora del panel
+    (function(){
+      var btn = document.getElementById('panel-sim-calc');
+      if (!btn) return;
+      btn.addEventListener('click', function(){
+        var n = parseInt(document.getElementById('panel-sim-sales').value || '0', 10);
+        if (isNaN(n) || n < 0) n = 0;
+        var prodSel = document.getElementById('panel-sim-product');
+        var precio_cliente = null;
+        var precio_proveedor = null;
+        if (prodSel && prodSel.value) {
+          var opt = prodSel.options[prodSel.selectedIndex];
+          precio_cliente = parseFloat(opt.dataset.precio_cliente || '0');
+          precio_proveedor = parseFloat(opt.dataset.precio_proveedor || '0');
+        }
+        // Si no selecciona producto, usamos un margen promedio (ej: $30)
+        var margen_por_unidad = 30;
+        if (precio_cliente !== null) margen_por_unidad = Math.max(0, precio_cliente - (precio_proveedor || 0));
+
+        var comm = getCommissionBySales(n);
+        document.getElementById('panel-sim-comision').textContent = comm.pct + '%';
+        document.getElementById('panel-sim-beneficios').textContent = comm.note || '—';
+
+        var est = (margen_por_unidad * (comm.pct/100) * n);
+        document.getElementById('panel-sim-estimation').textContent = '$' + est.toFixed(2) + ' estimados al mes';
+      });
+    })();
+
     
     function bindNavItems() {
       document.querySelectorAll('.nav-item').forEach(item => {
@@ -1718,5 +1809,7 @@
       }, true);
     })();
   </script>
+
+  {% include '_support_bubble.html' %}
 </body>
 </html>

@@ -1,0 +1,42 @@
+/* Support bubble styles - responsive and accessible */
+:root{
+  --sb-size: 56px;
+  --sb-accent: #0ea5a4; /* teal-ish */
+  --sb-bg: #ffffff;
+  --sb-text: #0f172a;
+  --sb-shadow: 0 6px 18px rgba(2,6,23,0.12);
+}
+
+/* Siempre fixed y por encima, considera safe-area para iOS */
+.support-bubble{position:fixed;right:calc(20px + env(safe-area-inset-right, 0px));bottom:calc(20px + env(safe-area-inset-bottom, 0px));z-index:100000 !important;font-family:inherit;display:block !important}
+.support-bubble-btn{display:flex !important;align-items:center;gap:10px;background:var(--sb-accent);color:white;border:none;border-radius:999px;padding:10px 14px;box-shadow:var(--sb-shadow);cursor:pointer;transition:transform .12s ease,box-shadow .12s ease}
+.support-bubble-btn:active{transform:translateY(1px)}
+.support-bubble-btn .bubble-icon{font-size:1.05rem}
+.support-bubble-btn .bubble-label{font-weight:700;font-size:0.95rem}
+
+/* Small collapsed circle on mobile */
+@media (max-width:640px){
+  .support-bubble-btn{padding:0;width:var(--sb-size);height:var(--sb-size);border-radius:50%;justify-content:center;box-shadow:var(--sb-shadow);}
+  .support-bubble-btn .bubble-label{display:none}
+  /* Aumentar visibilidad en móviles y evitar que quede bajo otros elementos (subido 140px) */
+  .support-bubble{right:calc(12px + env(safe-area-inset-right, 0px));bottom:calc(140px + env(safe-area-inset-bottom, 0px));}
+}
+
+/* Modal */
+.support-modal{position:fixed;right:calc(20px + env(safe-area-inset-right, 0px));bottom:calc(92px + env(safe-area-inset-bottom, 0px));z-index:100001;display:none}
+.support-modal[aria-hidden="false"]{display:block}
+.support-modal-content{width:320px;max-width:calc(100vw - 40px);background:var(--sb-bg);color:var(--sb-text);border-radius:12px;box-shadow:var(--sb-shadow);padding:16px;border:1px solid rgba(15,23,42,0.06)}
+.support-modal h3{margin:0 0 6px;font-size:1.05rem}
+.support-modal .muted{color:rgba(15,23,42,0.6);font-size:0.9rem;margin-bottom:10px}
+.support-modal label{display:block;font-weight:600;margin-top:8px;font-size:0.85rem}
+.support-modal input,.support-modal textarea{width:100%;padding:10px;border:1px solid rgba(15,23,42,0.08);border-radius:8px;margin-top:6px;font-size:0.95rem}
+.support-submit{margin-top:12px;background:var(--sb-accent);color:white;border:none;padding:10px 12px;border-radius:8px;font-weight:700;width:100%;cursor:pointer}
+.support-modal-close{position:absolute;right:10px;top:10px;background:transparent;border:none;font-size:1.2rem;color:rgba(15,23,42,0.6);cursor:pointer}
+
+/* Feedback */
+.sb-feedback{margin-top:10px;font-size:0.9rem;color:green}
+
+/* Desktop: slightly wider modal */
+@media (min-width:641px){
+  .support-modal-content{width:360px}
+}

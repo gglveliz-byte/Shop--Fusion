@@ -930,6 +930,11 @@ PAYPAL_TIMEOUT_SECONDS = 15
 SORTEO_BOLETO_USD = config('SORTEO_BOLETO_USD', default='1.00')
 SORTEO_BOLETO_CURRENCY = config('SORTEO_BOLETO_CURRENCY', default='USD')
 
+# Número de contacto para WhatsApp (usar formato +<código-país><número>)
+WHATSAPP_NUMBER = config('WHATSAPP_NUMBER', default='+593987865420')
+# Versión sin + para enlaces wa.me
+WHATSAPP_NUMBER_DIGITS = WHATSAPP_NUMBER.replace('+', '')
+
 if is_production and PAYPAL_MODE != 'live':
     raise RuntimeError("PAYPAL_MODE must be 'live' in production")
 
@@ -5251,6 +5256,7 @@ def listar_productos_exclusivos():
                     'imagenes': imagenes_list,
                     'envio_gratis': envio_gratis,
                     'importado': importado,
+                    'mas_vendido': (request.form.get('mas_vendido') == 'on'),
                     'link_proveedor': link_proveedor or None,
                 })
                 flash(f'Producto exclusivo creado correctamente (ID {nuevo_id}).', 'success')
@@ -5305,6 +5311,7 @@ def editar_producto_exclusivo(producto_id):
                 "stock": int(request.form.get('stock') or 0),
                 "estado": (request.form.get('estado') or '').strip(),
                 "imagenes": imagenes_list,   # 👈 importante
+                "mas_vendido": (request.form.get('mas_vendido') == 'on'),
             }
 
             # Actualizar en BD
@@ -5398,6 +5405,7 @@ def panel_crear_exclusivo():
                 'stock': stock,
                 'estado': estado,
                 'imagenes': imagenes_list,
+                'mas_vendido': (request.form.get('mas_vendido') == 'on'),
                 'link_proveedor': link_proveedor,
             })
             flash(f'✅ Producto exclusivo creado correctamente (ID {nuevo_id}).', 'success')
@@ -5511,6 +5519,33 @@ def admin_eliminar_categoria(categoria_id):
         flash(f'❌ Error al eliminar categoría: {e}', 'danger')
     
     return redirect(url_for('admin_categorias'))
+
+
+@app.route('/admin/productos-exclusivos/<int:producto_id>/toggle-mas-vendido', methods=['POST'])
+def toggle_mas_vendido_producto_exclusivo(producto_id):
+    """Alterna la marca 'mas_vendido' de un producto exclusivo"""
+    if 'usuario_id' not in session or session.get('rol') != 'admin':
+        flash('Debes iniciar sesión como administrador.', 'danger')
+        return redirect(url_for('admin'))
+
+    producto = obtener_producto_exclusivo_por_id(producto_id)
+    if not producto:
+        flash('Producto no encontrado', 'danger')
+        return redirect(url_for('listar_productos_exclusivos'))
+
+    try:
+        nuevo_valor = not bool(producto.get('mas_vendido'))
+        actualizar_producto_exclusivo(producto_id, {'mas_vendido': nuevo_valor})
+        action = 'marcado' if nuevo_valor else 'desmarcado'
+        flash(f'✅ Producto {action} como Más Vendido.', 'success')
+        app.logger.info(f'[TOGGLE_MAS_VENDIDO] Producto {producto_id} -> {nuevo_valor}')
+    except Exception as e:
+        app.logger.error(f'[TOGGLE_MAS_VENDIDO] Error: {e}')
+        flash('❌ Error al actualizar la marca de "Más Vendido".', 'danger')
+
+    if request.referrer and 'panel' in request.referrer:
+        return redirect(url_for('panel'))
+    return redirect(url_for('listar_productos_exclusivos'))
 
 
 @app.route('/admin/productos-exclusivos/<int:producto_id>/eliminar', methods=['POST'])
@@ -6262,7 +6297,8 @@ FRECUENCIAS = {'semanal', 'quincenal', 'mensual'}
 @app.route('/registro_vendedor', methods=['GET', 'POST'])
 @limiter.limit("3 per hour")  # Maximo 3 registros por hora por IP
 def registro_vendedor():
-    return render_template('mantenimiento.html', titulo='Proveedores', mensaje='Estamos realizando mantenimiento en la seccion de proveedores. Vuelve pronto.')
+    # Redirigir a la página de proveedores con información y contacto (WhatsApp)
+    return redirect(url_for('proveedores'))
 
 
 from flask import render_template, request, redirect, url_for, flash, session
@@ -6272,7 +6308,8 @@ from werkzeug.security import check_password_hash
 @app.route('/login_vendedor', methods=['GET', 'POST'])
 @limiter.limit("5 per minute")  # Maximo 5 intentos de login por minuto
 def login_vendedor():
-    return render_template('mantenimiento.html', titulo='Proveedores', mensaje='Estamos realizando mantenimiento en la seccion de proveedores. Vuelve pronto.')
+    # Redirigir a la página de proveedores con información y contacto (WhatsApp)
+    return redirect(url_for('proveedores'))
 
 
 # ========= Helpers y guard de vendedor =========
@@ -7672,7 +7709,19 @@ def trabaja_vacantes():
 @app.route('/proveedores')
 def proveedores():
     """Página para proveedores que quieren vender productos"""
-    return render_template('mantenimiento.html', titulo='Proveedores', mensaje='Estamos realizando mantenimiento en la sección de proveedores. Vuelve pronto.')
+    try:
+        categorias = obtener_categorias(activas=True) or []
+    except Exception as e:
+        app.logger.error(f"[PROVEEDORES] Error al cargar categorías: {e}")
+        categorias = []
+
+    # Mostrar página con invitación y listado de categorías
+    return render_template(
+        'proveedores.html',
+        categorias=categorias,
+        whatsapp=WHATSAPP_NUMBER,
+        whatsapp_digits=WHATSAPP_NUMBER_DIGITS
+    )
 
 
 @app.route('/soporte', methods=['GET', 'POST'])

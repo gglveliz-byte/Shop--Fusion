@@ -295,7 +295,7 @@
                                     </div>
 
                                     <h3 class="product-name">{{ producto.titulo }}</h3>
-<p class="product-desc">
+<p class="product-desc preserve-lines">
   {{ producto.descripcion | replace('\n', '<br>') | safe }}
 </p>
                                     <p class="categoria">Categoría: {{ producto.categoria or 'Otros' }}</p>
@@ -387,7 +387,7 @@
           <div class="product-modal__info">
             <h3 id="product-modal-title" class="product-modal__title"></h3>
             <p id="product-modal-category" class="product-modal__category"></p>
-            <p id="product-modal-desc" class="product-modal__desc"></p>
+            <p id="product-modal-desc" class="product-modal__desc preserve-lines"></p>
 
             <div id="product-modal-prices" class="product-modal__prices"></div>
 

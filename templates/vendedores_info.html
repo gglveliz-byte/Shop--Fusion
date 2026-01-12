@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vende tus productos en ShopFusion</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/elegant_styles.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/vendedores_info.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script defer src="{{ url_for('static', filename='js/vendedores_info.js') }}"></script>
 </head>
 <body>
@@ -25,14 +28,30 @@
     </section>
 
     <section class="fade-in-right">
-      <h2 class="fx-gradient-text">💰 Comisiones y costos</h2>
+      <h2 class="fx-gradient-text">💰 Modelo de precios y ventas</h2>
       <ul>
-        <li><strong>10%</strong> de comisión por venta realizada.</li>
-        <li>El precio final mostrado al comprador incluye un <span class="highlight">5% adicional</span> sobre el precio propuesto por el vendedor.</li>
-        <li><span class="highlight">Tarifa mensual fija: $15</span> por uso del sistema y mantenimiento de la cuenta.</li>
-        <li>Sin cargos ocultos. Todo claro desde el inicio.</li>
-        <li>Puedes optar por <strong>planes de publicidad</strong> para aumentar la visibilidad de tus productos dentro de ShopFusion.</li>
+        <li>No cobramos comisión por venta al proveedor: <strong>el proveedor vende al por mayor a ShopFusion por pedido</strong>, y ShopFusion se encarga de vender al cliente final.</li>
+        <li>El proveedor debe registrar un <strong>precio mayorista justo</strong> que cubra producto y envío (envíos incluidos a todo el Ecuador).</li>
+        <li>ShopFusion sugerirá un precio de venta al público con una <strong>margen recomendado</strong> para que el proveedor gane y ShopFusion pueda cobrar el valor correspondiente en cada venta (ej.: si te cuesta $10 y cubre el envío, la sugerencia podría ser vender a $15).</li>
+        <li>El uso del sistema es <strong>gratuito</strong> (no aplica tarifa mensual).</li>
+        <li>El sistema ofrece herramientas completas: registro de productos, control de stock, panel de ventas y pedidos, reporte de ganancias netas y depósitos semanales/quincenales/mensuales.</li>
       </ul>
+
+      <!-- Ejemplo visual claro -->
+      <div style="margin-top:14px; padding:14px; border-left:4px solid #0ea5a4; background:#f8fffe; border-radius:8px;">
+        <div style="font-weight:800; color:#064e3b; font-size:1.05rem; margin-bottom:8px;">Ejemplo práctico</div>
+        <div style="display:flex; gap:18px; align-items:center;">
+          <div style="flex:0 0 110px; text-align:center; background:white; padding:10px; border-radius:8px; border:1px solid #e6f6f6;">
+            <div style="font-size:0.9rem; color:#334155;">Costo mayorista</div>
+            <div style="font-size:1.4rem; font-weight:800; color:#0f172a;">$50</div>
+            <div style="font-size:0.8rem; color:#475569;">(producto + envío)</div>
+          </div>
+          <div style="flex:1; color:#334155;">
+            <p style="margin:0 0 6px 0;">ShopFusion sugiere un <strong>precio de venta: $100</strong> y vende al cliente final a $100.</p>
+            <p style="margin:0;">Resultado: proveedor cobra $50 por pedido (precio mayorista) y ShopFusion gestiona la venta al cliente.</p>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="fade-in-left">

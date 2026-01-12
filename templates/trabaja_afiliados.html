@@ -121,6 +121,22 @@
     }
     .footer a { color: var(--muted); text-decoration: none; }
     .footer a:hover { text-decoration: underline; color: var(--text); }
+
+      .sf-card-ejemplo img.sf-img-responsive {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;          /* Mantiene proporción */
+    border-radius: 8px;
+  }
+
+  .sf-card-ejemplo .sf-img-wrapper {
+    margin-top: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    background: #0f172a;}
+    
   </style>
 </head>
 <body>
@@ -184,8 +200,40 @@
         </tbody>
       </table>
       <p class="lead" style="margin:12px 0 0; font-size:0.95rem;">Soporte técnico y guía de todas las funcionalidades disponibles en tu panel.</p>
+
+
+
+
+      <br><br><br>
+
+      <h1>Ejemplo de los productos y comisiones explora tu panel vende y no dejes de ganar dinero y trabajar para un mejor futuro</h1>
+      <h2>comiensas con 50% de comision y puedes llegar hasta el 90% segun tus ventas mensuales, si llegas a 9 ventas antes del mes no te preocupes el sistema detecta todas tus ventas y aumenta la comision cosntantemente</h2>
+         <!-- Imágenes de ejemplo (RESPONSIVAS SOLO AQUÍ) -->
+    <div class="sf-img-wrapper">
+      <img src="/static/images/image.png"
+           alt="Ejemplo de producto en ShopFusion"
+           class="sf-img-responsive">
+    </div>
+
+       <!-- Imágenes de ejemplo (RESPONSIVAS SOLO AQUÍ) -->
+    <div class="sf-img-wrapper">
+      <img src="/static/images/image2.png"
+           alt="Ejemplo de producto en ShopFusion"
+           class="sf-img-responsive">
+    </div>
+
+       <!-- Imágenes de ejemplo (RESPONSIVAS SOLO AQUÍ) -->
+    <div class="sf-img-wrapper">
+      <img src="/static/images/image3.png"
+           alt="Ejemplo de producto en ShopFusion"
+           class="sf-img-responsive">
+    </div>
+
     </div>
   </div>
+
+
+
   <footer class="footer">
     <div>© ShopFusion</div>
     <div style="display:flex; gap:12px; flex-wrap:wrap;">
@@ -194,5 +242,32 @@
       <a href="{{ url_for('index') }}">Inicio</a>
     </div>
   </footer>
+
+  <script>
+    (function(){
+      function getCommissionBySales(n) {
+        if (n >= 11) return {pct:90, note:'✓ Descuentos exclusivos activados'};
+        if (n >= 9) return {pct:80, note:'✓ Descuentos exclusivos activados'};
+        if (n >= 7) return {pct:70, note:'✓ Descuentos exclusivos activados'};
+        if (n >= 5) return {pct:60, note:'✓ Descuentos exclusivos activados'};
+        if (n >= 4) return {pct:55, note:'✓ Descuentos exclusivos activados'};
+        if (n >= 3) return {pct:50, note:'✓ Descuentos exclusivos activados (15 días)'};
+        if (n === 0) return {pct:20, note:'Comisión mínima'};
+        if (n === 1 || n === 2) return {pct:40, note:'Comisión reducida (no cumplió 3 ventas)'};
+        return {pct:50, note:''};
+      }
+
+      var btn = document.getElementById('sim-calc');
+      if (btn) {
+        btn.addEventListener('click', function(){
+          var n = parseInt(document.getElementById('sim-sales').value || '0', 10);
+          if (isNaN(n) || n < 0) n = 0;
+          var res = getCommissionBySales(n);
+          document.getElementById('sim-comision').textContent = res.pct + '%';
+          document.getElementById('sim-beneficios').textContent = res.note || '—';
+        });
+      }
+    })();
+  </script>
 </body>
 </html>

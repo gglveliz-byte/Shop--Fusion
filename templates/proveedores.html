@@ -27,6 +27,33 @@
             <p style="font-size: 1.25rem; color: var(--text-elegant-light); max-width: 800px; margin: 0 auto;">
                 Vende tus productos a través de ShopFusion. Nosotros nos encargamos de la venta, tú solo provees los productos.
             </p>
+
+            <!-- Nueva sección: CTA WhatsApp y categorías -->
+            <div style="margin-top: 30px;">
+                <h2 style="font-size:1.25rem; margin-bottom:8px;">Necesitamos proveedores para entregas puntuales a <strong>todo el Ecuador</strong></h2>
+                <p style="margin-bottom:6px;">Si ofreces entregas rápidas y confiables en cualquiera de nuestras categorías, contáctanos por WhatsApp para más información y para trabajar juntos:</p>
+                <p style="margin: 0.4rem 0 0; font-weight:700;">
+                    <a href="https://wa.me/{{ whatsapp_digits }}" target="_blank" rel="noopener noreferrer" style="color: #fff; background: #25D366; padding:8px 12px; border-radius:6px; text-decoration:none; display:inline-block;">
+                        📲 {{ whatsapp }} — Enviar WhatsApp
+                    </a>
+                </p>
+            </div>
+
+            <div style="margin-top:20px; text-align:left; max-width:800px; margin-left:auto; margin-right:auto;">
+                <h3 style="font-size:1.05rem; margin-top:12px;">Categorías que buscamos:</h3>
+                {% if categorias and categorias|length > 0 %}
+                    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+                        {% for cat in categorias %}
+                            <span style="display:inline-flex; align-items:center; gap:8px; padding:8px 10px; background:white; border-radius:8px; border:1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                                <i class="fas {{ cat.icono }}" style="color: {{ cat.color }};"></i>
+                                <strong style="font-size:0.95rem;">{{ cat.nombre }}</strong>
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p style="margin:0; color:var(--text-elegant-light);">Actualmente no hay categorías registradas.</p>
+                {% endif %}
+            </div>
         </section>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 60px;">
@@ -38,8 +65,25 @@
                     Sin Preocuparte por Ventas
                 </h3>
                 <p style="color: var(--text-elegant-light); line-height: 1.6;">
-                    Nosotros nos encargamos de toda la venta online, marketing, atención al cliente y proceso de pago.
+                    Vendés al por mayor a ShopFusion por pedido; nosotros nos encargamos de la venta al cliente, marketing, atención y cobro. Asegurate de registrar un precio mayorista que cubra producto y envío (envíos incluidos a todo el Ecuador); ShopFusion sugerirá un precio de venta al público con un margen recomendado (ej.: costo $10 → sugerencia $15).
                 </p>
+
+                <!-- Ejemplo visual de flujo de precios -->
+                <div style="margin-top:16px; padding:14px; border-radius:10px; background: linear-gradient(90deg,#fff,#f8fafc); border:1px solid #e6eef7; display:flex; gap:16px; align-items:center;">
+                    <div style="flex:0 0 120px; padding:12px; border-radius:8px; background:#eef6ff; text-align:center;">
+                        <div style="font-size:1.1rem; font-weight:700; color:#0f172a;">Costo mayorista</div>
+                        <div style="font-size:1.5rem; font-weight:800; color:#064e3b;">$50</div>
+                        <div style="font-size:0.8rem; color:#475569;">(producto + envío)</div>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700; color:#0f172a; margin-bottom:6px;">Ejemplo: flujo</div>
+                        <ul style="margin:0; padding-left:18px; color:#334155; line-height:1.5;">
+                            <li>ShopFusion sugiere precio de venta al público: <strong>$100</strong>.</li>
+                            <li>ShopFusion vende al cliente final a <strong>$100</strong> y gestiona cobros, atención y envíos.</li>
+                            <li>Resultado: el proveedor recibe el precio mayorista acordado por pedido, y ShopFusion aplica el valor correspondiente por la venta al cliente.</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
 
             <div style="background: var(--bg-elegant-white); border: 1px solid var(--border-elegant-light); border-radius: var(--radius-elegant-lg); padding: 30px; box-shadow: var(--shadow-elegant-md);">
