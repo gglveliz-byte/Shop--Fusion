@@ -52,19 +52,9 @@ def ensure_carrito_tables():
                 );
             """)
             
-            # Tabla de carritos de afiliados
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS shopfusion.carritos_afiliados (
-                    id SERIAL PRIMARY KEY,
-                    afiliado_id INTEGER NOT NULL REFERENCES shopfusion.afiliados(id) ON DELETE CASCADE,
-                    producto_id INTEGER NOT NULL REFERENCES shopfusion.productos_vendedor(id) ON DELETE CASCADE,
-                    cantidad INTEGER NOT NULL DEFAULT 1 CHECK (cantidad > 0),
-                    precio_unitario DECIMAL(10, 2) NOT NULL,
-                    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE(afiliado_id, producto_id)
-                );
-            """)
+            # Nota: se eliminó el soporte de carritos para afiliados. Los afiliados
+            # solo pueden vender, no comprar, por lo que no se crea la tabla
+            # `carritos_afiliados`.
             
             # Índices para mejor rendimiento
             cur.execute("""
@@ -77,15 +67,7 @@ def ensure_carrito_tables():
                 ON shopfusion.carritos_usuarios(producto_id);
             """)
             
-            cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_carritos_afiliado_id 
-                ON shopfusion.carritos_afiliados(afiliado_id);
-            """)
-            
-            cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_carritos_afiliado_producto_id 
-                ON shopfusion.carritos_afiliados(producto_id);
-            """)
+            # Indices para carritos de afiliados omitidos (funcionalidad removida)
             
             conn.commit()
             return True
@@ -433,376 +415,28 @@ def migrar_carrito_cookies_a_bd(usuario_id, carrito_cookies):
 # ========== FUNCIONES PARA CARRITO DE AFILIADOS ==========
 
 def obtener_carrito_afiliado(afiliado_id):
-    """Obtiene el carrito completo de un afiliado desde BD con precios normal y de afiliado"""
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT 
-                    c.id,
-                    c.producto_id,
-                    c.cantidad,
-                    c.precio_unitario as precio_afiliado,
-                    p.titulo as nombre,
-                    p.descripcion,
-                    p.categoria,
-                    p.imagenes,
-                    p.stock,
-                    p.estado,
-                    p.precio,
-                    p.precio_oferta,
-                    p.precio_proveedor
-                FROM shopfusion.carritos_afiliados c
-                INNER JOIN shopfusion.productos_vendedor p ON c.producto_id = p.id
-                WHERE c.afiliado_id = %s AND p.estado = 'activo' AND p.stock > 0
-                ORDER BY c.creado_en DESC
-            """, (afiliado_id,))
-            
-            items = cur.fetchall()
-            
-            # Obtener comisión del afiliado para mostrar información completa
-            cur.execute("""
-                SELECT comision_porcentaje FROM shopfusion.afiliados
-                WHERE id = %s
-            """, (afiliado_id,))
-            afiliado = cur.fetchone()
-            comision_pct = float(afiliado.get('comision_porcentaje', 0)) if afiliado else 0
-            
-            # Formatear items
-            carrito = []
-            for item in items:
-                # Parsear imágenes
-                imagenes = item.get('imagenes', '[]')
-                if isinstance(imagenes, str):
-                    try:
-                        imagenes = json.loads(imagenes) if imagenes.startswith('[') else [imagenes]
-                    except:
-                        imagenes = [imagenes] if imagenes else []
-                elif not isinstance(imagenes, list):
-                    imagenes = []
-                
-                # Calcular precios para comparación
-                precio_normal = float(item.get('precio_oferta') or item.get('precio') or 0)
-                precio_afiliado = float(item.get('precio_afiliado', 0))
-                precio_proveedor = float(item.get('precio_proveedor') or 0)
-                margen = precio_normal - precio_proveedor
-                comision_ganada = (margen * comision_pct / 100) if margen > 0 else 0
-                
-                carrito.append({
-                    'producto_id': item['producto_id'],
-                    'cantidad': item['cantidad'],
-                    'precio': precio_afiliado,  # Precio que pagará el afiliado
-                    'precio_normal': precio_normal,  # Precio normal del producto (para comparación)
-                    'precio_proveedor': precio_proveedor,
-                    'margen': margen,
-                    'comision_ganada': comision_ganada,
-                    'comision_porcentaje': comision_pct,
-                    'nombre': item['nombre'],
-                    'descripcion': item.get('descripcion', ''),
-                    'categoria': item.get('categoria', 'General'),
-                    'imagen': imagenes[0] if imagenes else '/static/images/placeholder.jpg',
-                    'stock': item.get('stock', 0)
-                })
-            
-            return carrito
-    except Exception as e:
-        print(f"Error al obtener carrito de afiliado: {e}")
-        return []
-    finally:
-        conn.close()
+    """Los afiliados no pueden comprar; no existe carrito afiliado."""
+    return []
 
 
 def agregar_al_carrito_afiliado(afiliado_id, producto_id, cantidad=1):
-    """Agrega o actualiza un producto en el carrito del afiliado con precio de afiliado calculado"""
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            # Verificar que el producto existe y tiene stock
-            cur.execute("""
-                SELECT id, titulo, precio, precio_oferta, precio_proveedor, stock, estado
-                FROM shopfusion.productos_vendedor
-                WHERE id = %s AND estado = 'activo'
-            """, (producto_id,))
-            
-            producto = cur.fetchone()
-            if not producto:
-                return {'error': 'Producto no encontrado'}
-            
-            stock_disponible = producto.get('stock', 0)
-            # Calcular precio final: usar precio_oferta si existe y es menor que precio, si no usar precio
-            precio_normal = float(producto.get('precio') or 0)
-            precio_oferta_val = float(producto.get('precio_oferta') or 0)
-            if precio_oferta_val > 0 and precio_oferta_val < precio_normal:
-                precio_final = precio_oferta_val
-            else:
-                precio_final = precio_normal
-            
-            precio_proveedor = float(producto.get('precio_proveedor') or 0)
-            
-            # Obtener comisión del afiliado
-            cur.execute("""
-                SELECT comision_porcentaje FROM shopfusion.afiliados
-                WHERE id = %s
-            """, (afiliado_id,))
-            afiliado = cur.fetchone()
-            if not afiliado:
-                return {'error': 'Afiliado no encontrado'}
-            
-            comision_pct = float(afiliado.get('comision_porcentaje', 0))
-            
-            # Calcular precio del afiliado: precio_final - comisión
-            # La comisión se calcula sobre el margen (precio_final - precio_proveedor)
-            margen = precio_final - precio_proveedor
-            comision_ganada = (margen * comision_pct / 100) if margen > 0 else 0
-            precio_afiliado = precio_final - comision_ganada
-            
-            # Asegurar que el precio del afiliado no sea negativo
-            if precio_afiliado < 0:
-                precio_afiliado = 0
-            
-            # Verificar si el producto ya está en el carrito
-            cur.execute("""
-                SELECT id, cantidad FROM shopfusion.carritos_afiliados
-                WHERE afiliado_id = %s AND producto_id = %s
-            """, (afiliado_id, producto_id))
-            
-            item_existente = cur.fetchone()
-            
-            if item_existente:
-                # Actualizar cantidad y precio (por si cambió la comisión)
-                nueva_cantidad = item_existente['cantidad'] + cantidad
-                if nueva_cantidad > stock_disponible:
-                    return {'error': f'Solo hay {stock_disponible} unidades disponibles'}
-                
-                cur.execute("""
-                    UPDATE shopfusion.carritos_afiliados
-                    SET cantidad = %s,
-                        precio_unitario = %s,
-                        actualizado_en = CURRENT_TIMESTAMP
-                    WHERE id = %s
-                """, (nueva_cantidad, precio_afiliado, item_existente['id']))
-            else:
-                # Agregar nuevo producto
-                if cantidad > stock_disponible:
-                    return {'error': f'Solo hay {stock_disponible} unidades disponibles'}
-                
-                cur.execute("""
-                    INSERT INTO shopfusion.carritos_afiliados
-                    (afiliado_id, producto_id, cantidad, precio_unitario)
-                    VALUES (%s, %s, %s, %s)
-                """, (afiliado_id, producto_id, cantidad, precio_afiliado))
-            
-            conn.commit()
-            
-            # Obtener totales
-            cur.execute("""
-                SELECT 
-                    SUM(cantidad) as total_items,
-                    COUNT(*) as total_productos
-                FROM shopfusion.carritos_afiliados
-                WHERE afiliado_id = %s
-            """, (afiliado_id,))
-            
-            totales = cur.fetchone()
-            
-            return {
-                'success': True,
-                'total_items': totales['total_items'] or 0,
-                'carrito_count': totales['total_productos'] or 0
-            }
-    except Exception as e:
-        conn.rollback()
-        print(f"Error al agregar al carrito de afiliado: {e}")
-        return {'error': 'Error al agregar producto'}
-    finally:
-        conn.close()
+    """Operación no permitida: los afiliados no pueden agregar productos a carrito."""
+    return {'error': 'Operación no permitida: los afiliados no pueden comprar productos'}
 
 
 def actualizar_cantidad_carrito_afiliado(afiliado_id, producto_id, cantidad):
-    """Actualiza la cantidad de un producto en el carrito del afiliado"""
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            # Verificar stock
-            cur.execute("""
-                SELECT stock FROM shopfusion.productos_vendedor
-                WHERE id = %s AND estado = 'activo'
-            """, (producto_id,))
-            
-            producto = cur.fetchone()
-            if not producto:
-                return {'error': 'Producto no encontrado'}
-            
-            if cantidad > producto.get('stock', 0):
-                return {'error': f'Solo hay {producto.get("stock", 0)} unidades disponibles'}
-            
-            # Actualizar cantidad
-            cur.execute("""
-                UPDATE shopfusion.carritos_afiliados
-                SET cantidad = %s,
-                    actualizado_en = CURRENT_TIMESTAMP
-                WHERE afiliado_id = %s AND producto_id = %s
-            """, (cantidad, afiliado_id, producto_id))
-            
-            if cur.rowcount == 0:
-                return {'error': 'Producto no encontrado en el carrito'}
-            
-            conn.commit()
-            
-            # Obtener totales
-            cur.execute("""
-                SELECT 
-                    SUM(cantidad) as total_items,
-                    COUNT(*) as total_productos
-                FROM shopfusion.carritos_afiliados
-                WHERE afiliado_id = %s
-            """, (afiliado_id,))
-            
-            totales = cur.fetchone()
-            
-            return {
-                'success': True,
-                'total_items': totales['total_items'] or 0,
-                'carrito_count': totales['total_productos'] or 0
-            }
-    except Exception as e:
-        conn.rollback()
-        print(f"Error al actualizar carrito de afiliado: {e}")
-        return {'error': 'Error al actualizar carrito'}
-    finally:
-        conn.close()
+    return {'error': 'Operación no permitida: los afiliados no pueden comprar productos'}
 
 
 def eliminar_del_carrito_afiliado(afiliado_id, producto_id):
-    """Elimina un producto del carrito del afiliado"""
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                DELETE FROM shopfusion.carritos_afiliados
-                WHERE afiliado_id = %s AND producto_id = %s
-            """, (afiliado_id, producto_id))
-            
-            conn.commit()
-            
-            # Obtener totales
-            cur.execute("""
-                SELECT 
-                    SUM(cantidad) as total_items,
-                    COUNT(*) as total_productos
-                FROM shopfusion.carritos_afiliados
-                WHERE afiliado_id = %s
-            """, (afiliado_id,))
-            
-            totales = cur.fetchone()
-            
-            return {
-                'success': True,
-                'total_items': totales['total_items'] or 0,
-                'carrito_count': totales['total_productos'] or 0
-            }
-    except Exception as e:
-        conn.rollback()
-        print(f"Error al eliminar del carrito de afiliado: {e}")
-        return {'error': 'Error al eliminar producto'}
-    finally:
-        conn.close()
+    return {'error': 'Operación no permitida: los afiliados no pueden comprar productos'}
 
 
 def limpiar_carrito_afiliado(afiliado_id):
-    """Limpia todo el carrito del afiliado (después de compra)"""
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                DELETE FROM shopfusion.carritos_afiliados
-                WHERE afiliado_id = %s
-            """, (afiliado_id,))
-            conn.commit()
-            return True
-    except Exception as e:
-        conn.rollback()
-        print(f"Error al limpiar carrito de afiliado: {e}")
-        return False
-    finally:
-        conn.close()
+    return False
 
 
 def migrar_carrito_cookies_a_bd_afiliado(afiliado_id, carrito_cookies):
-    """Migra el carrito de cookies a BD cuando un afiliado inicia sesión"""
-    if not carrito_cookies:
-        return True
-    
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT comision_porcentaje
-                FROM shopfusion.afiliados
-                WHERE id = %s
-            """, (afiliado_id,))
-            afiliado = cur.fetchone()
-            comision_pct = float(afiliado.get('comision_porcentaje') or 0) if afiliado else 0
-
-            for item in carrito_cookies:
-                producto_id = item.get('producto_id')
-                cantidad = item.get('cantidad', 1)
-
-                if not producto_id:
-                    continue
-
-                cur.execute("""
-                    SELECT precio, precio_oferta, precio_proveedor, estado
-                    FROM shopfusion.productos_vendedor
-                    WHERE id = %s AND estado = 'activo'
-                """, (producto_id,))
-                producto = cur.fetchone()
-                if not producto:
-                    continue
-
-                precio_normal = float(producto.get('precio') or 0)
-                precio_oferta_val = float(producto.get('precio_oferta') or 0)
-                if precio_oferta_val > 0 and precio_oferta_val < precio_normal:
-                    precio_final = precio_oferta_val
-                else:
-                    precio_final = precio_normal
-
-                precio_proveedor = float(producto.get('precio_proveedor') or 0)
-                margen = precio_final - precio_proveedor
-                comision_ganada = (margen * comision_pct / 100) if margen > 0 else 0
-                precio_unitario = max(0, precio_final - comision_ganada)
-
-                # Verificar si ya existe
-                cur.execute("""
-                    SELECT id FROM shopfusion.carritos_afiliados
-                    WHERE afiliado_id = %s AND producto_id = %s
-                """, (afiliado_id, producto_id))
-
-                existe = cur.fetchone()
-
-                if existe:
-                    # Actualizar cantidad
-                    cur.execute("""
-                        UPDATE shopfusion.carritos_afiliados
-                        SET cantidad = cantidad + %s,
-                            precio_unitario = %s,
-                            actualizado_en = CURRENT_TIMESTAMP
-                        WHERE id = %s
-                    """, (cantidad, precio_unitario, existe['id']))
-                else:
-                    # Insertar nuevo
-                    cur.execute("""
-                        INSERT INTO shopfusion.carritos_afiliados
-                        (afiliado_id, producto_id, cantidad, precio_unitario)
-                        VALUES (%s, %s, %s, %s)
-                    """, (afiliado_id, producto_id, cantidad, precio_unitario))
-            
-            conn.commit()
-            return True
-    except Exception as e:
-        conn.rollback()
-        print(f"Error al migrar carrito de afiliado: {e}")
-        return False
-    finally:
-        conn.close()
+    # No migrar carritos de afiliados: los afiliados no pueden comprar.
+    return False
 

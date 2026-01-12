@@ -694,13 +694,12 @@ nav {
 
 .products-container {
   display: flex;
-  gap: 1.75rem;
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  scrollbar-width: thin;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
   padding: 1.5rem 1rem;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
+  scroll-snap-type: none;
 }
 
 .products-container::-webkit-scrollbar {
@@ -730,8 +729,8 @@ nav {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  min-width: 280px;
-  max-width: 320px;
+  min-width: 200px;
+  max-width: 230px;
   scroll-snap-align: start;
   border: 1px solid var(--border-elegant-light);
   display: flex;
@@ -2210,8 +2209,8 @@ footer {
   
   .product-card,
   .product-card.exclusive {
-    min-width: 85vw;
-    max-width: 85vw;
+    min-width: 78vw;
+    max-width: 78vw;
   }
   
   .carousel-nav {
@@ -2699,13 +2698,13 @@ footer {
   
   .product-card,
   .product-card.exclusive {
-    min-width: 90vw;
-    max-width: 90vw;
+    min-width: 84vw;
+    max-width: 84vw;
     border-radius: 12px;
   }
   
   .carousel {
-    height: 200px;
+    height: 170px;
   }
   
   .product-name {
@@ -3147,13 +3146,16 @@ footer {
 
 /* Asegurar que todas las imágenes de producto tengan el mismo tamaño */
 .product-card .carousel {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1 / 1;
+  max-height: 220px;
+  background: #f8f9fb;
 }
 
 .product-card .carousel img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  padding: 8px;
 }
 
 /* Mejoras visuales adicionales */

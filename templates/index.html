@@ -694,6 +694,35 @@
 </head>
 
 <body>
+<script>
+  // Evita peticiones a via.placeholder si el HTML contiene referencias literales
+  (function(){
+    try {
+      var imgs = document.getElementsByTagName('img');
+      for (var i=0;i<imgs.length;i++){
+        try {
+          if (imgs[i].src && imgs[i].src.indexOf('https://via.placeholder.com') !== -1) {
+            imgs[i].src = '/static/images/placeholder.svg';
+            imgs[i].onerror = null;
+          }
+        } catch(e){}
+      }
+      // Observer para imágenes posteriores (dinámicas)
+      new MutationObserver(function(muts){
+        muts.forEach(function(m){
+          (m.addedNodes||[]).forEach(function(n){
+            try {
+              if (n && n.tagName === 'IMG' && n.src && n.src.indexOf('via.placeholder.com') !== -1) {
+                n.src = '/static/images/placeholder.svg'; n.onerror = null;
+              }
+            } catch(e){}
+          });
+        });
+      }).observe(document, { childList:true, subtree:true });
+    } catch(e){}
+  })();
+</script>
+
 <!-- Banner de cookies / consentimiento -->
 <div id="cookie-banner"
      class="cookie-banner"
@@ -837,6 +866,10 @@
           <p class="sorteo-precio">
             🎟️ Participa por solo <strong>$1</strong> y podrías ser el próximo ganador.
           </p>
+          <p class="sorteo-precio" style="color:#475569;font-size:0.95rem;">
+            <i class="fas fa-ticket-alt"></i>
+            {{ sorteo.total_boletos or 0 }} participante{{ 's' if (sorteo.total_boletos or 0) != 1 else '' }} registrado{{ 's' if (sorteo.total_boletos or 0) != 1 else '' }}.
+          </p>
 
           <!-- Botón de PayPal del sorteo -->
           <div id="paypal-button-container"></div>
@@ -923,12 +956,12 @@
                                         <img src="{{ img }}"
                                              alt="Imagen de {{ producto.titulo }}"
                                              class="product-media"
-                                             onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=Sin+imagen';">
+                                             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
                                         {% endif %}
                                     {% endfor %}
                                 {% endif %}
                                 {% if not producto.imagenes or producto.imagenes|length == 0 or not producto.imagenes[0] %}
-                                    <img src="https://via.placeholder.com/300x200?text=Sin+imagen"
+                                    <img src="{{ url_for('static', filename='images/placeholder.svg') }}"
                                          alt="Sin imagen disponible"
                                          class="product-media">
                                 {% endif %}
@@ -1077,12 +1110,12 @@
                                                     <img src="{{ img }}"
                                                          alt="Imagen de {{ producto.titulo }}"
                                                          class="product-media"
-                                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=Sin+imagen';">
+                                                         onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
                                                     {% endif %}
                                                 {% endfor %}
                                             {% endif %}
                                             {% if not producto.imagenes or producto.imagenes|length == 0 or not producto.imagenes[0] %}
-                                                <img src="https://via.placeholder.com/300x200?text=Sin+imagen"
+                                                <img src="{{ url_for('static', filename='images/placeholder.svg') }}"
                                                      alt="Sin imagen disponible"
                                                      class="product-media">
                                             {% endif %}
@@ -1486,7 +1519,62 @@
                 <div class="account-tab-content" id="account-tab-settings" style="display: none;">
                     <div id="account-settings-content">
                         <h3>Configuración</h3>
+
                         <div class="settings-section">
+                            <h4>Datos de Envío / Facturación (Ecuador)</h4>
+                            <div id="envio-loading" style="display:none; color:#6b7280; margin-bottom:0.5rem;">
+                                <i class="fas fa-spinner fa-spin"></i> Cargando datos...
+                            </div>
+                            <form id="envio-form">
+                                <div class="form-group">
+                                    <label>Tipo de identificación</label>
+                                    <select name="tipo_identificacion" required>
+                                        <option value="">Selecciona...</option>
+                                        <option value="cedula">Cédula</option>
+                                        <option value="ruc">RUC</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Número de identificación</label>
+                                    <input type="text" name="numero_identificacion" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Nombre</label>
+                                    <input type="text" name="nombre" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Apellido</label>
+                                    <input type="text" name="apellido" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Correo</label>
+                                    <input type="email" name="email" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Teléfono</label>
+                                    <input type="text" name="telefono" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Provincia</label>
+                                    <input type="text" name="provincia" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Ciudad</label>
+                                    <input type="text" name="ciudad" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Dirección</label>
+                                    <textarea name="direccion" rows="2" required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>País</label>
+                                    <input type="text" name="pais" value="Ecuador" readonly>
+                                </div>
+                                <button type="submit" class="btn-save">Guardar datos</button>
+                            </form>
+                        </div>
+
+                        <div class="settings-section" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e5e7eb;">
                             <h4>Cambiar Contraseña</h4>
                             <form id="change-password-form">
                                 <div class="form-group">
@@ -1575,12 +1663,16 @@
                     </li>
                     <li class="list-item">
                         <i class="fa fa-phone fa-2x" aria-hidden="true"></i>
-                        <span class="contact-text phone"></span>
+                        <span class="contact-text phone">
+                            <a href="https://wa.me/593987865420" title="WhatsApp" style="color: inherit; text-decoration: none;">
+                                0987865420
+                            </a>
+                        </span>
                     </li>
                     <li class="list-item">
                         <i class="fa fa-envelope fa-2x" aria-hidden="true"></i>
                         <span class="contact-text gmail">
-                            <a href="mailto:info@shopfusion.com" title="Envíanos un email"></a>
+                            <a href="mailto:shop_fusion@shop_fusion.store" title="Envíanos un email">shop_fusion@shop_fusion.store</a>
                         </span>
                     </li>
                 </ul>
@@ -2306,7 +2398,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!currentImages.length) {
       currentImages = [{
-        src: 'https://via.placeholder.com/300x200?text=Sin+imagen',
+        src: '{{ url_for('static', filename='images/placeholder.svg') }}',
         alt: 'Sin imagen'
       }];
     }
@@ -2709,7 +2801,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     .then(function(res) { return res.json(); })
                     .then(function(resp) {
                         if (resp.status === 'success') {
-                            const okText = '✅ Pago completado. Tus datos se guardaron correctamente. Tu producto se enviará pronto.';
+                            const okText = '🎉 ¡Gracias por tu compra! Tu pedido se procesará de inmediato y llegará en 1 a 3 días. Gracias por confiar en Shop Fusion.';
                             messageEl.textContent = okText;
                             showFlashMessage('success', okText);
                             setTimeout(closeModal, 3000);
@@ -3513,6 +3605,8 @@ function switchAccountTab(tabName) {
         loadAccountAddresses();
     } else if (tabName === 'invoices') {
         loadAccountInvoices();
+    } else if (tabName === 'settings') {
+        loadAccountEnvio();
     }
 }
 
@@ -3666,7 +3760,9 @@ async function loadAccountInvoices() {
                         <p><strong>Monto:</strong> $${parseFloat(factura.monto_total || 0).toFixed(2)}</p>
                         <p><strong>Fecha:</strong> ${new Date(factura.creado_en).toLocaleDateString()}</p>
                         <p><strong>Estado:</strong> ${factura.estado_pago || 'pagado'}</p>
-                        <button class="btn-download" onclick="downloadInvoice(${factura.id})" style="background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin-top: 0.5rem;">Descargar Factura</button>
+                        <div class="invoice-note" style="margin-top: 0.5rem; color: #047857; font-weight: 600;">
+                            ✔️ Factura enviada a tu correo registrado.
+                        </div>
                     </div>
                 `).join('');
             } else {
@@ -3727,11 +3823,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Formulario de cambio de contraseña
-    const passwordForm = document.getElementById('change-password-form');
-    if (passwordForm) {
-        passwordForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+// Formulario de cambio de contraseña
+const passwordForm = document.getElementById('change-password-form');
+if (passwordForm) {
+    passwordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
             const formData = new FormData(passwordForm);
             const data = Object.fromEntries(formData);
             
@@ -3762,11 +3858,69 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error al cambiar contraseña');
+        }
+    });
+}
+
+// Formulario de datos de envío/facturación
+const envioForm = document.getElementById('envio-form');
+if (envioForm) {
+    envioForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(envioForm);
+        const data = Object.fromEntries(formData);
+        data.pais = 'Ecuador';
+        try {
+            const resp = await fetch('/api/cuenta/envio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await resp.json();
+            if (result.success) {
+                alert('Datos de envío guardados');
+            } else {
+                alert(result.error || 'Error al guardar datos de envío');
             }
-        });
-    }
+        } catch (err) {
+            console.error(err);
+            alert('Error al guardar datos de envío');
+        }
+    });
+}
 });
 
+
+// Cargar datos de envío (configuración)
+async function loadAccountEnvio() {
+    const form = document.getElementById('envio-form');
+    const loading = document.getElementById('envio-loading');
+    if (!form) return;
+    if (loading) loading.style.display = 'block';
+    form.style.opacity = '0.5';
+    try {
+        const resp = await fetch('/api/cuenta/envio');
+        const data = await resp.json();
+        if (data.success && data.envio) {
+            const e = data.envio;
+            form.tipo_identificacion.value = e.tipo_identificacion || '';
+            form.numero_identificacion.value = e.numero_identificacion || '';
+            form.nombre.value = e.nombre || '';
+            form.apellido.value = e.apellido || '';
+            form.email.value = e.email || '';
+            form.telefono.value = e.telefono || '';
+            form.provincia.value = e.provincia || '';
+            form.ciudad.value = e.ciudad || '';
+            form.direccion.value = e.direccion || '';
+            form.pais.value = e.pais || 'Ecuador';
+        }
+    } catch (err) {
+        console.error('Error al cargar datos de envío', err);
+    } finally {
+        if (loading) loading.style.display = 'none';
+        form.style.opacity = '1';
+    }
+}
 
 // Cerrar sesión
 function logout() {
@@ -3838,6 +3992,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 150);
 });
 </script>
+
+  <script>
+    // Reemplazo automático para placeholders externos (evita errores si no hay internet)
+    (function(){
+      window.addEventListener('error', function(e){
+        try {
+          var target = e.target || e.srcElement;
+          if (target && target.tagName === 'IMG') {
+            var src = (target.getAttribute && target.getAttribute('src')) || '';
+            if (src && src.indexOf('via.placeholder.com') !== -1) {
+              target.src = '/static/images/placeholder.svg';
+              target.onerror = null;
+            }
+          }
+        } catch(err) {}
+      }, true);
+    })();
+  </script>
 
 </body>
 </html>

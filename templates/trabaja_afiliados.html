@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Afiliados | ShopFusion</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --accent: #f97316;
+      --text: #0f172a;
+      --muted: #64748b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+    }
+    .nav {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 18px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 12px; flex-wrap: wrap; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 8px 10px;
+      border-radius: 10px;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .nav-links a:hover { background: #fef3e6; color: var(--text); }
+    .wrap { max-width: 1100px; margin: 10px auto 40px; padding: 0 18px 36px; }
+    h1 { margin: 0; font-size: 2rem; display: flex; align-items: center; gap: 10px; }
+    p.lead { color: var(--muted); line-height: 1.6; max-width: 820px; }
+    .cta { display: flex; gap: 12px; flex-wrap: wrap; margin: 14px 0 24px; }
+    .btn {
+      padding: 11px 16px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-primary { background: linear-gradient(135deg, #f97316, #ef4444); color: white; border: none; }
+    .btn-ghost { color: var(--text); background: transparent; }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(249,115,22,0.5); box-shadow: 0 8px 20px rgba(15,23,42,0.12); }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 12px;
+      box-shadow: 0 16px 40px rgba(15,23,42,0.07);
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+    .table thead { color: var(--muted); }
+    .table th, .table td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(249,115,22,0.14);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 0.85rem;
+    }
+    .highlight-box {
+      background: linear-gradient(180deg, #fffaf0, #fff7ed);
+      border: 1px solid rgba(249,115,22,0.18);
+      padding: 18px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      box-shadow: 0 12px 30px rgba(15,23,42,0.06);
+    }
+    .highlight-box h2 { margin: 0 0 6px; font-size:1.125rem; color: #0f172a; }
+    .highlight-box p { margin: 0 0 10px; color: var(--text); line-height:1.5; }
+    .key-points { margin-top: 8px; }
+    .key-points ul { margin: 0; padding-left: 18px; color: #374151; }
+    .key-points li { margin: 6px 0; }
+    .key-points li strong { color: #0f172a; }
+    .small-note { font-size: 0.9rem; color: var(--muted); margin-top: 8px; }
+    .footer {
+      max-width: 1100px;
+      margin: 0 auto 24px;
+      padding: 12px 18px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .footer a { color: var(--muted); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; color: var(--text); }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="{{ url_for('index') }}">
+      <span style="color:#f97316;">🔥</span> ShopFusion
+    </a>
+    <div class="nav-links">
+      <a href="{{ url_for('trabaja_con_nosotros') }}">Trabaja</a>
+      <a href="{{ url_for('trabaja_vacantes') }}">Vacantes</a>
+      <a href="{{ url_for('trabaja_proveedores') }}">Proveedores</a>
+    </div>
+  </header>
+  <div class="wrap">
+    <h1>🧑‍🤝‍🧑 Programa de Afiliados</h1>
+    <div class="highlight-box" role="region" aria-label="Información destacada sobre el programa de afiliados">
+      <h2>Únete y gana comisiones vendiendo todos los productos de ShopFusion</h2>
+      <p>Únete y gana comisiones vendiendo todos los productos de ShopFusion. Tienes panel, links de seguimiento, soporte técnico y guía completa. Incluso puedes generar tu propia tienda ShopFusion: todos los productos quedan vinculados a tu afiliación y ganas cuando compartes tu tienda y tus clientes compran.</p>
+      <div class="key-points">
+        <ul>
+          <li><strong>No controlas stock.</strong></li>
+          <li><strong>No controlas envíos ni entregas.</strong></li>
+          <li><strong>Ventas 100% online.</strong></li>
+          <li><strong>Envíos a todo Ecuador por Servientrega.</strong></li>
+          <li><strong>Catálogo con un sinfín de productos.</strong></li>
+          <li><strong>Puedes vender la tienda completa como tu propio negocio:</strong> toda la actividad generada por tu tienda vinculada se registra en tu cuenta.</li>
+          <li><strong>Ideal si tienes un público amplio.</strong></li>
+          <li><strong>Retiros:</strong> PayPal, Skrill o transferencias bancarias (semanal, quincenal o mensual).</li>
+          <li><strong>Panel de control fácil de usar y soporte técnico disponible.</strong></li>
+          <li><strong>Tu comisión depende de tu rendimiento: sube hasta el 90%.</strong></li>
+        </ul>
+      </div>
+    </div>
+    <div class="cta">
+      <a class="btn btn-primary" href="{{ url_for('afiliados_registro') }}">Registrarme como afiliado</a>
+      <a class="btn btn-ghost" href="{{ url_for('afiliados_login') }}">Ya soy afiliado</a>
+    </div>
+
+    <div class="panel">
+      <div class="badge">Sistema de comisiones automático</div>
+      <p class="lead" style="margin:8px 0 12px;">Comisión inicial predeterminada 50% al registrarse. Sube con más ventas mensuales; si no vendes, baja hasta 20% (mínimo). Las comisiones manuales temporales (con tiempo límite) tienen prioridad.</p>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Ventas en el mes</th>
+            <th>Comisión</th>
+            <th>Beneficios</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Usuario nuevo</td><td>50%</td><td>Comisión inicial predeterminada</td></tr>
+          <tr><td>3 ventas</td><td>50%</td><td>✓ Descuentos exclusivos activados (15 días)</td></tr>
+          <tr><td>4 ventas</td><td>55%</td><td>✓ Descuentos exclusivos activados</td></tr>
+          <tr><td>5 ventas</td><td>60%</td><td>✓ Descuentos exclusivos activados</td></tr>
+          <tr><td>7+ ventas</td><td>70%</td><td>✓ Descuentos exclusivos activados</td></tr>
+          <tr><td>9 ventas</td><td>80%</td><td>✓ Descuentos exclusivos activados</td></tr>
+          <tr><td>11+ ventas</td><td>90% (Máximo)</td><td>✓ Descuentos exclusivos activados<br><em class="small-note">Se mantiene si las ventas son constantes</em></td></tr>
+          <tr><td>No cumple 3 ventas en el mes</td><td>40%</td><td>Comisión se reduce</td></tr>
+          <tr><td>No vende en el segundo mes</td><td>30%</td><td>Comisión se reduce</td></tr>
+          <tr><td>No vende nada</td><td>20% (Mínimo)</td><td>Comisión mínima. Al comenzar a vender, sube automáticamente</td></tr>
+        </tbody>
+      </table>
+      <p class="lead" style="margin:12px 0 0; font-size:0.95rem;">Soporte técnico y guía de todas las funcionalidades disponibles en tu panel.</p>
+    </div>
+  </div>
+  <footer class="footer">
+    <div>© ShopFusion</div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <a href="{{ url_for('privacidad') }}">Privacidad</a>
+      <a href="{{ url_for('soporte') }}">Soporte</a>
+      <a href="{{ url_for('index') }}">Inicio</a>
+    </div>
+  </footer>
+</body>
+</html>

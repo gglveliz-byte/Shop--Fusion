@@ -256,20 +256,10 @@ def ensure_afiliados_tables():
                 END $$;
             """)
             
-            # Tabla de descuentos activos para afiliados
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS shopfusion.descuentos_afiliados (
-                    id SERIAL PRIMARY KEY,
-                    afiliado_id INTEGER NOT NULL REFERENCES shopfusion.afiliados(id) ON DELETE CASCADE,
-                    ventas_requeridas INTEGER NOT NULL DEFAULT 3,
-                    ventas_actuales INTEGER NOT NULL DEFAULT 0,
-                    descuento_acumulado DECIMAL(10,2) DEFAULT 0.00,
-                    fecha_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    fecha_expiracion TIMESTAMP NOT NULL,
-                    estado VARCHAR(20) DEFAULT 'activo',
-                    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-            """)
+            # Nota: El sistema de descuentos para afiliados fue desactivado.
+            # Se elimina la creación de la tabla `descuentos_afiliados` porque
+            # los afiliados solo podrán vender, no comprar ni recibir descuentos
+            # para uso propio.
 
             # Tabla de clientes asociados a afiliados (asignacion permanente)
             cur.execute("""
@@ -321,9 +311,7 @@ def ensure_afiliados_tables():
                 ("idx_afiliados_codigo", "afiliados", "codigo_afiliado"),
                 ("idx_comisiones_afiliado", "comisiones_afiliados", "afiliado_id"),
                 ("idx_comisiones_estado", "comisiones_afiliados", "estado"),
-                ("idx_descuentos_afiliado", "descuentos_afiliados", "afiliado_id"),
-                ("idx_descuentos_estado", "descuentos_afiliados", "estado"),
-                ("idx_descuentos_expiracion", "descuentos_afiliados", "fecha_expiracion"),
+                # indices relacionados con descuentos eliminados.
                 ("idx_tracking_afiliado", "tracking_afiliados", "afiliado_id"),
                 ("idx_afiliados_clientes_afiliado", "afiliados_clientes", "afiliado_id"),
             ]
@@ -661,11 +649,24 @@ def registrar_comision(afiliado_id, compra_id, monto_venta, comision_porcentaje,
                 cur.execute("SAVEPOINT sp_comision_shopfusion")
                 cur.execute("""
                     UPDATE cliente_compraron_productos
-                    SET margen_bruto = COALESCE(margen_bruto, %s),
-                        comision_afiliado = %s,
-                        ganancia_shopfusion = COALESCE(margen_bruto, %s) - %s
+                    SET comision_afiliado = %s
                     WHERE id = %s
-                """, (base_margen, monto_comision, base_margen, monto_comision, compra_id))
+                """, (monto_comision, compra_id))
+                # Solo actualizar margen/ganancia si existen las columnas (evita warnings en esquemas antiguos)
+                cur.execute("""
+                    SELECT column_name FROM information_schema.columns
+                    WHERE table_schema = 'shopfusion'
+                      AND table_name = 'cliente_compraron_productos'
+                      AND column_name IN ('margen_bruto', 'ganancia_shopfusion')
+                """)
+                cols = {row[0] for row in cur.fetchall()}
+                if {'margen_bruto', 'ganancia_shopfusion'}.issubset(cols):
+                    cur.execute("""
+                        UPDATE cliente_compraron_productos
+                        SET margen_bruto = COALESCE(margen_bruto, %s),
+                            ganancia_shopfusion = COALESCE(margen_bruto, %s) - %s
+                        WHERE id = %s
+                    """, (base_margen, base_margen, monto_comision, compra_id))
                 cur.execute("RELEASE SAVEPOINT sp_comision_shopfusion")
             except Exception as e:
                 try:
@@ -680,8 +681,7 @@ def registrar_comision(afiliado_id, compra_id, monto_venta, comision_porcentaje,
             
             conn.commit()
             
-            # Verificar y crear/actualizar descuento (cada 3 ventas)
-            verificar_y_crear_descuento_afiliado(afiliado_id, monto_comision)
+            # Nota: sistema de descuentos para afiliados desactivado — no crear descuentos.
             
             # Marcar tracking como convertido
             # MEJORA: Primero intentar asociar con el producto específico si se proporciona
@@ -838,118 +838,15 @@ def obtener_link_afiliado(codigo_afiliado, base_url, producto_id=None):
 
 
 def verificar_y_crear_descuento_afiliado(afiliado_id, monto_comision):
-    """
-    Verifica si el afiliado ha alcanzado 3 ventas y crea/actualiza un descuento.
-    Cada 3 ventas desbloquea un descuento de 15 días.
-    El descuento acumulado = suma de todas las comisiones ganadas en ese período.
-    """
-    from datetime import datetime, timedelta
-    
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            # Obtener descuento activo actual
-            cur.execute("""
-                SELECT id, ventas_actuales, descuento_acumulado, fecha_expiracion
-                FROM descuentos_afiliados
-                WHERE afiliado_id = %s 
-                AND estado = 'activo'
-                AND fecha_expiracion > CURRENT_TIMESTAMP
-                ORDER BY fecha_inicio DESC
-                LIMIT 1
-            """, (afiliado_id,))
-            
-            descuento_actual = cur.fetchone()
-            
-            if descuento_actual:
-                # Actualizar descuento existente
-                nuevas_ventas = descuento_actual['ventas_actuales'] + 1
-                nuevo_descuento = float(descuento_actual['descuento_acumulado']) + float(monto_comision)
-                
-                cur.execute("""
-                    UPDATE descuentos_afiliados
-                    SET ventas_actuales = %s,
-                        descuento_acumulado = %s
-                    WHERE id = %s
-                """, (nuevas_ventas, nuevo_descuento, descuento_actual['id']))
-                conn.commit()
-                
-                # Si alcanzó múltiplo de 3, extender por 15 días más
-                if nuevas_ventas % 3 == 0:
-                    nueva_expiracion = datetime.now() + timedelta(days=15)
-                    cur.execute("""
-                        UPDATE descuentos_afiliados
-                        SET fecha_expiracion = %s
-                        WHERE id = %s
-                    """, (nueva_expiracion, descuento_actual['id']))
-                    conn.commit()
-            else:
-                # Crear nuevo descuento (primera venta o descuento expirado)
-                # Contar ventas totales del afiliado
-                cur.execute("""
-                    SELECT COUNT(*) as total_ventas
-                    FROM comisiones_afiliados
-                    WHERE afiliado_id = %s
-                """, (afiliado_id,))
-                total_ventas = cur.fetchone()['total_ventas'] or 0
-                
-                # Si tiene múltiplo de 3 ventas, crear descuento
-                if total_ventas % 3 == 0:
-                    fecha_expiracion = datetime.now() + timedelta(days=15)
-                    cur.execute("""
-                        INSERT INTO descuentos_afiliados
-                        (afiliado_id, ventas_requeridas, ventas_actuales, descuento_acumulado, fecha_expiracion)
-                        VALUES (%s, 3, 1, %s, %s)
-                        RETURNING id
-                    """, (afiliado_id, float(monto_comision), fecha_expiracion))
-                    conn.commit()
-    finally:
-        conn.close()
+    """No-op: sistema de descuentos desactivado."""
+    return None
 
 
 def obtener_descuento_disponible_afiliado(afiliado_id):
-    """
-    Obtiene el descuento disponible para un afiliado.
-    Retorna el monto acumulado de comisiones que puede usar como descuento.
-    """
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT descuento_acumulado, fecha_expiracion, estado
-                FROM descuentos_afiliados
-                WHERE afiliado_id = %s 
-                AND estado = 'activo'
-                AND fecha_expiracion > CURRENT_TIMESTAMP
-                ORDER BY fecha_inicio DESC
-                LIMIT 1
-            """, (afiliado_id,))
-            
-            descuento = cur.fetchone()
-            if descuento:
-                return float(descuento['descuento_acumulado'])
-            return 0.00
-    finally:
-        conn.close()
+    """Retorna 0. El sistema de descuentos de afiliados está desactivado."""
+    return 0.00
 
 
 def aplicar_descuento_afiliado(afiliado_id, monto_descuento):
-    """
-    Aplica un descuento al descuento acumulado del afiliado.
-    Reduce el descuento_acumulado cuando el afiliado usa su descuento en una compra.
-    """
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                UPDATE descuentos_afiliados
-                SET descuento_acumulado = GREATEST(0, descuento_acumulado - %s)
-                WHERE afiliado_id = %s 
-                AND estado = 'activo'
-                AND fecha_expiracion > CURRENT_TIMESTAMP
-                AND descuento_acumulado >= %s
-            """, (float(monto_descuento), afiliado_id, float(monto_descuento)))
-            conn.commit()
-            return cur.rowcount > 0
-    finally:
-        conn.close()
+    """No-op: devuelve False porque no hay descuentos aplicables."""
+    return False

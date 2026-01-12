@@ -96,6 +96,25 @@
       background: #fff7e6;
       color: #7a4d00;
     }
+
+    /* Página: ajustes específicos para login de afiliados */
+    .afiliado-card { background: var(--bg-card, #ffffff); }
+    .afiliado-card .field input,
+    .afiliado-card .form-control {
+      background: var(--bg-card, #ffffff);
+      color: var(--text-dark, #1a1a1a);
+      border: 1px solid var(--border-elegant-light, #e5e7eb);
+      padding: 0.75rem 1rem;
+      box-shadow: none;
+    }
+    .afiliado-card .form-control::placeholder { color: rgba(26,26,26,0.5); }
+
+    @media (max-width: 480px) {
+      .afiliado-container { margin: 1rem; padding: 0; max-width: 100%; }
+      .afiliado-card { padding: 1rem; border-radius: 12px; }
+      .afiliado-header h1 { font-size: 1.5rem; }
+      .btn-primary { padding: 0.6rem 1rem; font-size: 0.95rem; }
+    }
   </style>
 </head>
 <body>
@@ -129,7 +148,7 @@
 
         <div class="field">
           {{ form.password.label }}
-          {{ form.password(class="form-control") }}
+          {{ form.password(class="form-control", type="password", autocomplete="current-password") }}
           {% if form.password.errors %}
             <small style="color: #b42318;">{{ form.password.errors[0] }}</small>
           {% endif %}
@@ -146,6 +165,7 @@
   </div>
 </body>
 </html>
+
 
 
 

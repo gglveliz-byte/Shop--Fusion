@@ -79,6 +79,55 @@ def ensure_link_proveedor_column():
         conn.close()
 
 
+def _producto_columns(conn):
+    """Devuelve el set de columnas actuales en productos_vendedor."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'shopfusion'
+              AND table_name = 'productos_vendedor';
+        """)
+        rows = cur.fetchall()
+        return {row.get('column_name') for row in rows if row and row.get('column_name')}
+
+
+def ensure_extra_product_columns(conn=None):
+    """Asegura columnas envio_gratis e importado (y link_proveedor si falta)."""
+    close_conn = False
+    if conn is None:
+        conn = get_db_connection()
+        close_conn = True
+    try:
+        cols = _producto_columns(conn)
+        with conn.cursor() as cur:
+            if 'envio_gratis' not in cols:
+                try:
+                    cur.execute("ALTER TABLE shopfusion.productos_vendedor ADD COLUMN envio_gratis BOOLEAN DEFAULT FALSE;")
+                    conn.commit()
+                    cols.add('envio_gratis')
+                except Exception:
+                    conn.rollback()
+            if 'importado' not in cols:
+                try:
+                    cur.execute("ALTER TABLE shopfusion.productos_vendedor ADD COLUMN importado BOOLEAN DEFAULT FALSE;")
+                    conn.commit()
+                    cols.add('importado')
+                except Exception:
+                    conn.rollback()
+            if 'link_proveedor' not in cols:
+                try:
+                    cur.execute("ALTER TABLE shopfusion.productos_vendedor ADD COLUMN link_proveedor TEXT;")
+                    conn.commit()
+                    cols.add('link_proveedor')
+                except Exception:
+                    conn.rollback()
+        return cols
+    finally:
+        if close_conn:
+            conn.close()
+
+
 
 def _compras_columns(conn):
     """Retorna un set con los nombres de columnas de cliente_compraron_productos."""
@@ -128,6 +177,42 @@ def ensure_compras_columns():
         return ok
     finally:
         conn.close()
+
+
+def ensure_compras_envio_columns(conn=None):
+    """
+    Asegura columnas de datos de envio/identificacion en cliente_compraron_productos.
+    Devuelve el set de columnas actuales (con las nuevas si se pudieron crear).
+    """
+    close_conn = False
+    if conn is None:
+        conn = get_db_connection()
+        close_conn = True
+    columnas_actuales = _compras_columns(conn)
+    try:
+        with conn.cursor() as cur:
+            columnas_requeridas = {
+                'provincia': "VARCHAR(150)",
+                'ciudad': "VARCHAR(150)",
+                'tipo_identificacion': "VARCHAR(20)",
+                'numero_identificacion': "VARCHAR(50)",
+            }
+            for col, col_def in columnas_requeridas.items():
+                if col in columnas_actuales:
+                    continue
+                try:
+                    cur.execute(
+                        f"ALTER TABLE shopfusion.cliente_compraron_productos "
+                        f"ADD COLUMN {col} {col_def};"
+                    )
+                    conn.commit()
+                    columnas_actuales.add(col)
+                except Exception:
+                    conn.rollback()
+        return columnas_actuales
+    finally:
+        if close_conn:
+            conn.close()
 
 
 def _parse_imagenes(value):
@@ -382,7 +467,18 @@ def actualizar_producto_exclusivo(producto_id: int, campos: dict) -> bool:
         "estado",
         "imagenes",
         "link_proveedor",
+        "envio_gratis",
+        "importado",
     }
+
+    try:
+        conn_cols = get_db_connection()
+        ensure_extra_product_columns(conn_cols)
+    finally:
+        try:
+            conn_cols.close()
+        except Exception:
+            pass
 
     if "link_proveedor" in campos:
         conn_check = get_db_connection()
@@ -441,117 +537,77 @@ def crear_producto_exclusivo(campos: dict) -> int:
       - stock (int, por defecto 0)
       - estado (str, por defecto "activo")
       - imagenes (list[str] | str | None)
+      - envio_gratis (bool)
+      - importado (bool)
+      - link_proveedor (str)
     """
-    # Solo aceptamos estas claves
     permitidos = {
-        "titulo",
-        "descripcion",
-        "precio",
-        "precio_oferta",
-        "precio_proveedor",
-        "categoria",
-        "stock",
-        "estado",
-        "imagenes",
-        "link_proveedor",
+        "titulo", "descripcion", "precio", "precio_oferta", "precio_proveedor",
+        "categoria", "stock", "estado", "imagenes", "link_proveedor",
+        "envio_gratis", "importado",
     }
 
-    datos = {}
-
-    for clave in permitidos:
-        if clave in campos:
-            datos[clave] = campos[clave]
-
-    # Valores por defecto
+    datos = {k: v for k, v in campos.items() if k in permitidos}
     datos.setdefault("precio_oferta", None)
     datos.setdefault("precio_proveedor", 0.00)
     datos.setdefault("categoria", None)
     datos.setdefault("stock", 0)
     datos.setdefault("estado", "activo")
+    datos.setdefault("envio_gratis", False)
+    datos.setdefault("importado", False)
 
-    # Normalizar imagenes y guardarlas como JSON
     imagenes_raw = datos.get("imagenes") or []
     datos["imagenes"] = json.dumps(_parse_imagenes(imagenes_raw))
 
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        has_link = _link_proveedor_column_exists(conn)
-        if not has_link:
-            if ensure_link_proveedor_column():
-                has_link = _link_proveedor_column_exists(conn)
+        cols = ensure_extra_product_columns(conn)
+        has_link = "link_proveedor" in cols
+        has_envio = "envio_gratis" in cols
+        has_importado = "importado" in cols
 
+        insert_cols = [
+            "titulo", "descripcion", "precio", "precio_oferta", "precio_proveedor",
+            "categoria", "stock", "estado", "imagenes",
+        ]
+        valores = [
+            datos.get("titulo"), datos.get("descripcion"), datos.get("precio"),
+            datos.get("precio_oferta"), datos.get("precio_proveedor", 0.00),
+            datos.get("categoria"), datos.get("stock"), datos.get("estado"),
+            datos.get("imagenes"),
+        ]
+
+        if has_envio:
+            insert_cols.append("envio_gratis")
+            valores.append(bool(datos.get("envio_gratis")))
+        if has_importado:
+            insert_cols.append("importado")
+            valores.append(bool(datos.get("importado")))
         if has_link:
-            cur.execute(
-                """
-                INSERT INTO shopfusion.productos_vendedor (
-                    titulo,
-                    descripcion,
-                    precio,
-                    precio_oferta,
-                    precio_proveedor,
-                    categoria,
-                    stock,
-                    estado,
-                    imagenes,
-                    link_proveedor
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id
-                """,
-                (
-                    datos.get("titulo"),
-                    datos.get("descripcion"),
-                    datos.get("precio"),
-                    datos.get("precio_oferta"),
-                    datos.get("precio_proveedor", 0.00),
-                    datos.get("categoria"),
-                    datos.get("stock"),
-                    datos.get("estado"),
-                    datos.get("imagenes"),
-                    datos.get("link_proveedor") or None,
-                ),
-            )
-        else:
-            cur.execute(
-                """
-                INSERT INTO shopfusion.productos_vendedor (
-                    titulo,
-                    descripcion,
-                    precio,
-                    precio_oferta,
-                    precio_proveedor,
-                    categoria,
-                    stock,
-                    estado,
-                    imagenes
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id
-                """,
-                (
-                    datos.get("titulo"),
-                    datos.get("descripcion"),
-                    datos.get("precio"),
-                    datos.get("precio_oferta"),
-                    datos.get("precio_proveedor", 0.00),
-                    datos.get("categoria"),
-                    datos.get("stock"),
-                    datos.get("estado"),
-                    datos.get("imagenes"),
-                ),
-            )
+            insert_cols.append("link_proveedor")
+            valores.append(datos.get("link_proveedor") or None)
+
+        placeholders = ", ".join(["%s"] * len(insert_cols))
+        cols_sql = ", ".join(insert_cols)
+
+        cur.execute(
+            f"""
+            INSERT INTO shopfusion.productos_vendedor ({cols_sql})
+            VALUES ({placeholders})
+            RETURNING id
+            """,
+            tuple(valores),
+        )
         fila = cur.fetchone()
         conn.commit()
         return fila["id"] if fila else None
-    except Exception:
+    except Exception as e:
         conn.rollback()
-        raise
+        raise e
     finally:
         cur.close()
         conn.close()
-
-
 
 
 def registrar_compra_exclusivo(
@@ -570,6 +626,10 @@ def registrar_compra_exclusivo(
     estado_pago: str = "pagado",
     afiliado_id: int = None,
     afiliado_codigo: str = None,
+    provincia: str = "",
+    ciudad: str = "",
+    tipo_identificacion: str = "",
+    numero_identificacion: str = "",
 ) -> int:
     """
     Registra una compra de producto exclusivo en la tabla cliente_compraron_productos
@@ -584,6 +644,7 @@ def registrar_compra_exclusivo(
     cur = conn.cursor()
 
     try:
+        columnas_extra = ensure_compras_envio_columns(conn)
         # 1) Obtener datos del producto (snapshot de título y precio final)
         cur.execute(
             """
@@ -654,7 +715,21 @@ def registrar_compra_exclusivo(
             afiliado_codigo,
         ]
 
-        columnas_extra = _compras_columns(conn)
+        columnas_extra = columnas_extra or _compras_columns(conn)
+        # Agregar datos de envío solo si las columnas existen en la tabla
+        if "provincia" in columnas_extra:
+            columnas.insert(10, "provincia")
+            valores.insert(10, provincia or "")
+        if "ciudad" in columnas_extra:
+            columnas.insert(11, "ciudad")
+            valores.insert(11, ciudad or "")
+        if "tipo_identificacion" in columnas_extra:
+            columnas.insert(12, "tipo_identificacion")
+            valores.insert(12, tipo_identificacion or "")
+        if "numero_identificacion" in columnas_extra:
+            columnas.insert(13, "numero_identificacion")
+            valores.insert(13, numero_identificacion or "")
+
         if "precio_proveedor" in columnas_extra:
             columnas.append("precio_proveedor")
             valores.append(precio_proveedor)

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vacantes | Trabaja con nosotros</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --panel: #ffffff;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --accent: #f97316;
+    --text: #0f172a;
+    --muted: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+  }
+  .nav {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 18px 18px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .nav-links { display: flex; gap: 12px; flex-wrap: wrap; }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 8px 10px;
+    border-radius: 10px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .nav-links a:hover { background: #fef3e6; color: var(--text); }
+  .hero {
+    max-width: 1100px;
+    margin: 10px auto 0;
+    padding: 0 18px 12px;
+  }
+  .hero h1 {
+    margin: 0;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .hero p {
+    margin: 10px 0 0;
+    color: var(--muted);
+    max-width: 720px;
+    line-height: 1.6;
+  }
+  .grid {
+    max-width: 1100px;
+    margin: 18px auto 60px;
+    padding: 0 18px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 10px 30px rgba(15,23,42,0.08);
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(249,115,22,0.12);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.85rem;
+  }
+  .muted { color: var(--muted); }
+  .actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #f97316, #ef4444);
+    color: white;
+    border: none;
+  }
+  .btn-outline {
+    color: var(--text);
+    background: transparent;
+  }
+  .btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(249,115,22,0.6);
+    box-shadow: 0 8px 20px rgba(15,23,42,0.15);
+  }
+  .footer {
+    max-width: 1100px;
+    margin: 0 auto 24px;
+    padding: 12px 18px;
+    color: var(--muted);
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .footer a { color: var(--muted); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; color: var(--text); }
+
+  /* Mobile tweaks */
+  @media (max-width: 768px) {
+    .nav { padding: 12px; }
+    .nav-links { gap: 8px; }
+    .hero h1 { font-size: 1.4rem; }
+    .hero p { font-size: 0.98rem; }
+    .grid { margin: 12px auto 40px; gap: 12px; }
+    .card { padding: 12px; border-radius: 10px; }
+    .badge { font-size: 0.8rem; padding: 5px 8px; }
+    .actions { flex-direction: column; align-items: stretch; }
+    .btn { padding: 12px; width: 100%; }
+    .muted { font-size: 0.96rem; }
+  }
+
+  @media (max-width: 480px) {
+    .hero h1 { font-size: 1.2rem; }
+    .hero p { font-size: 0.95rem; }
+    .card { padding: 10px; }
+  }
+</style>
+<body>
+  <header class="nav">
+    <a class="brand" href="{{ url_for('index') }}">
+      <span style="color:#f97316;">🔥</span> ShopFusion
+    </a>
+    <div class="nav-links">
+      <a href="{{ url_for('trabaja_con_nosotros') }}">Trabaja</a>
+      <a href="{{ url_for('trabaja_afiliados') }}">Afiliados</a>
+      <a href="{{ url_for('trabaja_proveedores') }}">Proveedores</a>
+    </div>
+  </header>
+  <section class="hero">
+    <h1>💼 Vacantes disponibles</h1>
+    <p>Explora las oportunidades abiertas y postula para unirte a nuestro equipo. Cada vacante detalla lo que buscamos y cómo aplicar.</p>
+
+    <!-- Banner: Incentivo programa de afiliados -->
+    <div class="card" style="margin-top:12px; display:flex; gap:12px; align-items:center;">
+      <div style="flex:1;">
+        <strong>Incentivo y comunidad 🧡</strong>
+        <p class="muted" style="margin:6px 0 0;">Para fomentar el trabajo en equipo y reconocimiento, ShopFusion dispone de un sistema de afiliados en Ecuador: vende nuestros productos y gana ingresos extra, con comisiones de hasta <strong>90%</strong> en algunos casos.</p>
+      </div>
+      <div style="white-space:nowrap;">
+        <a class="btn btn-primary" href="{{ url_for('trabaja_afiliados') }}">Conoce más</a>
+      </div>
+    </div>
+  </section>
+  {% if vacantes %}
+    <div class="grid" id="vacantes-grid">
+      {% for v in vacantes %}
+        <article class="card" data-vacante-id="{{ v.id }}">
+          <div class="badge">Vacante activa</div>
+          <h3 style="margin:0; font-size:1.2rem;">{{ v.titulo }}</h3>
+          <p class="muted" style="margin:4px 0 0; line-height:1.6;">{{ v.descripcion }}</p>
+          {% if v.requisitos %}
+            <p class="muted" style="margin:8px 0 0; font-size:0.95rem;"><strong>Requisitos:</strong> {{ v.requisitos }}</p>
+          {% endif %}
+          <div class="actions">
+            <a class="btn btn-primary aplicar-link" href="{{ url_for('aplicar_vacante', vacante_id=v.id) }}" data-vacante-id="{{ v.id }}">Aplicar ahora</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="grid">
+      <article class="card">
+        <h3 style="margin:0;">Por ahora no hay vacantes activas</h3>
+        <p class="muted">Vuelve pronto, estamos creciendo y pronto abriremos nuevas posiciones.</p>
+        <div class="actions">
+          <a class="btn btn-outline" href="{{ url_for('index') }}">Ir al inicio</a>
+        </div>
+      </article>
+    </div>
+  {% endif %}
+  <footer class="footer">
+    <div>© ShopFusion</div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <a href="{{ url_for('privacidad') }}">Privacidad</a>
+      <a href="{{ url_for('soporte') }}">Soporte</a>
+      <a href="{{ url_for('index') }}">Inicio</a>
+    </div>
+  </footer>
+</body>
+</html>

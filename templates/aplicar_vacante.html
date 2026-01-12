@@ -115,28 +115,28 @@
                     <label for="nombre_completo">
                         <i class="fas fa-user"></i> Nombre Completo *
                     </label>
-                    <input type="text" id="nombre_completo" name="nombre_completo" required autocomplete="name">
+                    <input type="text" id="nombre_completo" name="nombre_completo" required autocomplete="name" value="{{ form.get('nombre_completo','') if form is defined else '' }}">
                 </div>
 
                 <div class="form-group">
                     <label for="email">
                         <i class="fas fa-envelope"></i> Correo Electrónico *
                     </label>
-                    <input type="email" id="email" name="email" required autocomplete="email">
+                    <input type="email" id="email" name="email" required autocomplete="email" value="{{ form.get('email','') if form is defined else '' }}">
                 </div>
 
                 <div class="form-group">
                     <label for="telefono">
                         <i class="fas fa-phone"></i> Teléfono
                     </label>
-                    <input type="tel" id="telefono" name="telefono" autocomplete="tel">
+                    <input type="tel" id="telefono" name="telefono" autocomplete="tel" value="{{ form.get('telefono','') if form is defined else '' }}">
                 </div>
 
                 <div class="form-group">
                     <label for="hoja_vida">
                         <i class="fas fa-file-alt"></i> Hoja de Vida / CV *
                     </label>
-                    <textarea id="hoja_vida" name="hoja_vida" required placeholder="Pega aquí tu hoja de vida o escribe un resumen de tu experiencia, educación y habilidades..."></textarea>
+                    <textarea id="hoja_vida" name="hoja_vida" required placeholder="Pega aquí tu hoja de vida o escribe un resumen de tu experiencia, educación y habilidades...">{{ form.get('hoja_vida','') if form is defined else '' }}</textarea>
                     <small style="color: var(--text-elegant-light); font-size: 0.9rem;">
                         Puedes pegar el contenido de tu CV o escribir un resumen detallado de tu experiencia
                     </small>
@@ -146,7 +146,7 @@
                     <label for="mensaje">
                         <i class="fas fa-comment"></i> Mensaje Adicional
                     </label>
-                    <textarea id="mensaje" name="mensaje" placeholder="¿Por qué te interesa esta posición? ¿Tienes alguna pregunta?"></textarea>
+                    <textarea id="mensaje" name="mensaje" placeholder="¿Por qué te interesa esta posición? ¿Tienes alguna pregunta?">{{ form.get('mensaje','') if form is defined else '' }}</textarea>
                 </div>
 
                 <button type="submit" class="btn-submit">
@@ -162,6 +162,29 @@
         </div>
     </main>
 
+    <!-- Modal de confirmación de envío -->
+    <style>
+      /* Scoped modal styles */
+      #aplicacion-modal { display:flex; position:fixed; inset:0; background: rgba(0,0,0,0.45); z-index:2000; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition: opacity 220ms ease; }
+      #aplicacion-modal.open { opacity:1; pointer-events:auto; }
+      .modal-box { background:white; max-width:620px; width:92%; padding:22px; border-radius:12px; box-shadow:0 20px 60px rgba(2,6,23,0.18); text-align:left; transform: translateY(8px) scale(0.98); opacity:0; transition: transform 240ms cubic-bezier(.2,.9,.2,1), opacity 200ms ease; position:relative; }
+      .modal-box.open { transform: translateY(0) scale(1); opacity:1; }
+      .modal-box .modal-close.top { position:absolute; right:12px; top:12px; border:none; background:transparent; font-size:20px; cursor:pointer; color:#6b7280; }
+    </style>
+    <div id="aplicacion-modal" aria-hidden="true">
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="aplicacion-modal-title">
+            <button class="modal-close top" aria-label="Cerrar">×</button>
+            <h2 id="aplicacion-modal-title" style="margin-top:0; font-size:1.25rem;">✅ ¡Postulación enviada!</h2>
+            <p style="color:#374151;">Gracias por postularte. Revisaremos tu perfil y nos pondremos en contacto contigo lo antes posible.</p>
+            <hr style="margin:12px 0; border:none; border-top:1px solid #eef2ff;">
+            <p style="margin:0; color:#374151;"><strong>¿Buscas ingresos extra?</strong> Conoce nuestro <a href="{{ url_for('trabaja_afiliados') }}">Programa de Afiliados</a>: vende sin gestionar inventario, recibe <strong>comisiones de hasta 90%</strong>, pagos semanal/quincenal/mensual y soporte para empezar rápido.</p>
+            <div style="margin-top:16px; display:flex; gap:10px; justify-content:flex-end;">
+                <a href="{{ url_for('trabaja_vacantes') }}" class="btn" style="background:transparent;">Seguir viendo vacantes</a>
+                <a href="{{ url_for('trabaja_afiliados') }}" class="btn btn-primary btn-lg">Conoce el programa</a>
+            </div>
+        </div>
+    </div>
+
     <footer>
         <div class="footer-container">
             <div class="footer-section">
@@ -175,6 +198,21 @@
     </footer>
     <script>
         document.getElementById('current-year').textContent = new Date().getFullYear();
+        // Mostrar modal si venimos con ?enviado=1
+        (function(){
+          var show = {{ 'true' if show_modal else 'false' }};
+          if (show) {
+            var overlay = document.getElementById('aplicacion-modal');
+            var box = overlay.querySelector('.modal-box');
+            overlay.style.display = 'flex';
+            setTimeout(function(){ overlay.classList.add('open'); box.classList.add('open'); overlay.setAttribute('aria-hidden','false'); }, 20);
+
+            function closeModal(){ overlay.classList.remove('open'); box.classList.remove('open'); setTimeout(function(){ overlay.style.display='none'; overlay.setAttribute('aria-hidden','true'); }, 220); }
+            overlay.querySelectorAll('.modal-close').forEach(function(b){ b.addEventListener('click', closeModal); });
+            overlay.addEventListener('click', function(e){ if (e.target===overlay) closeModal(); });
+            document.addEventListener('keydown', function esc(e){ if (e.key === 'Escape') { closeModal(); document.removeEventListener('keydown', esc); } });
+          }
+        })();
     </script>
 </body>
 </html>

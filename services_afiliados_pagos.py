@@ -17,6 +17,7 @@ AFILIADOS_PAGO_FIELDS = [
     'paypal_email',
     'skrill_email',
     'frecuencia_pago',
+    'total_pagado',
 ]
 
 

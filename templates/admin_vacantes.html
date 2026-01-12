@@ -142,6 +142,12 @@
                         <a href="{{ url_for('admin_aplicaciones_vacante', vacante_id=vacante.id) }}" style="padding: 0.5rem 1rem; background: #10b981; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9rem;">
                             <i class="fas fa-users"></i> Aplicaciones
                         </a>
+                        <form method="POST" action="{{ url_for('admin_finalizar_vacante', vacante_id=vacante.id) }}" style="display: inline;" onsubmit="return confirm('Marcar esta vacante como finalizada?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" style="padding: 0.5rem 1rem; background: #f59e0b; color: white; border: none; border-radius: 6px; font-size: 0.9rem; cursor: pointer;">
+                                <i class="fas fa-flag-checkered"></i> Finalizar
+                            </button>
+                        </form>
                         <form method="POST" action="{{ url_for('admin_eliminar_vacante', vacante_id=vacante.id) }}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de eliminar esta vacante?');">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <button type="submit" style="padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 0.9rem; cursor: pointer;">
@@ -158,5 +164,6 @@
     </main>
 </body>
 </html>
+
 
 

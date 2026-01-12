@@ -72,6 +72,20 @@
           >
         </div>
 
+        <!-- Precio proveedor -->
+        <div class="form-group">
+          <label for="precio_proveedor">Precio proveedor</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            id="precio_proveedor"
+            name="precio_proveedor"
+            value="{{ request.form.get('precio_proveedor', '') }}"
+            required
+          >
+        </div>
+
         <!-- Precio oferta (opcional) -->
         <div class="form-group">
           <label for="precio_oferta">Precio oferta (opcional)</label>
@@ -112,6 +126,18 @@
           >
         </div>
 
+        <!-- Opciones adicionales -->
+        <div class="form-group" style="display:flex; gap:1rem; flex-wrap:wrap;">
+          <label style="display:flex; align-items:center; gap:0.4rem;">
+            <input type="checkbox" name="envio_gratis" {% if request.form.get('envio_gratis') %}checked{% endif %}>
+            Envío gratis
+          </label>
+          <label style="display:flex; align-items:center; gap:0.4rem;">
+            <input type="checkbox" name="importado" {% if request.form.get('importado') %}checked{% endif %}>
+            Producto importado (mostrar tiempo de llegada 20-30 días)
+          </label>
+        </div>
+
         <!-- Imágenes (URLs) -->
         <div class="form-group">
           <label for="imagenes">Imágenes (URLs separadas por comas)</label>
@@ -125,6 +151,19 @@
             Escribe una o varias URLs completas separadas por comas.
             La primera se usará como imagen principal en la web.
           </p>
+        </div>
+
+        <!-- Link del proveedor / solo admin -->
+        <div class="form-group">
+          <label for="link_proveedor">URL interna (solo admin / proveedor)</label>
+          <input
+            type="url"
+            id="link_proveedor"
+            name="link_proveedor"
+            placeholder="https://link-del-proveedor.com"
+            value="{{ request.form.get('link_proveedor', '') }}"
+          >
+          <p class="help-text">No se muestra a clientes; referencia interna.</p>
         </div>
 
         <!-- Estado -->
@@ -158,6 +197,8 @@
               <th>Precio</th>
               <th>Oferta</th>
               <th>Stock</th>
+              <th>Envío gratis</th>
+              <th>Importado</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -177,6 +218,8 @@
                   {% endif %}
                 </td>
                 <td>{{ p.stock }}</td>
+                <td>{{ 'Sí' if p.envio_gratis else 'No' }}</td>
+                <td>{{ 'Sí' if p.importado else 'No' }}</td>
                 <td>{{ p.estado }}</td>
                 <td>
                   <a

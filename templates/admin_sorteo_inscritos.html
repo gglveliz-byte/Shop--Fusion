@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inscritos - {{ sorteo.titulo }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/panel.css') }}">
+</head>
+<body>
+  <header class="admin-header" style="padding: 1rem 2rem;">
+    <h1>Inscritos del sorteo</h1>
+    <a href="{{ url_for('panel') }}" class="btn-primario">Volver al panel</a>
+  </header>
+
+  <main class="content" style="max-width: 1000px; margin: 2rem auto;">
+    <div class="content-card">
+      <h2>{{ sorteo.titulo }}</h2>
+      <p style="color: var(--panel-text-light);">{{ sorteo.descripcion }}</p>
+      {% if sorteo.imagen %}
+        <img src="{{ sorteo.imagen }}" alt="{{ sorteo.titulo }}" style="width: 220px; border-radius: 10px; margin-top: 0.5rem;">
+      {% endif %}
+    </div>
+
+    <div class="content-card" style="margin-top: 1.5rem;">
+      <h3>Participantes ({{ inscritos|length }})</h3>
+      {% if inscritos %}
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Contacto</th>
+                <th>Número de boleto</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for i in inscritos %}
+              <tr>
+                <td>{{ i.id }}</td>
+                <td>{{ i.nombre }}</td>
+                <td>{{ i.contacto }}</td>
+                <td>{{ i.numero_boleto }}</td>
+                <td>{{ i.creado_en }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p style="color: var(--panel-text-light);">No hay inscritos todavía.</p>
+      {% endif %}
+    </div>
+  </main>
+</body>
+</html>

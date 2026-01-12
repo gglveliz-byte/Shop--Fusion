@@ -1,12 +1,15 @@
 ﻿import os
 import re
 import time
+import logging
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, make_response
 from flask_wtf import FlaskForm, CSRFProtect
 from flask_wtf.csrf import CSRFError
 from wtforms import StringField, PasswordField, SubmitField, TextAreaField, SelectField, IntegerField, FloatField
 from wtforms.validators import DataRequired, Email, Length, NumberRange
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
+import sys
 import psycopg
 from psycopg.rows import dict_row
 from psycopg import sql
@@ -27,6 +30,7 @@ from services_exclusivos import (
     obtener_producto_exclusivo_por_id,     # admin
     actualizar_producto_exclusivo,         # admin
     registrar_compra_exclusivo,
+    ensure_compras_envio_columns,
     crear_producto_exclusivo,            # registrar compra + stock
 )
 from services_afiliados import (
@@ -85,6 +89,15 @@ from services_carrito import (
 
 
 app = Flask(__name__)
+logging.basicConfig(level=logging.INFO)
+app.logger.setLevel(logging.INFO)
+# Friendly stdout handler with timestamp (useful under gunicorn / render)
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.INFO)
+handler.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+if not any(isinstance(h, logging.StreamHandler) for h in app.logger.handlers):
+    app.logger.addHandler(handler)
+
 app.config['SECRET_KEY'] = config('SECRET_KEY')
 # CRÍTICO: Configurar CSRF sin límite de tiempo para evitar problemas con sesiones
 app.config['WTF_CSRF_TIME_LIMIT'] = None  # Sin límite de tiempo
@@ -161,6 +174,12 @@ if is_production:
         content_security_policy_nonce_in=[],
         referrer_policy='strict-origin-when-cross-origin'
     )
+    # Aplicar ProxyFix cuando el app está detrás de un proxy (ej. Render, Heroku, Nginx)
+    try:
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
+        app.logger.info('[CONFIG] ProxyFix aplicado (x_for=1, x_proto=1)')
+    except Exception as e:
+        app.logger.warning(f'[CONFIG] No se pudo aplicar ProxyFix: {e}')
 else:
     # En desarrollo, no usar Talisman para evitar problemas con cookies de sesión
     app.logger.warning('[CONFIG] Talisman deshabilitado en desarrollo para evitar problemas con cookies')
@@ -468,6 +487,138 @@ FRECUENCIAS_PAGO = ['semanal', 'quincenal', 'mensual']
 STOCK_BAJO_UMBRAL = 5
 
 
+def ensure_envio_clientes_table(conn=None):
+    """
+    Crea tabla de datos de envío/facturación para clientes (sin alterar tablas existentes).
+    """
+    close_conn = False
+    if conn is None:
+        conn = get_db_connection()
+        close_conn = True
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS shopfusion.datos_envio_clientes (
+                    usuario_id INTEGER PRIMARY KEY REFERENCES shopfusion.usuarios(id) ON DELETE CASCADE,
+                    tipo_identificacion VARCHAR(20),
+                    numero_identificacion VARCHAR(50),
+                    nombre VARCHAR(150),
+                    apellido VARCHAR(150),
+                    email VARCHAR(200),
+                    telefono VARCHAR(50),
+                    pais VARCHAR(100) DEFAULT 'Ecuador',
+                    provincia VARCHAR(150),
+                    ciudad VARCHAR(150),
+                    direccion TEXT,
+                    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                """
+            )
+            conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        if close_conn:
+            conn.close()
+
+def get_envio_cliente(usuario_id):
+    """Obtiene datos de envío/facturación guardados del cliente."""
+    conn = get_db_connection()
+    try:
+        ensure_envio_clientes_table(conn)
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT tipo_identificacion, numero_identificacion, nombre, apellido, email,
+                       telefono, pais, provincia, ciudad, direccion
+                FROM shopfusion.datos_envio_clientes
+                WHERE usuario_id = %s
+                """,
+                (usuario_id,)
+            )
+            return cur.fetchone()
+    finally:
+        conn.close()
+
+def upsert_envio_cliente(usuario_id, datos):
+    """Guarda/actualiza datos de envío del cliente."""
+    conn = get_db_connection()
+    try:
+        ensure_envio_clientes_table(conn)
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO shopfusion.datos_envio_clientes (
+                    usuario_id, tipo_identificacion, numero_identificacion, nombre, apellido, email,
+                    telefono, pais, provincia, ciudad, direccion, actualizado_en
+                ) VALUES (
+                    %(usuario_id)s, %(tipo_identificacion)s, %(numero_identificacion)s, %(nombre)s, %(apellido)s, %(email)s,
+                    %(telefono)s, %(pais)s, %(provincia)s, %(ciudad)s, %(direccion)s, CURRENT_TIMESTAMP
+                )
+                ON CONFLICT (usuario_id)
+                DO UPDATE SET
+                    tipo_identificacion = EXCLUDED.tipo_identificacion,
+                    numero_identificacion = EXCLUDED.numero_identificacion,
+                    nombre = EXCLUDED.nombre,
+                    apellido = EXCLUDED.apellido,
+                    email = EXCLUDED.email,
+                    telefono = EXCLUDED.telefono,
+                    pais = EXCLUDED.pais,
+                    provincia = EXCLUDED.provincia,
+                    ciudad = EXCLUDED.ciudad,
+                    direccion = EXCLUDED.direccion,
+                    actualizado_en = CURRENT_TIMESTAMP;
+                """,
+                {
+                    'usuario_id': usuario_id,
+                    'tipo_identificacion': datos.get('tipo_identificacion'),
+                    'numero_identificacion': datos.get('numero_identificacion'),
+                    'nombre': datos.get('nombre'),
+                    'apellido': datos.get('apellido'),
+                    'email': datos.get('email'),
+                    'telefono': datos.get('telefono'),
+                    'pais': datos.get('pais') or 'Ecuador',
+                    'provincia': datos.get('provincia'),
+                    'ciudad': datos.get('ciudad'),
+                    'direccion': datos.get('direccion'),
+                }
+            )
+            conn.commit()
+    finally:
+        conn.close()
+
+
+def ensure_pedidos_entregas_table(conn=None):
+    """
+    Crea una tabla auxiliar para marcar pedidos como entregados/leídos
+    sin alterar cliente_compraron_productos. Devuelve True si existe/creó.
+    """
+    close_conn = False
+    if conn is None:
+        conn = get_db_connection()
+        close_conn = True
+    ok = True
+    try:
+        with conn.cursor() as cur:
+            try:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS shopfusion.pedidos_entregas (
+                        pedido_id INTEGER PRIMARY KEY,
+                        entregado BOOLEAN DEFAULT FALSE,
+                        fecha_entregado TIMESTAMP NULL
+                    );
+                """)
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                ok = False
+    finally:
+        if close_conn:
+            conn.close()
+    return ok
+
 def link_proveedor_column_exists(conn=None):
     """Check if link_proveedor column exists in shopfusion.productos_vendedor."""
     close_conn = False
@@ -486,6 +637,58 @@ def link_proveedor_column_exists(conn=None):
             """)
             row = cur.fetchone()
             return bool(row.get('exists', False)) if row else False
+    finally:
+        if close_conn:
+            conn.close()
+
+def ensure_estado_entrega_columns(conn=None):
+    """
+    Garantiza que cliente_compraron_productos tenga columnas de estado/fecha de entrega
+    sin fallar si ya existen. Devuelve True si quedaron creadas o ya estaban.
+    """
+    ok = True
+    close_conn = False
+    if conn is None:
+        conn = get_db_connection()
+        close_conn = True
+    try:
+        with conn.cursor() as cur:
+            try:
+                cur.execute("""
+                    ALTER TABLE shopfusion.cliente_compraron_productos
+                    ADD COLUMN IF NOT EXISTS estado_entrega VARCHAR(20) DEFAULT 'pendiente';
+                """)
+                cur.execute("""
+                    ALTER TABLE shopfusion.cliente_compraron_productos
+                    ADD COLUMN IF NOT EXISTS fecha_entrega TIMESTAMP NULL;
+                """)
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                ok = False
+    finally:
+        if close_conn:
+            conn.close()
+    return ok
+
+def has_estado_entrega_columns(conn=None):
+    """Verifica si las columnas de entrega existen."""
+    close_conn = False
+    if conn is None:
+        conn = get_db_connection()
+        close_conn = True
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema = 'shopfusion'
+                  AND table_name = 'cliente_compraron_productos'
+                  AND column_name IN ('estado_entrega','fecha_entrega');
+            """)
+            rows = cur.fetchall()
+            cols = {r['column_name'] for r in rows}
+            return 'estado_entrega' in cols and 'fecha_entrega' in cols
     finally:
         if close_conn:
             conn.close()
@@ -535,6 +738,90 @@ def validar_tipo_columna(tipo):
         if kw in lowered:
             return False
     return True
+
+
+def ensure_direcciones_tables(conn=None):
+    """Crea tablas de direcciones para clientes y afiliados si no existen."""
+    close_conn = False
+    if conn is None:
+        conn = get_db_connection()
+        close_conn = True
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS shopfusion.direcciones_clientes (
+                    id SERIAL PRIMARY KEY,
+                    usuario_id INTEGER NOT NULL REFERENCES shopfusion.usuarios(id) ON DELETE CASCADE,
+                    pais VARCHAR(100) NOT NULL,
+                    ciudad VARCHAR(150) NOT NULL,
+                    direccion TEXT NOT NULL,
+                    telefono VARCHAR(50) NOT NULL,
+                    principal BOOLEAN DEFAULT FALSE,
+                    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE (usuario_id, pais, ciudad, direccion, telefono)
+                );
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_direcciones_clientes_usuario
+                ON shopfusion.direcciones_clientes(usuario_id);
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS shopfusion.direcciones_afiliados (
+                    id SERIAL PRIMARY KEY,
+                    afiliado_id INTEGER NOT NULL REFERENCES shopfusion.afiliados(id) ON DELETE CASCADE,
+                    pais VARCHAR(100) NOT NULL,
+                    ciudad VARCHAR(150) NOT NULL,
+                    direccion TEXT NOT NULL,
+                    telefono VARCHAR(50) NOT NULL,
+                    principal BOOLEAN DEFAULT FALSE,
+                    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE (afiliado_id, pais, ciudad, direccion, telefono)
+                );
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_direcciones_afiliados_afiliado
+                ON shopfusion.direcciones_afiliados(afiliado_id);
+            """)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        if close_conn:
+            conn.close()
+
+
+def ensure_soporte_table(conn=None):
+    """Crea tabla de tickets de soporte si no existe."""
+    close_conn = False
+    if conn is None:
+        conn = get_db_connection()
+        close_conn = True
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS shopfusion.tickets_soporte (
+                    id SERIAL PRIMARY KEY,
+                    nombre VARCHAR(150) NOT NULL,
+                    email VARCHAR(200) NOT NULL,
+                    mensaje TEXT NOT NULL,
+                    estado VARCHAR(30) DEFAULT 'abierto',
+                    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_tickets_soporte_email
+                ON shopfusion.tickets_soporte(email);
+            """)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        if close_conn:
+            conn.close()
 
 def obtener_tablas_permitidas():
     """
@@ -667,6 +954,14 @@ def capture_payment():
             app.logger.error(f"[PAYPAL_CAPTURE] Falta orderID en el payload: {data}")
             return jsonify({'error': 'Falta el orderID', 'payload': data}), 400
 
+        # Inicializar variables para evitar referencias indefinidas
+        expected_total = Decimal("0")
+        monto_bruto_total = Decimal("0")
+        descuento_aplicado = Decimal("0")
+        descuento_disponible = Decimal("0")
+        es_afiliado = False
+        afiliado_id_sesion = None
+
         # 🔑 Obtener token de acceso de PayPal
         auth = (PAYPAL_CLIENT_ID, PAYPAL_SECRET)
         token_resp = requests.post(
@@ -784,6 +1079,59 @@ def exclusivos_checkout():
         telefono = (data.get('telefono') or '').strip()
         pais = (data.get('pais') or '').strip()
         direccion = (data.get('direccion') or '').strip()
+        provincia = (data.get('provincia') or '').strip()
+        ciudad = (data.get('ciudad') or '').strip()
+        tipo_identificacion = (data.get('tipo_identificacion') or '').strip()
+        numero_identificacion = (data.get('numero_identificacion') or '').strip()
+        provincia = (data.get('provincia') or '').strip()
+        ciudad = (data.get('ciudad') or '').strip()
+        tipo_identificacion = (data.get('tipo_identificacion') or '').strip()
+        numero_identificacion = (data.get('numero_identificacion') or '').strip()
+
+        # Completar datos faltantes desde sesión/BD si el cliente está autenticado
+        usuario_id = None
+        try:
+            from flask import g
+            if hasattr(g, 'current_user') and g.current_user and g.current_user.get('rol') == 'cliente':
+                usuario_id = g.current_user.get('usuario_id')
+        except Exception:
+            usuario_id = None
+        if not usuario_id and session.get('usuario_id') and session.get('rol') == 'cliente':
+            usuario_id = session.get('usuario_id')
+
+        if usuario_id:
+            conn_dir = None
+            try:
+                conn_dir = get_db_connection()
+                ensure_direcciones_tables(conn_dir)
+                with conn_dir.cursor() as cur:
+                    # Datos básicos del usuario
+                    cur.execute("SELECT nombre, email FROM shopfusion.usuarios WHERE id = %s", (usuario_id,))
+                    usuario = cur.fetchone()
+                    if usuario:
+                        if not nombre:
+                            nombre = usuario.get('nombre', '')
+                        if not email:
+                            email = usuario.get('email', '')
+                    # Dirección guardada más reciente
+                    cur.execute("""
+                        SELECT pais, ciudad, direccion, telefono
+                        FROM shopfusion.direcciones_clientes
+                        WHERE usuario_id = %s
+                        ORDER BY actualizado_en DESC, creado_en DESC
+                        LIMIT 1
+                    """, (usuario_id,))
+                    dir_guardada = cur.fetchone()
+                    if dir_guardada:
+                        if not pais:
+                            pais = dir_guardada.get('pais', '')
+                        if not direccion:
+                            direccion = dir_guardada.get('direccion', '')
+                        if not telefono:
+                            telefono = dir_guardada.get('telefono', '')
+            finally:
+                if conn_dir:
+                    conn_dir.close()
 
         # Validaciones básicas
         if not order_id:
@@ -853,7 +1201,12 @@ def exclusivos_checkout():
         # Datos del pago
         payer_info = result.get('payer', {})
         payer_name = payer_info.get('name', {}).get('given_name', '') or nombre
-        payer_email = payer_info.get('email_address', '') or email
+        paypal_email = (payer_info.get('email_address') or '').strip()
+        email_cuenta = session.get('email') if session.get('rol') == 'cliente' else None
+        payer_email = (email_cuenta or email or paypal_email).strip()
+        if paypal_email:
+            session['ultima_paypal_email'] = paypal_email
+            session.modified = True
 
         purchase_unit = result['purchase_units'][0]
         capture = purchase_unit['payments']['captures'][0]
@@ -883,10 +1236,14 @@ def exclusivos_checkout():
             producto_id=int(producto_id),
             nombre=nombre,
             apellido=apellido,
-            email=payer_email,
+            email=email_para_guardar,
             telefono=telefono,
             pais=pais,
             direccion=direccion,
+            provincia=provincia,
+            ciudad=ciudad,
+            tipo_identificacion=tipo_identificacion,
+            numero_identificacion=numero_identificacion,
             cantidad=cantidad,
             paypal_order_id=order_id,
             paypal_capture_id=paypal_capture_id,
@@ -896,6 +1253,30 @@ def exclusivos_checkout():
             afiliado_id=afiliado_id,
             afiliado_codigo=afiliado_codigo
         )
+
+        # Guardar/actualizar dirección del cliente autenticado para futuras compras
+        if usuario_id:
+            conn_dir = None
+            try:
+                conn_dir = get_db_connection()
+                ensure_direcciones_tables(conn_dir)
+                with conn_dir.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO shopfusion.direcciones_clientes
+                            (usuario_id, pais, ciudad, direccion, telefono, principal, actualizado_en)
+                        VALUES (%s, %s, %s, %s, %s, FALSE, CURRENT_TIMESTAMP)
+                        ON CONFLICT (usuario_id, pais, ciudad, direccion, telefono)
+                        DO UPDATE SET actualizado_en = CURRENT_TIMESTAMP
+                    """, (usuario_id, pais, '', direccion, telefono))
+                    conn_dir.commit()
+            except Exception as e:
+                app.logger.warning(f"[EXCLUSIVOS_CHECKOUT] No se pudo guardar dirección de cliente: {e}")
+            finally:
+                if conn_dir:
+                    try:
+                        conn_dir.close()
+                    except Exception:
+                        pass
 
         # 💰 Registrar comisión de afiliado si existe
         if afiliado_id:
@@ -969,6 +1350,36 @@ def afiliados_checkout():
         pais = (data.get('pais') or '').strip()
         direccion = (data.get('direccion') or '').strip()
         
+        # Completar con datos existentes si falta información
+        if not nombre:
+            nombre = session.get('afiliado_nombre', '')
+        if not email:
+            email = session.get('afiliado_email', '')
+        if not telefono or not pais or not direccion:
+            conn_dir = None
+            try:
+                conn_dir = get_db_connection()
+                ensure_direcciones_tables(conn_dir)
+                with conn_dir.cursor() as cur:
+                    cur.execute("""
+                        SELECT pais, ciudad, direccion, telefono
+                        FROM shopfusion.direcciones_afiliados
+                        WHERE afiliado_id = %s
+                        ORDER BY actualizado_en DESC, creado_en DESC
+                        LIMIT 1
+                    """, (afiliado_id,))
+                    dir_guardada = cur.fetchone()
+                    if dir_guardada:
+                        if not pais:
+                            pais = dir_guardada.get('pais', '')
+                        if not direccion:
+                            direccion = dir_guardada.get('direccion', '')
+                        if not telefono:
+                            telefono = dir_guardada.get('telefono', '')
+            finally:
+                if conn_dir:
+                    conn_dir.close()
+        
         if not order_id or not producto_id:
             return jsonify({'error': 'Faltan datos requeridos'}), 400
         
@@ -981,9 +1392,9 @@ def afiliados_checkout():
                 WHERE id = %s AND estado = 'activo'
             """, (producto_id,))
             producto = cur.fetchone()
+        conn.close()
         
         if not producto:
-            conn.close()
             return jsonify({'error': 'Producto no encontrado'}), 404
         
         # Calcular precio final: usar precio_oferta si existe y es menor que precio, si no usar precio
@@ -1002,9 +1413,11 @@ def afiliados_checkout():
         
         comision_ganada = (margen * comision_porcentaje) / 100
         
-        # PRECIO QUE PAGA EL AFILIADO: Precio Final - Comisión que ganaría
-        # Esto es automático, no requiere descuento acumulado
-        precio_afiliado = precio_final - comision_ganada
+        # PRECIO QUE PAGA EL AFILIADO: Precio Final - Comisión que ganaría (solo si margen >= 0)
+        if margen > 0:
+            precio_afiliado = precio_final - comision_ganada
+        else:
+            precio_afiliado = precio_final
         
         # Descuento adicional si tiene descuento acumulado disponible
         descuento_adicional = 0.00
@@ -1044,7 +1457,16 @@ def afiliados_checkout():
         
         # Registrar compra
         payer_info = result.get('payer', {})
-        payer_email = payer_info.get('email_address', '') or email
+        paypal_email = (payer_info.get('email_address') or '').strip()
+        # Preferir el email de la cuenta/logueo para vincular la compra al perfil
+        email_cuenta = None
+        if session.get('rol') == 'cliente':
+            email_cuenta = session.get('email')
+        email_para_guardar = (email_cuenta or email or paypal_email).strip()
+        # Guardamos el email de PayPal en sesi¢n como respaldo para futuras consultas
+        if paypal_email:
+            session['ultima_paypal_email'] = paypal_email
+            session.modified = True
         capture = result['purchase_units'][0]['payments']['captures'][0]
         paypal_capture_id = capture['id']
         amount_value = float(capture['amount']['value'])
@@ -1062,10 +1484,14 @@ def afiliados_checkout():
             producto_id=int(producto_id),
             nombre=nombre,
             apellido=apellido,
-            email=payer_email,
+            email=email_para_guardar,
             telefono=telefono,
             pais=pais,
             direccion=direccion,
+            provincia=provincia,
+            ciudad=ciudad,
+            tipo_identificacion=tipo_identificacion,
+            numero_identificacion=numero_identificacion,
             cantidad=cantidad,
             paypal_order_id=order_id,
             paypal_capture_id=paypal_capture_id,
@@ -2174,10 +2600,32 @@ def panel():
         conn.close()
         app.logger.info('[PANEL] Sugerencias cargadas correctamente')
 
+        # Cargar tickets de soporte
+        conn = get_db_connection()
+        ensure_soporte_table(conn)
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, nombre, email, mensaje, estado, creado_en
+                FROM shopfusion.tickets_soporte
+                ORDER BY creado_en DESC
+            """)
+            tickets_soporte = cur.fetchall()
+        conn.close()
+
                         # Obtener sorteos existentes
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT id, titulo, descripcion, imagen FROM sorteos ORDER BY id DESC")
+        cur.execute("""
+            SELECT s.id, s.titulo, s.descripcion, s.imagen,
+                   COALESCE(b.cnt, 0) AS total_boletos
+            FROM sorteos s
+            LEFT JOIN (
+                SELECT sorteo_id, COUNT(*) AS cnt
+                FROM boletos
+                GROUP BY sorteo_id
+            ) b ON b.sorteo_id = s.id
+            ORDER BY s.id DESC
+        """)
         sorteos = cur.fetchall()
         cur.close()
         conn.close()
@@ -2200,7 +2648,7 @@ def panel():
         if pagos_en_afiliados:
             cur.execute("""
                 SELECT a.id, a.nombre, a.email, a.codigo_afiliado, a.comision_porcentaje, 
-                       a.total_ganancias, a.total_ventas, a.estado, a.creado_en,
+                       a.total_ganancias, a.total_pagado, a.total_ventas, a.estado, a.creado_en,
                        a.pais, a.metodo_pago, a.banco, a.numero_cuenta, a.titular_cuenta,
                        a.paypal_email, a.skrill_email, a.frecuencia_pago,
                        cmt.comision_manual as comision_manual_activa,
@@ -2214,7 +2662,7 @@ def panel():
         elif pagos_table:
             cur.execute("""
                 SELECT a.id, a.nombre, a.email, a.codigo_afiliado, a.comision_porcentaje, 
-                       a.total_ganancias, a.total_ventas, a.estado, a.creado_en,
+                       a.total_ganancias, 0::numeric as total_pagado, a.total_ventas, a.estado, a.creado_en,
                        ap.pais, ap.metodo_pago, ap.banco, ap.numero_cuenta, ap.titular_cuenta,
                        ap.paypal_email, ap.skrill_email, ap.frecuencia_pago,
                        cmt.comision_manual as comision_manual_activa,
@@ -2230,6 +2678,7 @@ def panel():
             cur.execute("""
                 SELECT a.id, a.nombre, a.email, a.codigo_afiliado, a.comision_porcentaje, 
                        a.total_ganancias, a.total_ventas, a.estado, a.creado_en,
+                       0::numeric as total_pagado,
                        NULL as pais, NULL as metodo_pago, NULL as banco, NULL as numero_cuenta,
                        NULL as titular_cuenta, NULL as paypal_email, NULL as skrill_email,
                        NULL as frecuencia_pago,
@@ -2242,6 +2691,10 @@ def panel():
                 ORDER BY a.creado_en DESC
             """)
         afiliados = cur.fetchall()
+        for af in afiliados:
+            af['total_ganancias'] = float(af.get('total_ganancias') or 0)
+            af['total_pagado'] = float(af.get('total_pagado') or 0)
+            af['saldo_pendiente'] = max(af['total_ganancias'] - af['total_pagado'], 0)
         
         # Obtener comisión predeterminada del sistema
         cur.execute("""
@@ -2270,9 +2723,26 @@ def panel():
         conn = get_db_connection()
         cur = conn.cursor()
         has_link_proveedor = link_proveedor_column_exists(conn)
-        if has_link_proveedor:
-            cur.execute("""
-                SELECT 
+        columnas_ok = ensure_estado_entrega_columns(conn)
+        columnas_entrega_disponibles = columnas_ok or has_estado_entrega_columns(conn)
+        columnas_envio = ensure_compras_envio_columns(conn)
+        has_envio_cols = columnas_envio and all(
+            col in columnas_envio for col in (
+                'provincia', 'ciudad', 'tipo_identificacion', 'numero_identificacion'
+            )
+        )
+        env_tipo_expr = "COALESCE(d.tipo_identificacion, c.tipo_identificacion, '')" if has_envio_cols else "COALESCE(d.tipo_identificacion, '')"
+        env_num_expr = "COALESCE(d.numero_identificacion, c.numero_identificacion, '')" if has_envio_cols else "COALESCE(d.numero_identificacion, '')"
+        env_prov_expr = "COALESCE(d.provincia, c.provincia, '')" if has_envio_cols else "COALESCE(d.provincia, '')"
+        env_ciudad_expr = "COALESCE(d.ciudad, c.ciudad, '')" if has_envio_cols else "COALESCE(d.ciudad, '')"
+        env_tipo_fallback = "COALESCE(d.tipo_identificacion, c.tipo_identificacion, '')" if has_envio_cols else "COALESCE(d.tipo_identificacion, '')"
+        env_num_fallback = "COALESCE(d.numero_identificacion, c.numero_identificacion, '')" if has_envio_cols else "COALESCE(d.numero_identificacion, '')"
+        env_prov_fallback = "COALESCE(d.provincia, c.provincia, '')" if has_envio_cols else "COALESCE(d.provincia, '')"
+        env_ciudad_fallback = "COALESCE(d.ciudad, c.ciudad, '')" if has_envio_cols else "COALESCE(d.ciudad, '')"
+        entregas_ok = ensure_pedidos_entregas_table(conn)
+        if has_link_proveedor and columnas_entrega_disponibles:
+            cur.execute(f"""
+                SELECT
                     c.id as numero_factura,
                     c.producto_id,
                     c.producto_titulo,
@@ -2281,14 +2751,29 @@ def panel():
                     c.nombre,
                     c.apellido,
                     c.email,
-                    c.telefono,
-                    c.pais,
-                    c.direccion,
+                    COALESCE(d.telefono, c.telefono) AS telefono,
+                    'Ecuador' as pais,
+                    COALESCE(d.direccion, c.direccion) AS direccion,
+                    {env_prov_expr} AS envio_provincia,
+                    {env_ciudad_expr} AS envio_ciudad,
+                    {env_tipo_expr} AS envio_tipo_identificacion,
+                    {env_num_expr} AS envio_numero_identificacion,
                     c.paypal_order_id,
                     c.paypal_capture_id,
                     c.monto_total,
                     c.moneda,
                     c.estado_pago,
+                    COALESCE(c.estado_entrega, pe.entregado::text) AS estado_entrega,
+                    COALESCE(c.fecha_entrega, pe.fecha_entregado) AS fecha_entrega,
+                    COALESCE(pe.entregado, FALSE) AS entregado,
+                    COALESCE(d.nombre, c.nombre) AS nombre_envio,
+                    COALESCE(d.apellido, c.apellido) AS apellido_envio,
+                    {env_tipo_expr} AS envio_tipo_identificacion,
+                    {env_num_expr} AS envio_numero_identificacion,
+                    {env_prov_expr} AS envio_provincia,
+                    {env_ciudad_expr} AS envio_ciudad,
+                    COALESCE(d.telefono, c.telefono) AS telefono_envio,
+                    COALESCE(d.direccion, c.direccion) AS direccion_envio,
                     c.afiliado_id,
                     c.afiliado_codigo,
                     c.creado_en,
@@ -2296,12 +2781,16 @@ def panel():
                 FROM shopfusion.cliente_compraron_productos c
                 LEFT JOIN shopfusion.productos_vendedor pv
                     ON pv.id = c.producto_id
+                LEFT JOIN shopfusion.pedidos_entregas pe
+                    ON pe.pedido_id = c.id
+                LEFT JOIN shopfusion.usuarios u ON u.email = c.email
+                LEFT JOIN shopfusion.datos_envio_clientes d ON d.usuario_id = u.id
                 ORDER BY c.creado_en DESC
                 LIMIT 100
             """)
-        else:
-            cur.execute("""
-                SELECT 
+        elif columnas_entrega_disponibles:
+            cur.execute(f"""
+                SELECT
                     id as numero_factura,
                     producto_id,
                     producto_titulo,
@@ -2310,22 +2799,130 @@ def panel():
                     nombre,
                     apellido,
                     email,
-                    telefono,
-                    pais,
-                    direccion,
+                    COALESCE(d.telefono, telefono) AS telefono,
+                    'Ecuador' as pais,
+                    COALESCE(d.direccion, direccion) AS direccion,
+                    {env_prov_expr} AS envio_provincia,
+                    {env_ciudad_expr} AS envio_ciudad,
+                    {env_tipo_expr} AS envio_tipo_identificacion,
+                    {env_num_expr} AS envio_numero_identificacion,
                     paypal_order_id,
                     paypal_capture_id,
                     monto_total,
                     moneda,
                     estado_pago,
+                    COALESCE(estado_entrega, CASE WHEN pe.entregado THEN 'entregado' ELSE 'pendiente' END) AS estado_entrega,
+                    COALESCE(fecha_entrega, pe.fecha_entregado) AS fecha_entrega,
+                    COALESCE(pe.entregado, FALSE) AS entregado,
+                    COALESCE(d.nombre, nombre) AS nombre_envio,
+                    COALESCE(d.apellido, apellido) AS apellido_envio,
+                    {env_tipo_expr} AS envio_tipo_identificacion,
+                    {env_num_expr} AS envio_numero_identificacion,
+                    {env_prov_expr} AS envio_provincia,
+                    {env_ciudad_expr} AS envio_ciudad,
+                    COALESCE(d.telefono, telefono) AS telefono_envio,
+                    COALESCE(d.direccion, direccion) AS direccion_envio,
                     afiliado_id,
                     afiliado_codigo,
                     creado_en,
                     NULL as link_proveedor
                 FROM shopfusion.cliente_compraron_productos
+                LEFT JOIN shopfusion.pedidos_entregas pe
+                    ON pe.pedido_id = id
+                LEFT JOIN shopfusion.usuarios u ON u.email = email
+                LEFT JOIN shopfusion.datos_envio_clientes d ON d.usuario_id = u.id
                 ORDER BY creado_en DESC
                 LIMIT 100
             """)
+        else:
+            # Fallback sin columnas de entrega (permiso insuficiente)
+            app.logger.warning('[PEDIDOS] Mostrando pedidos sin columnas de entrega (permiso insuficiente para ALTER)')
+            if has_link_proveedor:
+                cur.execute(f"""
+                    SELECT 
+                        c.id as numero_factura,
+                        c.producto_id,
+                        c.producto_titulo,
+                        c.producto_precio,
+                        c.cantidad,
+                        c.nombre,
+                        c.apellido,
+                        c.email,
+                        c.telefono,
+                        c.pais,
+                        c.direccion,
+                        c.paypal_order_id,
+                        c.paypal_capture_id,
+                        c.monto_total,
+                        c.moneda,
+                        c.estado_pago,
+                        CASE WHEN pe.entregado THEN 'entregado' ELSE 'pendiente' END AS estado_entrega,
+                        pe.fecha_entregado AS fecha_entrega,
+                        COALESCE(pe.entregado, FALSE) AS entregado,
+                        {env_tipo_fallback} AS envio_tipo_identificacion,
+                        {env_num_fallback} AS envio_numero_identificacion,
+                        {env_prov_fallback} AS envio_provincia,
+                        {env_ciudad_fallback} AS envio_ciudad,
+                        c.telefono AS telefono_envio,
+                        c.direccion AS direccion_envio,
+                        c.nombre AS nombre_envio,
+                        c.apellido AS apellido_envio,
+                        c.afiliado_id,
+                        c.afiliado_codigo,
+                        c.creado_en,
+                        pv.link_proveedor
+                    FROM shopfusion.cliente_compraron_productos c
+                    LEFT JOIN shopfusion.productos_vendedor pv
+                        ON pv.id = c.producto_id
+                    LEFT JOIN shopfusion.pedidos_entregas pe
+                        ON pe.pedido_id = c.id
+                    LEFT JOIN shopfusion.usuarios u ON u.email = c.email
+                    LEFT JOIN shopfusion.datos_envio_clientes d ON d.usuario_id = u.id
+                    ORDER BY c.creado_en DESC
+                    LIMIT 100
+                """)
+            else:
+                cur.execute(f"""
+                    SELECT 
+                        c.id as numero_factura,
+                        c.producto_id,
+                        c.producto_titulo,
+                        c.producto_precio,
+                        c.cantidad,
+                        c.nombre,
+                        c.apellido,
+                        c.email,
+                        COALESCE(d.telefono, c.telefono) AS telefono,
+                        c.pais,
+                        COALESCE(d.direccion, c.direccion) AS direccion,
+                        c.paypal_order_id,
+                        c.paypal_capture_id,
+                        c.monto_total,
+                        c.moneda,
+                        c.estado_pago,
+                        CASE WHEN pe.entregado THEN 'entregado' ELSE 'pendiente' END AS estado_entrega,
+                        pe.fecha_entregado AS fecha_entrega,
+                        COALESCE(pe.entregado, FALSE) AS entregado,
+                        {env_tipo_fallback} AS envio_tipo_identificacion,
+                        {env_num_fallback} AS envio_numero_identificacion,
+                        {env_prov_fallback} AS envio_provincia,
+                        {env_ciudad_fallback} AS envio_ciudad,
+                        COALESCE(d.telefono, c.telefono) AS telefono_envio,
+                        COALESCE(d.direccion, c.direccion) AS direccion_envio,
+                        COALESCE(d.nombre, c.nombre) AS nombre_envio,
+                        COALESCE(d.apellido, c.apellido) AS apellido_envio,
+                        c.afiliado_id,
+                        c.afiliado_codigo,
+                        c.creado_en,
+                        NULL as link_proveedor
+                    FROM shopfusion.cliente_compraron_productos c
+                    LEFT JOIN shopfusion.pedidos_entregas pe
+                        ON pe.pedido_id = c.id
+                    LEFT JOIN shopfusion.usuarios u ON u.email = c.email
+                    LEFT JOIN shopfusion.datos_envio_clientes d ON d.usuario_id = u.id
+                    ORDER BY c.creado_en DESC
+                    LIMIT 100
+                """)
         pedidos = cur.fetchall()
         cur.close()
         conn.close()
@@ -2333,6 +2930,7 @@ def panel():
         return render_template(
             'panel.html',
             sugerencias=sugerencias,
+            tickets_soporte=tickets_soporte,
             categorias=get_categorias(),
             sorteos=sorteos,
             form_sorteo=form_sorteo,
@@ -2350,14 +2948,65 @@ def panel():
         flash(msg, 'danger')
         app.logger.error(msg)
         form_sorteo = SorteoForm()
-        return render_template('panel.html', sugerencias=[], categorias=get_categorias(), productos_exclusivos=[], productos_bajo_stock=[], stock_bajo_umbral=STOCK_BAJO_UMBRAL, sorteos=[], form_sorteo=form_sorteo, afiliados=[], vacantes=[], pedidos=[], comision_predeterminada=50.0)
+        return render_template('panel.html', sugerencias=[], tickets_soporte=[], categorias=get_categorias(), productos_exclusivos=[], productos_bajo_stock=[], stock_bajo_umbral=STOCK_BAJO_UMBRAL, sorteos=[], form_sorteo=form_sorteo, afiliados=[], vacantes=[], pedidos=[], comision_predeterminada=50.0)
     except Exception as e:
         msg = f"[PANEL] Error inesperado: {str(e)}"
         flash(msg, 'danger')
         app.logger.error(msg)
         form_sorteo = SorteoForm()
-        return render_template('panel.html', sugerencias=[], categorias=get_categorias(), productos_exclusivos=[], productos_bajo_stock=[], stock_bajo_umbral=STOCK_BAJO_UMBRAL, sorteos=[], form_sorteo=form_sorteo, afiliados=[], vacantes=[], pedidos=[], comision_predeterminada=50.0)
+        return render_template('panel.html', sugerencias=[], tickets_soporte=[], categorias=get_categorias(), productos_exclusivos=[], productos_bajo_stock=[], stock_bajo_umbral=STOCK_BAJO_UMBRAL, sorteos=[], form_sorteo=form_sorteo, afiliados=[], vacantes=[], pedidos=[], comision_predeterminada=50.0)
 
+@app.route('/admin/pedidos/<int:pedido_id>/estado-entrega', methods=['POST'])
+def admin_actualizar_estado_entrega(pedido_id):
+    """Permite al admin marcar un pedido como entregado/no entregado (marcar leído)."""
+    if 'usuario_id' not in session or str(session.get('rol', '')).lower() != 'admin':
+        flash('No autorizado', 'danger')
+        return redirect(url_for('admin'))
+
+    val = request.form.get('entregado')
+    entregar = str(val).lower() in ['1', 'true', 'on', 'yes', 'entregado'] if val is not None else False
+    nuevo_estado = 'entregado' if entregar else 'pendiente'
+
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            # Guardar en tabla auxiliar de entregas (sin tocar tabla base)
+            ensure_pedidos_entregas_table(conn)
+            if nuevo_estado == 'entregado':
+                cur.execute(
+                    """
+                    INSERT INTO shopfusion.pedidos_entregas (pedido_id, entregado, fecha_entregado)
+                    VALUES (%s, TRUE, CURRENT_TIMESTAMP)
+                    ON CONFLICT (pedido_id)
+                    DO UPDATE SET entregado = EXCLUDED.entregado,
+                                  fecha_entregado = EXCLUDED.fecha_entregado;
+                    """,
+                    (pedido_id,)
+                )
+            else:
+                cur.execute(
+                    """
+                    INSERT INTO shopfusion.pedidos_entregas (pedido_id, entregado, fecha_entregado)
+                    VALUES (%s, FALSE, NULL)
+                    ON CONFLICT (pedido_id)
+                    DO UPDATE SET entregado = EXCLUDED.entregado,
+                                  fecha_entregado = EXCLUDED.fecha_entregado;
+                    """,
+                    (pedido_id,)
+                )
+            conn.commit()
+        flash(f'Estado de entrega actualizado a "{nuevo_estado}"', 'success')
+        app.logger.info('[PEDIDOS] Pedido %s marcado como %s', pedido_id, nuevo_estado)
+    except Exception as e:
+        app.logger.error('[PEDIDOS] No se pudo actualizar estado de entrega: %s', e)
+        flash('No se pudo actualizar el estado del pedido', 'danger')
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+    return redirect(url_for('panel') + '#pedidos')
 @app.route('/agregar_sorteo', methods=['GET', 'POST'])
 def agregar_sorteo():
     if 'usuario_id' not in session or session.get('rol') != 'admin':
@@ -2432,6 +3081,72 @@ def eliminar_sorteo(id):
     except Exception as e:
         flash(f"Error al eliminar sorteo: {e}", "danger")
     return redirect(url_for('panel'))
+
+@app.route('/admin/sorteos/<int:sorteo_id>/editar', methods=['GET', 'POST'])
+def admin_editar_sorteo(sorteo_id):
+    if 'usuario_id' not in session or session.get('rol') != 'admin':
+        flash('Debes iniciar sesión como administrador.', 'danger')
+        return redirect(url_for('admin'))
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT id, titulo, descripcion, imagen FROM sorteos WHERE id = %s", (sorteo_id,))
+        sorteo = cur.fetchone()
+        if not sorteo:
+            flash('Sorteo no encontrado.', 'danger')
+            conn.close()
+            return redirect(url_for('panel'))
+        if request.method == 'POST':
+            titulo = (request.form.get('titulo') or '').strip()
+            descripcion = (request.form.get('descripcion') or '').strip()
+            imagen = (request.form.get('imagen') or '').strip()
+            if not titulo or not descripcion:
+                flash('Título y descripción son obligatorios.', 'danger')
+                conn.close()
+                return redirect(url_for('admin_editar_sorteo', sorteo_id=sorteo_id))
+            cur.execute("""
+                UPDATE sorteos
+                SET titulo = %s, descripcion = %s, imagen = %s
+                WHERE id = %s
+            """, (titulo, descripcion, imagen, sorteo_id))
+            conn.commit()
+            conn.close()
+            flash('Sorteo actualizado correctamente.', 'success')
+            return redirect(url_for('panel'))
+        conn.close()
+        return render_template('admin_editar_sorteo.html', sorteo=sorteo)
+    except Exception as e:
+        app.logger.error(f"[ADMIN_EDITAR_SORTEO] Error: {e}")
+        flash('No se pudo editar el sorteo.', 'danger')
+        return redirect(url_for('panel'))
+
+@app.route('/admin/sorteos/<int:sorteo_id>/inscritos')
+def admin_sorteo_inscritos(sorteo_id):
+    if 'usuario_id' not in session or session.get('rol') != 'admin':
+        flash('Debes iniciar sesión como administrador.', 'danger')
+        return redirect(url_for('admin'))
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT id, titulo, descripcion, imagen FROM sorteos WHERE id = %s", (sorteo_id,))
+        sorteo = cur.fetchone()
+        if not sorteo:
+            conn.close()
+            flash('Sorteo no encontrado.', 'danger')
+            return redirect(url_for('panel'))
+        cur.execute("""
+            SELECT id, nombre, contacto, numero_boleto, creado_en
+            FROM boletos
+            WHERE sorteo_id = %s
+            ORDER BY creado_en DESC
+        """, (sorteo_id,))
+        inscritos = cur.fetchall()
+        conn.close()
+        return render_template('admin_sorteo_inscritos.html', sorteo=sorteo, inscritos=inscritos)
+    except Exception as e:
+        app.logger.error(f"[SORTEO_INSCRITOS] Error: {e}")
+        flash('No se pudieron cargar los inscritos.', 'danger')
+        return redirect(url_for('panel'))
 
 
 @app.route('/registrar_boleto', methods=['POST'])
@@ -2541,6 +3256,26 @@ def eliminar_sugerencia(id):
         app.logger.error(msg)
         return redirect(url_for('panel'))
 
+@app.post('/admin/soporte/<int:ticket_id>/eliminar')
+def admin_eliminar_ticket(ticket_id):
+    """Eliminar ticket de soporte."""
+    if 'usuario_id' not in session or session.get('rol') != 'admin':
+        flash('Debes iniciar sesión como administrador.', 'danger')
+        return redirect(url_for('admin'))
+    try:
+        conn = get_db_connection()
+        ensure_soporte_table(conn)
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM shopfusion.tickets_soporte WHERE id = %s", (ticket_id,))
+            conn.commit()
+        conn.close()
+        flash('Ticket eliminado correctamente.', 'success')
+        return redirect(url_for('panel'))
+    except Exception as e:
+        app.logger.error(f"[ADMIN_ELIMINAR_TICKET] {e}")
+        flash('No se pudo eliminar el ticket.', 'danger')
+        return redirect(url_for('panel'))
+
 @app.route('/marcar_sugerencia_atendida/<int:id>')
 def marcar_sugerencia_atendida(id):
     if 'usuario_id' not in session or session.get('rol') != 'admin':
@@ -2612,6 +3347,7 @@ def usuario():
     
     usuario_id = session.get('usuario_id')
     usuario_email = session.get('email') or None
+    paypal_email_session = session.get('ultima_paypal_email')
     
     # Obtener información del usuario de la BD
     conn = get_db_connection()
@@ -2625,9 +3361,15 @@ def usuario():
                     usuario_email = usuario_data.get('email')
                     session['email'] = usuario_email
             
-            # Obtener compras del cliente por email
+            # Obtener compras del cliente por email (cuenta o el ·ltimo email usado en PayPal)
             compras = []
+            emails_busqueda = []
             if usuario_email:
+                emails_busqueda.append(usuario_email)
+            if paypal_email_session and paypal_email_session not in emails_busqueda:
+                emails_busqueda.append(paypal_email_session)
+
+            if emails_busqueda:
                 cur.execute("""
                     SELECT 
                         id,
@@ -2638,14 +3380,15 @@ def usuario():
                         monto_total,
                         moneda,
                         estado_pago,
-                        created_at as fecha_compra,
+                        COALESCE(creado_en, CURRENT_TIMESTAMP) as fecha_compra,
                         nombre,
-                        apellido
-                    FROM cliente_compraron_productos
-                    WHERE email = %s
-                    ORDER BY created_at DESC
+                        apellido,
+                        paypal_order_id
+                    FROM shopfusion.cliente_compraron_productos
+                    WHERE email = ANY(%s)
+                    ORDER BY COALESCE(creado_en, CURRENT_TIMESTAMP) DESC
                     LIMIT 50
-                """, (usuario_email,))
+                """, (emails_busqueda,))
                 compras = cur.fetchall()
     except Exception as e:
         app.logger.error(f"[USUARIO] Error al obtener datos: {e}")
@@ -2688,6 +3431,17 @@ def carrito():
         afiliado_id = session.get('afiliado_id')
         app.logger.info(f"[CARRITO] Afiliado autenticado detectado: {afiliado_id}")
         carrito_items = obtener_carrito_afiliado(afiliado_id)
+        if isinstance(carrito_items, dict) and carrito_items.get('error') == 'Operación no permitida: los afiliados no pueden comprar productos':
+            # Forzar logout silencioso y redirigir al login de afiliados
+            session.pop('afiliado_id', None)
+            session.pop('afiliado_nombre', None)
+            session.pop('afiliado_codigo', None)
+            session.pop('afiliado_email', None)
+            session.pop('afiliado_comision', None)
+            session.pop('afiliado_auth', None)
+            session.modified = True
+            app.logger.info('[SECURITY] Afiliado forzado a cerrar sesión por operación no permitida')
+            return redirect(url_for('afiliados_login'))
         # Limpiar carrito de cookies si existe
         if 'carrito' in session:
             session.pop('carrito', None)
@@ -2722,8 +3476,12 @@ def carrito():
                                     imagenes = [imagenes] if imagenes else []
                             elif not isinstance(imagenes, list):
                                 imagenes = []
-                            
-                            precio_final = float(producto.get('precio_oferta') or producto.get('precio') or 0)
+                            # Si existe un precio guardado en el carrito, úsalo (afiliados/clientes); si no, usa el vigente
+                            precio_guardado = item.get('precio')
+                            if precio_guardado is not None:
+                                precio_final = float(precio_guardado or 0)
+                            else:
+                                precio_final = float(producto.get('precio_oferta') or producto.get('precio') or 0)
                             productos_completos.append({
                                 'producto_id': producto['id'],
                                 'nombre': producto['titulo'],
@@ -2739,12 +3497,25 @@ def carrito():
         finally:
             conn.close()
     
-    # Calcular total correctamente
-    total = 0
+    # Calcular totales y descuentos (afiliado)
+    subtotal = 0
     for item in productos_completos:
         precio = float(item.get('precio', 0) or 0)
         cantidad = int(item.get('cantidad', 1) or 1)
-        total += precio * cantidad
+        subtotal += precio * cantidad
+
+    descuento_disponible = 0.0
+    descuento_aplicado = 0.0
+    if es_afiliado:
+        try:
+            descuento_disponible = obtener_descuento_disponible_afiliado(afiliado_id)
+            descuento_aplicado = min(subtotal, descuento_disponible or 0)
+        except Exception as e:
+            app.logger.error(f"[CARRITO] No se pudo calcular descuento afiliado: {e}")
+            descuento_disponible = 0.0
+            descuento_aplicado = 0.0
+
+    total = max(subtotal - descuento_aplicado, 0)
     
     app.logger.info('[CARRITO] Acceso - Items en sesión: %d, Productos encontrados: %d', len(carrito_items), len(productos_completos))
     
@@ -2766,7 +3537,11 @@ def carrito():
     
     return render_template('carrito.html', 
                          carrito=productos_completos if productos_completos else [], 
+                         subtotal=subtotal,
+                         descuento_aplicado=descuento_aplicado,
+                         descuento_disponible=descuento_disponible,
                          total=total,
+                         es_afiliado=es_afiliado,
                          config={'PAYPAL_CLIENT_ID': PAYPAL_CLIENT_ID})
 
 @app.route('/api/carrito/agregar', methods=['POST'])
@@ -2774,6 +3549,20 @@ def carrito():
 def carrito_agregar():
     """Agregar producto al carrito - BD para usuarios, cookies para visitantes"""
     try:
+        # Helper: cerrar sesión de afiliado sin mostrar mensaje si se detecta operación prohibida
+        def _force_logout_afiliado(is_api=True):
+            session.pop('afiliado_id', None)
+            session.pop('afiliado_nombre', None)
+            session.pop('afiliado_codigo', None)
+            session.pop('afiliado_email', None)
+            session.pop('afiliado_comision', None)
+            session.pop('afiliado_auth', None)
+            session.modified = True
+            app.logger.info('[SECURITY] Afiliado forzado a cerrar sesión por operación no permitida')
+            if is_api:
+                return ('', 204)
+            return redirect(url_for('afiliados_login'))
+
         from flask import g
         data = request.get_json() or {}
         producto_id = int(data.get('producto_id', 0))
@@ -2811,14 +3600,29 @@ def carrito_agregar():
             afiliado_id = session.get('afiliado_id')
             app.logger.info(f"[CARRITO_AGREGAR] Afiliado autenticado detectado: {afiliado_id}")
             resultado = agregar_al_carrito_afiliado(afiliado_id, producto_id, cantidad)
+            # Si el servicio devuelve el error prohibido, forzar logout sin mensaje
+            if isinstance(resultado, dict) and resultado.get('error') == 'Operación no permitida: los afiliados no pueden comprar productos':
+                return _force_logout_afiliado(is_api=True)
             if 'error' in resultado:
                 app.logger.error(f"[CARRITO_AGREGAR] Error: {resultado.get('error')}")
                 return jsonify(resultado), 400
+            carrito_afiliado = obtener_carrito_afiliado(afiliado_id)
+            if isinstance(carrito_afiliado, dict) and carrito_afiliado.get('error') == 'Operación no permitida: los afiliados no pueden comprar productos':
+                return _force_logout_afiliado(is_api=True)
+            subtotal = sum(float(i.get('precio', 0) or 0) * int(i.get('cantidad', 1) or 1) for i in carrito_afiliado)
+            descuento_disponible = obtener_descuento_disponible_afiliado(afiliado_id)
+            descuento_aplicado = min(subtotal, descuento_disponible or 0)
+            total_final = max(subtotal - descuento_aplicado, 0)
+            total_items = sum(int(i.get('cantidad', 1) or 1) for i in carrito_afiliado)
             return jsonify({
                 'success': True,
                 'message': 'Producto agregado al carrito',
-                'total_items': resultado.get('total_items', 0),
-                'carrito_count': resultado.get('carrito_count', 0)
+                'total_items': total_items,
+                'carrito_count': resultado.get('carrito_count', 0),
+                'subtotal': round(subtotal, 2),
+                'descuento_aplicado': round(descuento_aplicado, 2),
+                'descuento_disponible': round(descuento_disponible or 0, 2),
+                'total_final': round(total_final, 2)
             })
         else:
             # Visitante: usar cookies
@@ -2929,10 +3733,20 @@ def carrito_actualizar():
             # Afiliado autenticado: usar BD (sin límite de $50)
             afiliado_id = session.get('afiliado_id')
             resultado = actualizar_cantidad_carrito_afiliado(afiliado_id, producto_id, cantidad)
+            if isinstance(resultado, dict) and resultado.get('error') == 'Operación no permitida: los afiliados no pueden comprar productos':
+                # Forzar logout silencioso
+                session.pop('afiliado_id', None)
+                session.pop('afiliado_nombre', None)
+                session.pop('afiliado_codigo', None)
+                session.pop('afiliado_email', None)
+                session.pop('afiliado_comision', None)
+                session.pop('afiliado_auth', None)
+                session.modified = True
+                app.logger.info('[SECURITY] Afiliado forzado a cerrar sesión por operación no permitida')
+                return ('', 204)
             if 'error' in resultado:
                 return jsonify(resultado), 400
             
-            # Obtener precio del producto para respuesta
             conn = get_db_connection()
             try:
                 with conn.cursor() as cur:
@@ -2947,15 +3761,40 @@ def carrito_actualizar():
             finally:
                 conn.close()
             
+            carrito_afiliado = obtener_carrito_afiliado(afiliado_id)
+            if isinstance(carrito_afiliado, dict) and carrito_afiliado.get('error') == 'Operación no permitida: los afiliados no pueden comprar productos':
+                session.pop('afiliado_id', None)
+                session.pop('afiliado_nombre', None)
+                session.pop('afiliado_codigo', None)
+                session.pop('afiliado_email', None)
+                session.pop('afiliado_comision', None)
+                session.pop('afiliado_auth', None)
+                session.modified = True
+                app.logger.info('[SECURITY] Afiliado forzado a cerrar sesión por operación no permitida')
+                return ('', 204)
+            precio_unitario = precio_final
+            for item in carrito_afiliado:
+                if item.get('producto_id') == producto_id:
+                    precio_unitario = float(item.get('precio', precio_final) or 0)
+                    break
+            subtotal = sum(float(i.get('precio', 0) or 0) * int(i.get('cantidad', 1) or 1) for i in carrito_afiliado)
+            descuento_disponible = obtener_descuento_disponible_afiliado(afiliado_id)
+            descuento_aplicado = min(subtotal, descuento_disponible or 0)
+            total_final = max(subtotal - descuento_aplicado, 0)
+            
             return jsonify({
                 'success': True,
                 'message': 'Cantidad actualizada',
                 'total_items': resultado.get('total_items', 0),
-                'total_precio': round(precio_final * cantidad, 2),
-                'precio_unitario': round(precio_final, 2),
-                'precio_total_item': round(precio_final * cantidad, 2),
+                'total_precio': round(total_final, 2),
+                'precio_unitario': round(precio_unitario, 2),
+                'precio_total_item': round(precio_unitario * cantidad, 2),
                 'stock_disponible': stock_disponible,
-                'carrito_count': resultado.get('carrito_count', 0)
+                'carrito_count': resultado.get('carrito_count', 0),
+                'subtotal': round(subtotal, 2),
+                'descuento_aplicado': round(descuento_aplicado, 2),
+                'descuento_disponible': round(descuento_disponible or 0, 2),
+                'total_final': round(total_final, 2)
             })
         else:
             # Visitante: usar cookies
@@ -3072,9 +3911,44 @@ def carrito_eliminar():
             # Afiliado autenticado: usar BD
             afiliado_id = session.get('afiliado_id')
             resultado = eliminar_del_carrito_afiliado(afiliado_id, producto_id)
+            if isinstance(resultado, dict) and resultado.get('error') == 'Operación no permitida: los afiliados no pueden comprar productos':
+                session.pop('afiliado_id', None)
+                session.pop('afiliado_nombre', None)
+                session.pop('afiliado_codigo', None)
+                session.pop('afiliado_email', None)
+                session.pop('afiliado_comision', None)
+                session.pop('afiliado_auth', None)
+                session.modified = True
+                app.logger.info('[SECURITY] Afiliado forzado a cerrar sesión por operación no permitida')
+                return ('', 204)
             if 'error' in resultado:
                 return jsonify(resultado), 400
-            return jsonify(resultado)
+            carrito_afiliado = obtener_carrito_afiliado(afiliado_id)
+            if isinstance(carrito_afiliado, dict) and carrito_afiliado.get('error') == 'Operación no permitida: los afiliados no pueden comprar productos':
+                session.pop('afiliado_id', None)
+                session.pop('afiliado_nombre', None)
+                session.pop('afiliado_codigo', None)
+                session.pop('afiliado_email', None)
+                session.pop('afiliado_comision', None)
+                session.pop('afiliado_auth', None)
+                session.modified = True
+                app.logger.info('[SECURITY] Afiliado forzado a cerrar sesión por operación no permitida')
+                return ('', 204)
+            subtotal = sum(float(i.get('precio', 0) or 0) * int(i.get('cantidad', 1) or 1) for i in carrito_afiliado)
+            descuento_disponible = obtener_descuento_disponible_afiliado(afiliado_id)
+            descuento_aplicado = min(subtotal, descuento_disponible or 0)
+            total_final = max(subtotal - descuento_aplicado, 0)
+            total_items = sum(int(i.get('cantidad', 1) or 1) for i in carrito_afiliado)
+            return jsonify({
+                'success': True,
+                'message': 'Producto eliminado del carrito',
+                'total_items': total_items,
+                'carrito_count': resultado.get('carrito_count', 0),
+                'subtotal': round(subtotal, 2),
+                'descuento_aplicado': round(descuento_aplicado, 2),
+                'descuento_disponible': round(descuento_disponible or 0, 2),
+                'total_final': round(total_final, 2)
+            })
         else:
             # Visitante: usar cookies
             carrito = session.get('carrito', [])
@@ -3153,6 +4027,16 @@ def carrito_detalles():
             # Afiliado: usar BD (sin límite)
             afiliado_id = session.get('afiliado_id')
             carrito_items = obtener_carrito_afiliado(afiliado_id)
+            if isinstance(carrito_items, dict) and carrito_items.get('error') == 'Operación no permitida: los afiliados no pueden comprar productos':
+                session.pop('afiliado_id', None)
+                session.pop('afiliado_nombre', None)
+                session.pop('afiliado_codigo', None)
+                session.pop('afiliado_email', None)
+                session.pop('afiliado_comision', None)
+                session.pop('afiliado_auth', None)
+                session.modified = True
+                app.logger.info('[SECURITY] Afiliado forzado a cerrar sesión por operación no permitida')
+                return ('', 204)
             # Asegurar que no haya carrito en cookies para afiliados
             if 'carrito' in session:
                 session.pop('carrito', None)
@@ -3206,17 +4090,31 @@ def carrito_detalles():
             
             carrito_items = productos_completos
         
-        # Calcular total
-        total = 0
+        # Calcular totales y descuento (afiliados)
+        subtotal = 0
         for item in carrito_items:
             precio = float(item.get('precio', 0) or 0)
             cantidad = int(item.get('cantidad', 1) or 1)
-            total += precio * cantidad
+            subtotal += precio * cantidad
+
+        descuento_disponible = 0.0
+        descuento_aplicado = 0.0
+        if es_afiliado:
+            try:
+                afiliado_id = session.get('afiliado_id')
+                descuento_disponible = obtener_descuento_disponible_afiliado(afiliado_id)
+                descuento_aplicado = min(subtotal, descuento_disponible or 0)
+            except Exception as e:
+                app.logger.error(f"[CARRITO_DETALLES] No se pudo calcular descuento afiliado: {e}")
+                descuento_disponible = 0.0
+                descuento_aplicado = 0.0
+
+        total = max(subtotal - descuento_aplicado, 0)
         
         # Validar límite SOLO para visitantes (no para clientes ni afiliados)
         es_visitante = not usuario_id and not es_afiliado
         limite_excedido = False
-        if es_visitante and total > 50.0:
+        if es_visitante and subtotal > 50.0:
             limite_excedido = True
         
         # Obtener información del usuario si está autenticado
@@ -3277,7 +4175,11 @@ def carrito_detalles():
         return jsonify({
             'success': True,
             'carrito': carrito_items,
+            'subtotal': round(subtotal, 2),
+            'descuento_aplicado': round(descuento_aplicado, 2),
+            'descuento_disponible': round(descuento_disponible, 2),
             'total': round(total, 2),
+            'es_afiliado': es_afiliado,
             'es_visitante': es_visitante,
             'limite_excedido': limite_excedido,
             'limite_visitante': 50.0,
@@ -3300,13 +4202,30 @@ def carrito_checkout():
         apellido = (data.get('apellido') or '').strip()
         email = (data.get('email') or '').strip()
         telefono = (data.get('telefono') or '').strip()
-        pais = (data.get('pais') or '').strip()
+        # País fijo Ecuador
+        pais = 'Ecuador'
         direccion = (data.get('direccion') or '').strip()
+        provincia = (data.get('provincia') or '').strip()
+        ciudad = (data.get('ciudad') or '').strip()
+        tipo_identificacion = (data.get('tipo_identificacion') or '').strip()
+        numero_identificacion = (data.get('numero_identificacion') or '').strip()
         
         # Validaciones básicas
         if not order_id:
             return jsonify({'error': 'Falta orderID de PayPal'}), 400
-        if not all([nombre, apellido, email, telefono, pais, direccion]):
+        # Completar con datos guardados si es cliente autenticado
+        if 'usuario_id' in session and session.get('rol') == 'cliente':
+            saved = get_envio_cliente(session.get('usuario_id')) or {}
+            nombre = nombre or (saved.get('nombre') or '')
+            apellido = apellido or (saved.get('apellido') or '')
+            email = email or (saved.get('email') or '')
+            telefono = telefono or (saved.get('telefono') or '')
+            direccion = direccion or (saved.get('direccion') or '')
+            provincia = provincia or (saved.get('provincia') or '')
+            ciudad = ciudad or (saved.get('ciudad') or '')
+            tipo_identificacion = tipo_identificacion or (saved.get('tipo_identificacion') or '')
+            numero_identificacion = numero_identificacion or (saved.get('numero_identificacion') or '')
+        if not all([nombre, apellido, email, telefono, direccion, provincia, ciudad, tipo_identificacion, numero_identificacion]):
             return jsonify({'error': 'Faltan datos del cliente'}), 400
         
         # Verificar si es usuario autenticado (cliente o afiliado)
@@ -3332,6 +4251,16 @@ def carrito_checkout():
             afiliado_id = session.get('afiliado_id')
             app.logger.info(f"[CARRITO_CHECKOUT] Afiliado autenticado: {afiliado_id}")
             carrito_items = obtener_carrito_afiliado(afiliado_id)
+            if isinstance(carrito_items, dict) and carrito_items.get('error') == 'Operación no permitida: los afiliados no pueden comprar productos':
+                session.pop('afiliado_id', None)
+                session.pop('afiliado_nombre', None)
+                session.pop('afiliado_codigo', None)
+                session.pop('afiliado_email', None)
+                session.pop('afiliado_comision', None)
+                session.pop('afiliado_auth', None)
+                session.modified = True
+                app.logger.info('[SECURITY] Afiliado forzado a cerrar sesión por operación no permitida')
+                return ('', 204)
             if not carrito_items:
                 return jsonify({'error': 'El carrito está vacío'}), 400
             # NO validar límite de $50 para afiliados
@@ -3417,7 +4346,21 @@ def carrito_checkout():
                     })
         finally:
             conn.close()
-        
+
+        # Calcular descuentos para afiliados (totales netos)
+        monto_bruto_total = expected_total
+        descuento_aplicado = Decimal("0")
+        descuento_disponible = Decimal("0")
+        if es_afiliado and afiliado_id_sesion:
+            try:
+                descuento_disponible = _to_decimal(obtener_descuento_disponible_afiliado(afiliado_id_sesion))
+                descuento_aplicado = descuento_disponible if descuento_disponible < monto_bruto_total else monto_bruto_total
+                expected_total = max(monto_bruto_total - descuento_aplicado, Decimal("0"))
+            except Exception as e:
+                app.logger.error(f"[CARRITO_CHECKOUT] Error al calcular descuento de afiliado: {e}")
+                descuento_aplicado = Decimal("0")
+                expected_total = monto_bruto_total
+
         # 🔑 Obtener token de acceso de PayPal
         auth = (PAYPAL_CLIENT_ID, PAYPAL_SECRET)
         response = requests.post(
@@ -3455,7 +4398,12 @@ def carrito_checkout():
         paypal_capture_id = capture['id']
         
         payer_info = result.get('payer', {})
-        payer_email = payer_info.get('email_address', '') or email
+        paypal_email = (payer_info.get('email_address') or '').strip()
+        email_cuenta = session.get('email') if session.get('rol') == 'cliente' else None
+        email_para_guardar = (email_cuenta or email or paypal_email).strip()
+        if paypal_email:
+            session['ultima_paypal_email'] = paypal_email
+            session.modified = True
 
         if not _amounts_match(expected_total, amount_value):
             app.logger.error(
@@ -3465,12 +4413,30 @@ def carrito_checkout():
             )
             return jsonify({'error': 'Monto capturado no coincide con el total esperado'}), 400
 
+        # Ajustar montos netos si se aplicó un descuento de afiliado
+        if descuento_aplicado > 0 and monto_bruto_total > 0 and items_resueltos:
+            restante_desc = descuento_aplicado
+            for idx, item in enumerate(items_resueltos):
+                base = _to_decimal(item.get('monto_item', 0))
+                if idx == len(items_resueltos) - 1:
+                    descuento_item = restante_desc
+                else:
+                    propor = (base / monto_bruto_total) if monto_bruto_total > 0 else Decimal("0")
+                    descuento_item = (descuento_aplicado * propor).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                    if descuento_item > restante_desc:
+                        descuento_item = restante_desc
+                restante_desc -= descuento_item
+                item['monto_item_neto'] = float(max(base - descuento_item, Decimal("0")))
+        else:
+            for item in items_resueltos:
+                item['monto_item_neto'] = float(item.get('monto_item', 0))
+
         # 🧾 Registrar cada producto del carrito como compra separada
         from services_exclusivos import registrar_compra_exclusivo
         compra_ids = []
         ref_afiliado_id, ref_afiliado_codigo = get_afiliado_referido()
         ref_afiliado_id, ref_afiliado_codigo = resolver_afiliado_por_email(
-            payer_email,
+            email_para_guardar,
             ref_afiliado_id,
             ref_afiliado_codigo
         )
@@ -3495,14 +4461,18 @@ def carrito_checkout():
                         producto_id=int(producto_id),
                         nombre=nombre,
                         apellido=apellido,
-                        email=payer_email,
+                        email=email_para_guardar,
                         telefono=telefono,
                         pais=pais,
                         direccion=direccion,
+                        provincia=provincia,
+                        ciudad=ciudad,
+                        tipo_identificacion=tipo_identificacion,
+                        numero_identificacion=numero_identificacion,
                         cantidad=cantidad,
                         paypal_order_id=order_id,
                         paypal_capture_id=paypal_capture_id,
-                        monto_total=monto_item,
+                        monto_total=item.get('monto_item_neto', monto_item),
                         moneda=currency_code,
                         estado_pago="pagado",
                         afiliado_id=afiliado_id,
@@ -3535,6 +4505,32 @@ def carrito_checkout():
         finally:
             conn.close()
         
+        # Aplicar descuento usado (afiliados)
+        if es_afiliado and afiliado_id_sesion and descuento_aplicado > 0:
+            try:
+                aplicar_descuento_afiliado(afiliado_id_sesion, float(descuento_aplicado))
+            except Exception as e:
+                app.logger.error(f"[CARRITO_CHECKOUT] No se pudo descontar saldo de afiliado: {e}")
+
+        # Guardar datos de envío para cliente autenticado
+        if usuario_id:
+            try:
+                upsert_envio_cliente(usuario_id, {
+                    'usuario_id': usuario_id,
+                    'tipo_identificacion': tipo_identificacion,
+                    'numero_identificacion': numero_identificacion,
+                    'nombre': nombre,
+                    'apellido': apellido,
+                    'email': email,
+                    'telefono': telefono,
+                    'pais': pais,
+                    'provincia': provincia,
+                    'ciudad': ciudad,
+                    'direccion': direccion
+                })
+            except Exception as e:
+                app.logger.error(f"[CARRITO_CHECKOUT] No se pudo guardar datos de envío: {e}")
+
         # Limpiar carrito después de compra exitosa
         if usuario_id:
             # Cliente registrado: limpiar de BD
@@ -3609,6 +4605,65 @@ def cuenta_perfil():
         app.logger.error(f"[CUENTA_PERFIL] Error: {e}")
         return jsonify({'error': 'Error al obtener perfil'}), 500
 
+@app.route('/api/cuenta/envio', methods=['GET'])
+def cuenta_envio_get():
+    """Datos de envío/facturación del cliente (Ecuador)."""
+    try:
+        from flask import g
+        usuario_id = None
+        if hasattr(g, 'current_user') and g.current_user:
+            usuario_id = g.current_user['usuario_id']
+        elif 'usuario_id' in session and session.get('rol') == 'cliente':
+            usuario_id = session.get('usuario_id')
+        if not usuario_id:
+            return jsonify({'error': 'No autenticado'}), 401
+
+        envio = get_envio_cliente(usuario_id) or {}
+        return jsonify({
+            'success': True,
+            'envio': {
+                'tipo_identificacion': envio.get('tipo_identificacion') or '',
+                'numero_identificacion': envio.get('numero_identificacion') or '',
+                'nombre': envio.get('nombre') or '',
+                'apellido': envio.get('apellido') or '',
+                'email': envio.get('email') or '',
+                'telefono': envio.get('telefono') or '',
+                'pais': envio.get('pais') or 'Ecuador',
+                'provincia': envio.get('provincia') or '',
+                'ciudad': envio.get('ciudad') or '',
+                'direccion': envio.get('direccion') or ''
+            }
+        })
+    except Exception as e:
+        app.logger.error(f"[CUENTA_ENVIO_GET] Error: {e}")
+        return jsonify({'error': 'Error al obtener datos de envío'}), 500
+
+@app.route('/api/cuenta/envio', methods=['POST'])
+def cuenta_envio_post():
+    """Guardar/actualizar datos de envío/facturación del cliente."""
+    try:
+        from flask import g
+        usuario_id = None
+        if hasattr(g, 'current_user') and g.current_user:
+            usuario_id = g.current_user['usuario_id']
+        elif 'usuario_id' in session and session.get('rol') == 'cliente':
+            usuario_id = session.get('usuario_id')
+        if not usuario_id:
+            return jsonify({'error': 'No autenticado'}), 401
+
+        data = request.get_json() or {}
+        required = ['tipo_identificacion', 'numero_identificacion', 'nombre', 'apellido', 'email', 'telefono', 'provincia', 'ciudad', 'direccion']
+        for r in required:
+            if not (data.get(r) or '').strip():
+                return jsonify({'error': f'Falta {r}'}), 400
+        data['pais'] = 'Ecuador'
+        data['usuario_id'] = usuario_id
+        upsert_envio_cliente(usuario_id, data)
+        return jsonify({'success': True, 'message': 'Datos de envío guardados'})
+    except Exception as e:
+        app.logger.error(f"[CUENTA_ENVIO_POST] Error: {e}")
+        return jsonify({'error': 'Error al guardar datos de envío'}), 500
+
 @app.route('/api/cuenta/compras', methods=['GET'])
 def cuenta_compras():
     """Obtener compras del usuario autenticado"""
@@ -3632,14 +4687,18 @@ def cuenta_compras():
                     return jsonify({'error': 'Usuario no encontrado'}), 404
                 
                 email = usuario.get('email')
-                
+                emails_busqueda = [email] if email else []
+                paypal_email_sesion = session.get('ultima_paypal_email')
+                if paypal_email_sesion and paypal_email_sesion not in emails_busqueda:
+                    emails_busqueda.append(paypal_email_sesion)
+
                 cur.execute("""
                     SELECT id, producto_id, producto_titulo, cantidad, monto_total, 
-                           moneda, estado_pago, creado_en, paypal_order_id
+                           moneda, estado_pago, COALESCE(creado_en, CURRENT_TIMESTAMP) as creado_en, paypal_order_id
                     FROM shopfusion.cliente_compraron_productos
-                    WHERE email = %s
-                    ORDER BY creado_en DESC
-                """, (email,))
+                    WHERE email = ANY(%s)
+                    ORDER BY COALESCE(creado_en, CURRENT_TIMESTAMP) DESC
+                """, (emails_busqueda,))
                 
                 compras = cur.fetchall()
                 
@@ -3655,51 +4714,84 @@ def cuenta_compras():
 
 @app.route('/api/cuenta/direcciones', methods=['GET'])
 def cuenta_direcciones():
-    """Obtener direcciones guardadas del usuario"""
+    """Obtener direcciones guardadas del usuario más datos de envío (Ecuador)."""
     try:
         from flask import g
         usuario_id = None
+        afiliado_id = None
+        tipo = 'cliente'
         if hasattr(g, 'current_user') and g.current_user:
             usuario_id = g.current_user['usuario_id']
         elif 'usuario_id' in session and session.get('rol') == 'cliente':
             usuario_id = session.get('usuario_id')
+        elif session.get('afiliado_auth') and session.get('afiliado_id'):
+            afiliado_id = session.get('afiliado_id')
+            tipo = 'afiliado'
         
-        if not usuario_id:
+        if not usuario_id and not afiliado_id:
             return jsonify({'error': 'No autenticado'}), 401
         
         conn = get_db_connection()
         try:
+            ensure_direcciones_tables(conn)
+            ensure_envio_clientes_table(conn)
+            envio = None
             with conn.cursor() as cur:
-                cur.execute("SELECT email FROM shopfusion.usuarios WHERE id = %s", (usuario_id,))
-                usuario = cur.fetchone()
-                if not usuario:
-                    return jsonify({'error': 'Usuario no encontrado'}), 404
-                
-                email = usuario.get('email')
-                
-                cur.execute("""
-                    SELECT DISTINCT ON (pais, direccion, telefono)
-                           pais, direccion, telefono
-                    FROM shopfusion.cliente_compraron_productos
-                    WHERE email = %s AND direccion IS NOT NULL AND direccion != ''
-                    ORDER BY pais, direccion, telefono, creado_en DESC
-                """, (email,))
-                
-                direcciones = cur.fetchall()
+                direcciones = []
+                if tipo == 'cliente':
+                    cur.execute("SELECT email, nombre FROM shopfusion.usuarios WHERE id = %s", (usuario_id,))
+                    usuario = cur.fetchone()
+                    if not usuario:
+                        return jsonify({'error': 'Usuario no encontrado'}), 404
+                    
+                    cur.execute("""
+                        SELECT id, pais, ciudad, direccion, telefono
+                        FROM shopfusion.direcciones_clientes
+                        WHERE usuario_id = %s
+                        ORDER BY actualizado_en DESC, creado_en DESC
+                    """, (usuario_id,))
+                    direcciones = cur.fetchall()
+
+                    # Fallback: recuperar de compras históricas si aún no hay direcciones guardadas
+                    if not direcciones:
+                        email = usuario.get('email')
+                        cur.execute("""
+                            SELECT DISTINCT ON (pais, direccion, telefono)
+                                   NULL AS id, pais, '' AS ciudad, direccion, telefono
+                            FROM shopfusion.cliente_compraron_productos
+                            WHERE email = %s AND direccion IS NOT NULL AND direccion != ''
+                            ORDER BY pais, direccion, telefono, creado_en DESC
+                        """, (email,))
+                        direcciones = cur.fetchall()
+                    envio = get_envio_cliente(usuario_id)
+                else:
+                    cur.execute("""
+                        SELECT id, pais, ciudad, direccion, telefono
+                        FROM shopfusion.direcciones_afiliados
+                        WHERE afiliado_id = %s
+                        ORDER BY actualizado_en DESC, creado_en DESC
+                    """, (afiliado_id,))
+                    direcciones = cur.fetchall()
                 
                 direcciones_formateadas = []
-                for idx, dir in enumerate(direcciones):
+                for dir in direcciones:
                     direcciones_formateadas.append({
-                        'id': idx + 1,
-                        'pais': dir.get('pais', ''),
-                        'ciudad': '',  # No hay campo ciudad en la BD
+                        'id': dir.get('id'),
+                        'pais': dir.get('pais', 'Ecuador'),
+                        'ciudad': dir.get('ciudad', ''),
                         'direccion': dir.get('direccion', ''),
-                        'telefono': dir.get('telefono', '')
+                        'telefono': dir.get('telefono', ''),
+                        'provincia': envio.get('provincia') if tipo == 'cliente' and envio else '',
+                        'tipo_identificacion': envio.get('tipo_identificacion') if tipo == 'cliente' and envio else '',
+                        'numero_identificacion': envio.get('numero_identificacion') if tipo == 'cliente' and envio else '',
+                        'nombre': envio.get('nombre') if tipo == 'cliente' and envio else (usuario.get('nombre') if tipo == 'cliente' else ''),
+                        'apellido': envio.get('apellido') if tipo == 'cliente' and envio else ''
                     })
                 
                 return jsonify({
                     'success': True,
-                    'direcciones': direcciones_formateadas
+                    'direcciones': direcciones_formateadas,
+                    'tipo': tipo
                 })
         finally:
             conn.close()
@@ -3713,12 +4805,17 @@ def cuenta_direcciones_agregar():
     try:
         from flask import g
         usuario_id = None
+        afiliado_id = None
+        tipo = 'cliente'
         if hasattr(g, 'current_user') and g.current_user:
             usuario_id = g.current_user['usuario_id']
         elif 'usuario_id' in session and session.get('rol') == 'cliente':
             usuario_id = session.get('usuario_id')
+        elif session.get('afiliado_auth') and session.get('afiliado_id'):
+            afiliado_id = session.get('afiliado_id')
+            tipo = 'afiliado'
         
-        if not usuario_id:
+        if not usuario_id and not afiliado_id:
             return jsonify({'error': 'No autenticado'}), 401
         
         data = request.get_json() or {}
@@ -3732,22 +4829,39 @@ def cuenta_direcciones_agregar():
         
         conn = get_db_connection()
         try:
+            ensure_direcciones_tables(conn)
             with conn.cursor() as cur:
-                cur.execute("SELECT nombre, email FROM shopfusion.usuarios WHERE id = %s", (usuario_id,))
-                usuario = cur.fetchone()
-                if not usuario:
-                    return jsonify({'error': 'Usuario no encontrado'}), 404
-                
-                mensaje = f"Nueva dirección solicitada:\nPaís: {pais}\nCiudad: {ciudad}\nDirección: {direccion}\nTeléfono: {telefono}"
-                cur.execute("""
-                    INSERT INTO shopfusion.sugerencias (nombre, email, mensaje, urgente)
-                    VALUES (%s, %s, %s, FALSE)
-                """, (usuario.get('nombre'), usuario.get('email'), mensaje))
+                if tipo == 'cliente':
+                    cur.execute("SELECT nombre, email FROM shopfusion.usuarios WHERE id = %s", (usuario_id,))
+                    usuario = cur.fetchone()
+                    if not usuario:
+                        return jsonify({'error': 'Usuario no encontrado'}), 404
+                    
+                    cur.execute("""
+                        INSERT INTO shopfusion.direcciones_clientes
+                            (usuario_id, pais, ciudad, direccion, telefono, principal, actualizado_en)
+                        VALUES (%s, %s, %s, %s, %s, FALSE, CURRENT_TIMESTAMP)
+                        ON CONFLICT (usuario_id, pais, ciudad, direccion, telefono)
+                        DO UPDATE SET actualizado_en = CURRENT_TIMESTAMP
+                        RETURNING id;
+                    """, (usuario_id, pais, ciudad, direccion, telefono))
+                else:
+                    cur.execute("""
+                        INSERT INTO shopfusion.direcciones_afiliados
+                            (afiliado_id, pais, ciudad, direccion, telefono, principal, actualizado_en)
+                        VALUES (%s, %s, %s, %s, %s, FALSE, CURRENT_TIMESTAMP)
+                        ON CONFLICT (afiliado_id, pais, ciudad, direccion, telefono)
+                        DO UPDATE SET actualizado_en = CURRENT_TIMESTAMP
+                        RETURNING id;
+                    """, (afiliado_id, pais, ciudad, direccion, telefono))
                 conn.commit()
+                nueva_id = cur.fetchone()['id']
                 
                 return jsonify({
                     'success': True,
-                    'message': 'Dirección guardada. Se usará en tu próxima compra.'
+                    'id': nueva_id,
+                    'message': 'Dirección guardada. Se usará en tu próxima compra.',
+                    'tipo': tipo
                 })
         finally:
             conn.close()
@@ -3758,10 +4872,45 @@ def cuenta_direcciones_agregar():
 @app.route('/api/cuenta/direcciones/eliminar/<int:dir_id>', methods=['POST'])
 def cuenta_direcciones_eliminar(dir_id):
     """Eliminar dirección"""
-    return jsonify({
-        'success': True,
-        'message': 'Dirección eliminada (nota: las direcciones de compras no se pueden eliminar)'
-    })
+    try:
+        from flask import g
+        usuario_id = None
+        afiliado_id = None
+        if hasattr(g, 'current_user') and g.current_user:
+            usuario_id = g.current_user['usuario_id']
+        elif 'usuario_id' in session and session.get('rol') == 'cliente':
+            usuario_id = session.get('usuario_id')
+        elif session.get('afiliado_auth') and session.get('afiliado_id'):
+            afiliado_id = session.get('afiliado_id')
+        
+        if not usuario_id and not afiliado_id:
+            return jsonify({'error': 'No autenticado'}), 401
+
+        conn = get_db_connection()
+        try:
+            ensure_direcciones_tables(conn)
+            with conn.cursor() as cur:
+                if usuario_id:
+                    cur.execute("""
+                        DELETE FROM shopfusion.direcciones_clientes
+                        WHERE id = %s AND usuario_id = %s
+                    """, (dir_id, usuario_id))
+                else:
+                    cur.execute("""
+                        DELETE FROM shopfusion.direcciones_afiliados
+                        WHERE id = %s AND afiliado_id = %s
+                    """, (dir_id, afiliado_id))
+                conn.commit()
+        finally:
+            conn.close()
+
+        return jsonify({
+            'success': True,
+            'message': 'Dirección eliminada'
+        })
+    except Exception as e:
+        app.logger.error(f"[CUENTA_DIRECCIONES_ELIMINAR] Error: {e}")
+        return jsonify({'error': 'Error al eliminar dirección'}), 500
 
 @app.route('/api/cuenta/facturas', methods=['GET'])
 def cuenta_facturas():
@@ -3786,15 +4935,19 @@ def cuenta_facturas():
                     return jsonify({'error': 'Usuario no encontrado'}), 404
                 
                 email = usuario.get('email')
-                
+                emails_busqueda = [email] if email else []
+                paypal_email_sesion = session.get('ultima_paypal_email')
+                if paypal_email_sesion and paypal_email_sesion not in emails_busqueda:
+                    emails_busqueda.append(paypal_email_sesion)
+
                 cur.execute("""
                     SELECT id, producto_titulo, cantidad, monto_total, moneda, 
-                           estado_pago, creado_en, paypal_order_id, paypal_capture_id,
+                           estado_pago, COALESCE(creado_en, CURRENT_TIMESTAMP) as creado_en, paypal_order_id, paypal_capture_id,
                            nombre, apellido, email, telefono, pais, direccion
                     FROM shopfusion.cliente_compraron_productos
-                    WHERE email = %s
-                    ORDER BY creado_en DESC
-                """, (email,))
+                    WHERE email = ANY(%s)
+                    ORDER BY COALESCE(creado_en, CURRENT_TIMESTAMP) DESC
+                """, (emails_busqueda,))
                 
                 facturas = cur.fetchall()
                 
@@ -4028,6 +5181,9 @@ def listar_productos_exclusivos():
         stock_raw = (request.form.get('stock') or '0').strip()
         estado = (request.form.get('estado') or 'activo').strip() or 'activo'
         imagenes_raw = (request.form.get('imagenes') or '').strip()
+        envio_gratis = request.form.get('envio_gratis') == 'on'
+        importado = request.form.get('importado') == 'on'
+        link_proveedor = (request.form.get('link_proveedor') or '').strip()
 
         errores = []
 
@@ -4093,6 +5249,9 @@ def listar_productos_exclusivos():
                     'stock': stock,
                     'estado': estado,
                     'imagenes': imagenes_list,
+                    'envio_gratis': envio_gratis,
+                    'importado': importado,
+                    'link_proveedor': link_proveedor or None,
                 })
                 flash(f'Producto exclusivo creado correctamente (ID {nuevo_id}).', 'success')
                 return redirect(url_for('listar_productos_exclusivos'))
@@ -4439,9 +5598,15 @@ def index():
 
         # 🎁 Cargar el sorteo más reciente (si existe)
         cur.execute("""
-            SELECT id, titulo, descripcion, imagen
-            FROM sorteos
-            ORDER BY id DESC
+            SELECT s.id, s.titulo, s.descripcion, s.imagen,
+                   COALESCE(b.cnt, 0) AS total_boletos
+            FROM sorteos s
+            LEFT JOIN (
+                SELECT sorteo_id, COUNT(*) AS cnt
+                FROM boletos
+                GROUP BY sorteo_id
+            ) b ON b.sorteo_id = s.id
+            ORDER BY s.id DESC
             LIMIT 1;
         """)
         sorteo = cur.fetchone() or None  # Evita error si no hay sorteo
@@ -5036,6 +6201,12 @@ Consulta del usuario:
         app.logger.error(msg)
         return jsonify({'error': 'Error inesperado en la búsqueda'}), 500
 
+@app.route('/health')
+def health():
+    """Endpoint de salud para utilizar en servicios de deploy (Render, Heroku, etc.)"""
+    return jsonify({'status': 'ok', 'env': 'production' if is_production else 'development'}), 200
+
+
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
     error_msg = str(e)
@@ -5089,202 +6260,20 @@ USERNAME_RE = re.compile(r'^[a-z0-9._-]{3,32}$')
 FRECUENCIAS = {'semanal', 'quincenal', 'mensual'}
 
 @app.route('/registro_vendedor', methods=['GET', 'POST'])
-@limiter.limit("3 per hour")  # Máximo 3 registros por hora por IP
+@limiter.limit("3 per hour")  # Maximo 3 registros por hora por IP
 def registro_vendedor():
-    if request.method == 'POST':
-        # 1) CSRF
-        try:
-            validate_csrf(request.form.get('csrf_token', ''))
-        except Exception as e:
-            app.logger.error(f"[REGISTRO_VENDEDOR][CSRF] Token inválido: {e}")
-            flash("Error de seguridad en la solicitud. Inténtalo nuevamente.", "danger")
-            return redirect(url_for('registro_vendedor'))
+    return render_template('mantenimiento.html', titulo='Proveedores', mensaje='Estamos realizando mantenimiento en la seccion de proveedores. Vuelve pronto.')
 
-        # 2) Datos (sin identificacion)
-        tipo_persona      = (request.form.get('tipo_persona') or '').strip()
-        nombre_comercial  = (request.form.get('nombre_comercial') or '').strip()
-        email             = (request.form.get('email') or '').strip().lower()
-        telefono          = (request.form.get('telefono') or '').strip()
-        ciudad            = (request.form.get('ciudad') or '').strip()
-        direccion         = (request.form.get('direccion') or '').strip()
-
-        metodo_pago       = (request.form.get('metodo_pago') or '').strip()
-        banco             = (request.form.get('banco') or '').strip() if metodo_pago == 'banco' else None
-        tipo_cuenta       = (request.form.get('tipo_cuenta') or '').strip() if metodo_pago == 'banco' else None
-        numero_cuenta     = (request.form.get('numero_cuenta') or '').strip() if metodo_pago == 'banco' else None
-        paypal_email      = (request.form.get('paypal_email') or '').strip().lower() if metodo_pago == 'paypal' else None
-
-        frecuencia_retiro = (request.form.get('frecuencia_retiro') or '').strip()
-
-        username          = (request.form.get('username') or '').strip().lower()
-        password          = request.form.get('password') or ''
-        password2         = request.form.get('password2') or ''
-        acepto            = request.form.get('acepto')
-
-        # 3) Validaciones
-        if tipo_persona not in ('natural', 'juridica'):
-            flash("Selecciona un tipo de cuenta válido.", "danger"); return redirect(url_for('registro_vendedor'))
-
-        if not nombre_comercial:
-            flash("Ingresa el nombre comercial/marca.", "danger"); return redirect(url_for('registro_vendedor'))
-
-        if not validar_correo(email):
-            flash("Correo inválido.", "danger"); return redirect(url_for('registro_vendedor'))
-
-        if metodo_pago not in ('banco', 'paypal'):
-            flash("Selecciona un método de retiro válido.", "danger"); return redirect(url_for('registro_vendedor'))
-
-        if metodo_pago == 'paypal':
-            if not validar_correo(paypal_email):
-                flash("Ingresa tu correo de PayPal válido.", "danger"); return redirect(url_for('registro_vendedor'))
-            # Fuerza lógica de negocio: PayPal = inmediato
-            frecuencia_retiro = 'inmediato'
-        else:
-            # Transferencia: validar banco y frecuencia seleccionada
-            if not banco or not tipo_cuenta or not numero_cuenta:
-                flash("Completa los datos bancarios.", "danger"); return redirect(url_for('registro_vendedor'))
-            if frecuencia_retiro not in FRECUENCIAS:
-                flash("Selecciona la frecuencia de retiro.", "danger"); return redirect(url_for('registro_vendedor'))
-
-        if not USERNAME_RE.match(username):
-            flash("Usuario inválido. Solo minúsculas, números, punto, guion y guion bajo (3–32).", "danger")
-            return redirect(url_for('registro_vendedor'))
-
-        if len(password) < 6 or password != password2:
-            flash("La contraseña debe tener al menos 6 caracteres y coincidir.", "danger")
-            return redirect(url_for('registro_vendedor'))
-
-        if not acepto:
-            flash("Debes aceptar los términos y políticas.", "danger")
-            return redirect(url_for('registro_vendedor'))
-
-        password_hash = generate_password_hash(password)
-
-        # 4) Guardar en BD real
-        try:
-            conn = get_db_connection()
-            if not vendedores_table_exists(conn):
-                conn.close()
-                flash("La tabla de vendedores no esta disponible. Ejecuta migraciones.", "danger")
-                return redirect(url_for('registro_vendedor'))
-
-            with conn.cursor() as cur:
-                cur.execute("""
-                    INSERT INTO vendedores_ecuador
-                        (tipo_persona, nombre_comercial,
-                         username, email,
-                         telefono, ciudad, direccion,
-                         metodo_pago, banco, tipo_cuenta, numero_cuenta, paypal_email,
-                         frecuencia_retiro, password_hash)
-                    VALUES
-                        (%s, %s,
-                         %s, %s,
-                         %s, %s, %s,
-                         %s, %s, %s, %s, %s,
-                         %s, %s)
-                """, (
-                    tipo_persona, nombre_comercial,
-                    username, email,
-                    telefono, ciudad, direccion,
-                    metodo_pago, banco, tipo_cuenta, numero_cuenta, paypal_email,
-                    frecuencia_retiro, password_hash
-                ))
-                conn.commit()
-
-            flash('Tu cuenta de vendedor ha sido registrada. Te contactaremos para la activación.', 'success')
-            return redirect(url_for('vendedores_info'))
-
-        except psycopg.errors.UniqueViolation:
-            # Puede caer aquí si username o email ya existen
-            try: conn.rollback()
-            except: pass
-            flash("Ya existe un vendedor con ese usuario o correo.", "warning")
-            return redirect(url_for('registro_vendedor'))
-
-        except Exception as e:
-            try: conn.rollback()
-            except: pass
-            app.logger.error(f"[REGISTRO_VENDEDOR] Error al guardar: {e}")
-            flash("Ocurrió un error al registrar. Inténtalo más tarde.", "danger")
-            return redirect(url_for('registro_vendedor'))
-
-    # GET ⇒ render con CSRF
-    token = generate_csrf()
-    return render_template('registro_vendedor.html', csrf_token=token)
 
 from flask import render_template, request, redirect, url_for, flash, session
 from flask_wtf.csrf import generate_csrf, validate_csrf
 from werkzeug.security import check_password_hash
 
 @app.route('/login_vendedor', methods=['GET', 'POST'])
-@limiter.limit("5 per minute")  # Máximo 5 intentos de login por minuto
+@limiter.limit("5 per minute")  # Maximo 5 intentos de login por minuto
 def login_vendedor():
-    if request.method == 'POST':
-        # 1) CSRF
-        try:
-            validate_csrf(request.form.get('csrf_token', ''))
-        except Exception as e:
-            app.logger.error(f"[LOGIN_VENDEDOR][CSRF] Token inválido: {e}")
-            flash("Error de seguridad en la solicitud. Inténtalo nuevamente.", "danger")
-            return redirect(url_for('login_vendedor'))
+    return render_template('mantenimiento.html', titulo='Proveedores', mensaje='Estamos realizando mantenimiento en la seccion de proveedores. Vuelve pronto.')
 
-        # 2) Datos del form (acepta email o username en el mismo campo)
-        identificador = (request.form.get('identificador') or '').strip().lower()
-        password      = request.form.get('password') or ''
-
-        if not identificador or not password:
-            flash("Ingresa tus credenciales completas.", "warning")
-            return redirect(url_for('login_vendedor'))
-
-        # 3) Buscar vendedor
-        try:
-            conn = get_db_connection()
-            if not vendedores_table_exists(conn):
-                conn.close()
-                flash("La tabla de vendedores no esta disponible. Ejecuta migraciones.", "danger")
-                return redirect(url_for('login_vendedor'))
-            with conn.cursor() as cur:
-                cur.execute("""
-                    SELECT id, username, nombre_comercial, email, password_hash, estado
-                    FROM vendedores_ecuador
-                    WHERE lower(email) = %s OR lower(username) = %s
-                    LIMIT 1;
-                """, (identificador, identificador))
-                vendedor = cur.fetchone()
-        finally:
-            try: conn.close()
-            except: pass
-
-        # 4) Validar credenciales
-        if not vendedor:
-            flash("Usuario/Email no encontrado. Si eres cliente, usa el login principal.", "danger")
-            return redirect(url_for('login_vendedor'))
-
-        if not check_password_hash(vendedor['password_hash'], password):
-            flash("Contraseña incorrecta.", "danger")
-            return redirect(url_for('login_vendedor'))
-
-        # (Opcional) Validar estado
-        # if vendedor['estado'] != 'activo':
-        #     flash("Tu cuenta aún no está activa. Te contactaremos pronto.", "warning")
-        #     return redirect(url_for('login_vendedor'))
-
-        # 5) Iniciar sesión de vendedor
-        session.clear()
-        session['vendedor_id']       = vendedor['id']
-        session['vendedor_username'] = vendedor['username']
-        session['vendedor_nombre']   = vendedor['nombre_comercial']
-        session['rol']               = 'vendedor'
-
-        app.logger.info('[LOGIN_VENDEDOR] Autenticado: %s (%s)', vendedor['username'], vendedor['email'])
-        flash("Inicio de sesión exitoso.", "success")
-
-        return redirect(url_for('vendedor_panel'))
-
-
-    # GET → render
-    token = generate_csrf()
-    return render_template('login_vendedor.html', csrf_token=token)
 
 # ========= Helpers y guard de vendedor =========
 from functools import wraps
@@ -5837,11 +6826,31 @@ def afiliados_registro():
             password = form.password.data
             
             # Crear afiliado
+            comision_default = 10.0
+            try:
+                conn_cfg = get_db_connection()
+                with conn_cfg.cursor() as cur:
+                    cur.execute("""
+                        SELECT valor FROM shopfusion.configuracion_sistema
+                        WHERE clave = 'comision_predeterminada'
+                        LIMIT 1
+                    """)
+                    cfg = cur.fetchone()
+                    if cfg and cfg.get('valor') is not None:
+                        comision_default = float(cfg.get('valor'))
+            except Exception as e:
+                app.logger.warning(f"[AFILIADOS_REGISTRO] No se pudo leer comisión predeterminada, usando {comision_default}: {e}")
+            finally:
+                try:
+                    conn_cfg.close()
+                except Exception:
+                    pass
+            
             resultado = crear_afiliado(
                 nombre=nombre,
                 email=email,
                 password_hash=generate_password_hash(password),
-                comision_porcentaje=10.00  # Comisión por defecto 10%
+                comision_porcentaje=comision_default  # Comisión definida por admin
             )
             
             flash(f'✅ ¡Registro exitoso! Tu código de afiliado es: {resultado["codigo_afiliado"]}', 'success')
@@ -5976,7 +6985,20 @@ def afiliados_panel():
         
         # Obtener carrito del afiliado desde BD
         carrito_afiliado = obtener_carrito_afiliado(afiliado_id)
+        if isinstance(carrito_afiliado, dict) and carrito_afiliado.get('error') == 'Operación no permitida: los afiliados no pueden comprar productos':
+            # Forzar logout silencioso y redirigir al login de afiliados
+            session.pop('afiliado_id', None)
+            session.pop('afiliado_nombre', None)
+            session.pop('afiliado_codigo', None)
+            session.pop('afiliado_email', None)
+            session.pop('afiliado_comision', None)
+            session.pop('afiliado_auth', None)
+            session.modified = True
+            app.logger.info('[SECURITY] Afiliado forzado a cerrar sesión por operación no permitida')
+            return redirect(url_for('afiliados_login'))
         total_carrito = sum(item.get('precio', 0) * item.get('cantidad', 1) for item in carrito_afiliado)
+        descuento_aplicado_carrito = min(total_carrito, descuento_disponible or 0) if carrito_afiliado else 0
+        total_carrito_final = max(total_carrito - descuento_aplicado_carrito, 0)
         
         # Obtener productos por categorías
         from services_categorias import obtener_categorias
@@ -5990,6 +7012,51 @@ def afiliados_panel():
                 if categoria not in productos_por_categoria:
                     productos_por_categoria[categoria] = []
                 productos_por_categoria[categoria].append(producto)
+
+        # Historial de pagos recibidos
+        pagos_recibidos = []
+        try:
+            conn_pagos = get_db_connection()
+            ensure_pagos_afiliados_log(conn_pagos)
+            with conn_pagos.cursor() as cur:
+                cur.execute("""
+                    SELECT monto, nota, creado_en
+                    FROM shopfusion.pagos_afiliados_log
+                    WHERE afiliado_id = %s
+                    ORDER BY creado_en DESC
+                    LIMIT 50
+                """, (afiliado_id,))
+                pagos_recibidos = cur.fetchall()
+            conn_pagos.close()
+        except Exception as e:
+            app.logger.error(f"[AFILIADOS_PANEL] Error al cargar pagos recibidos: {e}")
+            pagos_recibidos = []
+
+        # Compras propias del afiliado (por email)
+        compras_afiliado = []
+        try:
+            conn_comp = get_db_connection()
+            with conn_comp.cursor() as cur:
+                cur.execute("""
+                    SELECT 
+                        id,
+                        producto_id,
+                        producto_titulo,
+                        cantidad,
+                        monto_total,
+                        moneda,
+                        estado_pago,
+                        creado_en as fecha_compra
+                    FROM shopfusion.cliente_compraron_productos
+                    WHERE email = %s
+                    ORDER BY creado_en DESC
+                    LIMIT 50
+                """, (afiliado.get('email'),))
+                compras_afiliado = cur.fetchall()
+            conn_comp.close()
+        except Exception as e:
+            app.logger.error(f"[AFILIADOS_PANEL] Error al cargar compras del afiliado: {e}")
+            compras_afiliado = []
         
         return render_template(
             'afiliados_panel.html',
@@ -6000,9 +7067,13 @@ def afiliados_panel():
             categorias=categorias,
             descuento_disponible=descuento_disponible,
             carrito=carrito_afiliado,
-            total_carrito=total_carrito,
+            total_carrito=total_carrito_final,
+            carrito_subtotal=total_carrito,
+            descuento_aplicado_carrito=descuento_aplicado_carrito,
             paypal_client_id=PAYPAL_CLIENT_ID,
-            bancos_ecuador=BANCOS_ECUADOR
+            bancos_ecuador=BANCOS_ECUADOR,
+            pagos_recibidos=pagos_recibidos,
+            compras_afiliado=compras_afiliado
         )
     except Exception as e:
         app.logger.error(f"[AFILIADOS_PANEL] Error: {e}")
@@ -6058,6 +7129,56 @@ def afiliados_producto_detalle(producto_id):
         precio_con_descuento=precio_con_descuento,
         descuento_disponible=descuento_disponible
     )
+
+
+# ============================
+# FACTURA / RECIBO DE COMPRA
+# ============================
+@app.route('/factura/<int:compra_id>')
+def factura_compra(compra_id):
+    """Factura simple en HTML para una compra."""
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT 
+                    id,
+                    producto_id,
+                    producto_titulo,
+                    producto_precio,
+                    cantidad,
+                    monto_total,
+                    moneda,
+                    estado_pago,
+                    creado_en,
+                    nombre,
+                    apellido,
+                    email,
+                    telefono,
+                    pais,
+                    direccion,
+                    afiliado_id,
+                    afiliado_codigo
+                FROM shopfusion.cliente_compraron_productos
+                WHERE id = %s
+                LIMIT 1
+            """, (compra_id,))
+            compra = cur.fetchone()
+        conn.close()
+        if not compra:
+            return render_template('error.html', codigo=404, mensaje='Factura no encontrada'), 404
+
+        # Validar acceso básico: cliente/afiliado dueño del email o admin
+        es_admin = session.get('rol') == 'admin'
+        es_cliente = session.get('email') and session.get('email') == compra.get('email')
+        es_afiliado = session.get('afiliado_auth') and session.get('afiliado_email') == compra.get('email')
+        if not (es_admin or es_cliente or es_afiliado):
+            return render_template('error.html', codigo=403, mensaje='No autorizado para ver esta factura'), 403
+
+        return render_template('factura.html', compra=compra)
+    except Exception as e:
+        app.logger.error(f"[FACTURA] Error: {e}")
+        return render_template('error.html', codigo=500, mensaje='No se pudo generar la factura'), 500
 
 
 @app.route('/afiliados/configuracion/pagos', methods=['POST'])
@@ -6264,6 +7385,91 @@ def actualizar_comision_afiliado(afiliado_id):
     
     return redirect(url_for('panel'))
 
+# =====================================================================
+# PAGOS A AFILIADOS (ADMIN)
+# =====================================================================
+
+def ensure_pagos_afiliados_log(conn):
+    """Crea tabla de pagos a afiliados si no existe."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS shopfusion.pagos_afiliados_log (
+                id SERIAL PRIMARY KEY,
+                afiliado_id INTEGER NOT NULL REFERENCES shopfusion.afiliados(id) ON DELETE CASCADE,
+                monto NUMERIC(12,2) NOT NULL,
+                nota TEXT,
+                creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+    conn.commit()
+
+@app.route('/admin/afiliados/<int:afiliado_id>/pago-parcial', methods=['POST'])
+def pagar_parcial_afiliado(afiliado_id):
+    """Registrar un pago parcial a un afiliado y descontarlo de su saldo."""
+    if 'usuario_id' not in session or session.get('rol') != 'admin':
+        flash('Debes iniciar sesión como administrador.', 'danger')
+        return redirect(url_for('admin'))
+    try:
+        monto = float(request.form.get('monto') or 0)
+        nota = (request.form.get('nota') or '').strip()
+        if monto <= 0:
+            flash('El monto debe ser mayor a 0.', 'danger')
+            return redirect(url_for('panel'))
+        conn = get_db_connection()
+        ensure_pagos_afiliados_log(conn)
+        with conn.cursor() as cur:
+            # Verificar si la columna total_pagado existe
+            cur.execute("""
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_schema = 'shopfusion'
+                    AND table_name = 'afiliados'
+                    AND column_name = 'total_pagado'
+                )
+            """)
+            has_total_pagado = bool(cur.fetchone().get('exists'))
+
+            if has_total_pagado:
+                cur.execute("SELECT total_ganancias, total_pagado FROM shopfusion.afiliados WHERE id = %s", (afiliado_id,))
+            else:
+                cur.execute("SELECT total_ganancias FROM shopfusion.afiliados WHERE id = %s", (afiliado_id,))
+            afiliado = cur.fetchone()
+            if not afiliado:
+                flash('Afiliado no encontrado.', 'danger')
+                conn.close()
+                return redirect(url_for('panel'))
+            saldo = float(afiliado.get('total_ganancias') or 0)
+            if saldo <= 0:
+                flash('El afiliado no tiene saldo pendiente.', 'info')
+                conn.close()
+                return redirect(url_for('panel'))
+            if monto > saldo:
+                monto = saldo
+            if has_total_pagado:
+                cur.execute("""
+                    UPDATE shopfusion.afiliados
+                    SET total_ganancias = GREATEST(total_ganancias - %s, 0),
+                        total_pagado = COALESCE(total_pagado, 0) + %s
+                    WHERE id = %s
+                """, (monto, monto, afiliado_id))
+            else:
+                cur.execute("""
+                    UPDATE shopfusion.afiliados
+                    SET total_ganancias = GREATEST(total_ganancias - %s, 0)
+                    WHERE id = %s
+                """, (monto, afiliado_id))
+            cur.execute("""
+                INSERT INTO shopfusion.pagos_afiliados_log (afiliado_id, monto, nota)
+                VALUES (%s, %s, %s)
+            """, (afiliado_id, monto, nota))
+            conn.commit()
+        conn.close()
+        flash(f'Pago registrado: ${monto:.2f}', 'success')
+    except Exception as e:
+        app.logger.error(f"[PAGO_PARCIAL_AFILIADO] Error: {e}")
+        flash('No se pudo registrar el pago.', 'danger')
+    return redirect(url_for('panel'))
+
 
 @app.route('/admin/afiliados/<int:afiliado_id>/estado', methods=['POST'])
 def cambiar_estado_afiliado(afiliado_id):
@@ -6429,12 +7635,27 @@ def ajustar_comision_todos_afiliados():
 
 @app.route('/trabaja-con-nosotros')
 def trabaja_con_nosotros():
-    """Página informativa del programa de afiliados, vacantes y proveedores"""
+    return render_template('trabaja_con_nosotros.html')
+
+
+@app.route('/trabaja/afiliados')
+def trabaja_afiliados():
+    """Página dedicada para afiliados."""
+    return render_template('trabaja_afiliados.html')
+
+@app.route('/trabaja/proveedores')
+def trabaja_proveedores():
+    """Página dedicada para proveedores."""
+    return render_template('trabaja_proveedores.html')
+
+@app.route('/trabaja/vacantes')
+def trabaja_vacantes():
+    """Página dedicada para vacantes activas."""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
-            SELECT id, titulo, descripcion, requisitos, activa
+            SELECT id, titulo, descripcion, requisitos, activa, creado_en
             FROM shopfusion.vacantes
             WHERE activa = TRUE
             ORDER BY creado_en DESC
@@ -6443,21 +7664,53 @@ def trabaja_con_nosotros():
         cur.close()
         conn.close()
     except Exception as e:
-        app.logger.error(f"[TRABAJA_CON_NOSOTROS] Error al cargar vacantes: {e}")
+        app.logger.error(f"[TRABAJA_VACANTES] Error al cargar vacantes: {e}")
         vacantes = []
-    
-    return render_template('trabaja_con_nosotros.html', vacantes=vacantes)
+    return render_template('trabaja_vacantes.html', vacantes=vacantes)
 
 
 @app.route('/proveedores')
 def proveedores():
     """Página para proveedores que quieren vender productos"""
-    return render_template('proveedores.html')
+    return render_template('mantenimiento.html', titulo='Proveedores', mensaje='Estamos realizando mantenimiento en la sección de proveedores. Vuelve pronto.')
 
 
-@app.route('/soporte')
+@app.route('/soporte', methods=['GET', 'POST'])
 def soporte():
     """Página de soporte y tickets de atención al cliente"""
+    if request.method == 'POST':
+        nombre = (request.form.get('nombre') or '').strip()
+        email = (request.form.get('email') or '').strip()
+        mensaje = (request.form.get('mensaje') or '').strip()
+
+        if not nombre or not email or not mensaje:
+            flash('Completa nombre, email y mensaje para crear el ticket.', 'danger')
+            return redirect(url_for('soporte'))
+        if not validar_correo(email):
+            flash('Correo inválido', 'danger')
+            return redirect(url_for('soporte'))
+
+        try:
+            conn = get_db_connection()
+            ensure_soporte_table(conn)
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO shopfusion.tickets_soporte (nombre, email, mensaje)
+                    VALUES (%s, %s, %s)
+                """, (nombre, email, mensaje))
+                conn.commit()
+            flash('Ticket de soporte creado. Te responderemos pronto.', 'success')
+            return redirect(url_for('soporte'))
+        except Exception as e:
+            app.logger.error(f"[SOPORTE] Error al crear ticket: {e}")
+            flash('No se pudo crear el ticket. Intenta nuevamente.', 'danger')
+            return redirect(url_for('soporte'))
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
     return render_template('soporte.html')
 
 
@@ -6588,6 +7841,28 @@ def admin_eliminar_vacante(vacante_id):
     
     return redirect(url_for('admin_vacantes'))
 
+@app.route('/admin/vacantes/<int:vacante_id>/finalizar', methods=['POST'])
+def admin_finalizar_vacante(vacante_id):
+    """Marcar una vacante como finalizada (activa = False)."""
+    if 'usuario_id' not in session or session.get('rol') != 'admin':
+        flash('Debes iniciar sesión como administrador.', 'danger')
+        return redirect(url_for('admin'))
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE shopfusion.vacantes
+                SET activa = FALSE, actualizado_en = CURRENT_TIMESTAMP
+                WHERE id = %s
+            """, (vacante_id,))
+            conn.commit()
+        conn.close()
+        flash('Vacante marcada como finalizada.', 'success')
+    except Exception as e:
+        app.logger.error(f"[ADMIN_FINALIZAR_VACANTE] Error: {e}")
+        flash('No se pudo marcar la vacante como finalizada.', 'danger')
+    return redirect(url_for('admin_vacantes'))
+
 @app.route('/admin/vacantes/<int:vacante_id>/aplicaciones')
 def admin_aplicaciones_vacante(vacante_id):
     """Ver aplicaciones a una vacante"""
@@ -6626,6 +7901,7 @@ def admin_aplicaciones_vacante(vacante_id):
 
 # ========== RUTA PARA APLICAR A VACANTE (PÚBLICO) ==========
 @app.route('/aplicar-vacante/<int:vacante_id>', methods=['GET', 'POST'])
+@limiter.limit("10 per hour")
 def aplicar_vacante(vacante_id):
     """Formulario para aplicar a una vacante"""
     try:
@@ -6647,6 +7923,9 @@ def aplicar_vacante(vacante_id):
         app.logger.error(f"[APLICAR_VACANTE] Error: {e}")
         flash('Error al cargar vacante', 'danger')
         return redirect(url_for('trabaja_con_nosotros'))
+
+    # Si llega con ?enviado=1 mostramos el modal de confirmación
+    show_modal = request.args.get('enviado') == '1'
     
     if request.method == 'POST':
         try:
@@ -6655,13 +7934,34 @@ def aplicar_vacante(vacante_id):
             telefono = request.form.get('telefono', '').strip()
             hoja_vida = request.form.get('hoja_vida', '').strip()
             mensaje = request.form.get('mensaje', '').strip()
-            
-            if not nombre_completo or not email:
-                flash('Nombre completo y email son obligatorios', 'danger')
-                return render_template('aplicar_vacante.html', vacante=vacante)
-            
+
+            # Validaciones básicas en servidor
+            if not nombre_completo or not email or not hoja_vida:
+                flash('Nombre completo, correo y Hoja de Vida son obligatorios', 'danger')
+                return render_template('aplicar_vacante.html', vacante=vacante, form=request.form, show_modal=show_modal)
+
+            if len(nombre_completo) > 200 or len(email) > 200 or len(telefono) > 50 or len(hoja_vida) > 20000:
+                flash('Uno de los campos excede la longitud permitida', 'danger')
+                return render_template('aplicar_vacante.html', vacante=vacante, form=request.form, show_modal=show_modal)
+
+            # Validación simple de email
+            if '@' not in email or '.' not in email.split('@')[-1]:
+                flash('Email inválido', 'danger')
+                return render_template('aplicar_vacante.html', vacante=vacante, form=request.form, show_modal=show_modal)
+
             conn = get_db_connection()
             with conn.cursor() as cur:
+                # Evitar aplicaciones múltiples en corto tiempo (anti-spam)
+                cur.execute("""
+                    SELECT 1 FROM shopfusion.aplicaciones_vacantes
+                    WHERE vacante_id=%s AND email=%s AND creado_en >= NOW() - INTERVAL '2 days'
+                """, (vacante_id, email))
+                if cur.fetchone():
+                    # Ya existe una aplicación reciente: redirigimos a la página general
+                    # con parámetros para mostrar un mensaje amigable en la UI.
+                    conn.close()
+                    return redirect(url_for('trabaja_con_nosotros', postulado=1, duplicado=1, vacante_id=vacante_id))
+
                 cur.execute("""
                     INSERT INTO shopfusion.aplicaciones_vacantes 
                     (vacante_id, nombre_completo, email, telefono, hoja_vida, mensaje)
@@ -6669,14 +7969,26 @@ def aplicar_vacante(vacante_id):
                 """, (vacante_id, nombre_completo, email, telefono, hoja_vida, mensaje))
                 conn.commit()
             conn.close()
-            
-            flash('✅ Tu aplicación ha sido enviada correctamente. Te contactaremos pronto.', 'success')
-            return redirect(url_for('trabaja_con_nosotros'))
+
+            # Redirigimos al hub 'Trabaja con nosotros' con parámetros para mostrar banner y modal
+            return redirect(url_for('trabaja_con_nosotros', postulado=1, enviado=1, vacante_id=vacante_id))
         except Exception as e:
             app.logger.error(f"[APLICAR_VACANTE] Error: {e}")
             flash('Error al enviar aplicación', 'danger')
+            return render_template('aplicar_vacante.html', vacante=vacante, form=request.form, show_modal=show_modal)
     
-    return render_template('aplicar_vacante.html', vacante=vacante)
+    return render_template('aplicar_vacante.html', vacante=vacante, show_modal=show_modal)
+
+# ============================================================
+# ERRORES CUSTOM
+# ============================================================
+@app.errorhandler(404)
+def error_404(e):
+    return render_template('error.html', codigo=404, mensaje='Ups, esta página no existe.'), 404
+
+@app.errorhandler(500)
+def error_500(e):
+    return render_template('error.html', codigo=500, mensaje='Ocurrió un error inesperado. Intenta más tarde.'), 500
 
 if __name__ == '__main__':
     # Ejecuta migraciones/control de esquema antes de iniciar en produccion.

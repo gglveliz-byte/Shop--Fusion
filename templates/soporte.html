@@ -169,7 +169,7 @@
                 {% endif %}
             {% endwith %}
             
-            <form action="{{ url_for('contacto') }}" method="POST">
+            <form action="{{ url_for('soporte') }}" method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 
                 <div class="form-group">
@@ -213,8 +213,8 @@
                 <div>
                     <i class="fas fa-envelope" style="font-size: 2rem; color: var(--elegant-primary); margin-bottom: 10px;"></i>
                     <p style="color: var(--text-elegant-dark); font-weight: 600;">Email</p>
-                    <a href="mailto:info@shopfusion.com" style="color: var(--elegant-primary); text-decoration: none;">
-                        info@shopfusion.com
+                    <a href="mailto:shop_fusion@shop_fusion.store" style="color: var(--elegant-primary); text-decoration: none;">
+                        shop_fusion@shop_fusion.store
                     </a>
                 </div>
                 <div>

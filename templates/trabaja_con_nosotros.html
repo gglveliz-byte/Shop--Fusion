@@ -1,398 +1,328 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trabaja con Nosotros | ShopFusion</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v=3.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/elegant_styles.css') }}?v=3.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    <style>
-        .section-header {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--text-elegant-dark);
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .info-card {
-            background: var(--bg-elegant-white);
-            border: 1px solid var(--border-elegant-light);
-            border-radius: var(--radius-elegant-lg);
-            padding: 30px;
-            box-shadow: var(--shadow-elegant-md);
-            margin-bottom: 30px;
-        }
-        .commission-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background: white;
-            border-radius: var(--radius-elegant-md);
-            overflow: hidden;
-        }
-        .commission-table th {
-            background: var(--elegant-accent);
-            color: white;
-            padding: 15px;
-            text-align: left;
-            font-weight: 700;
-        }
-        .commission-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid var(--border-elegant-light);
-        }
-        .commission-table tr:last-child td {
-            border-bottom: none;
-        }
-        .commission-table tr:nth-child(even) {
-            background: var(--bg-elegant-gray-50);
-        }
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        .badge-new {
-            background: #10b981;
-            color: white;
-        }
-        .badge-max {
-            background: #f59e0b;
-            color: white;
-        }
-        .badge-min {
-            background: #ef4444;
-            color: white;
-        }
-        .highlight-box {
-            background: linear-gradient(135deg, rgba(255, 95, 31, 0.1) 0%, rgba(255, 95, 31, 0.05) 100%);
-            border-left: 4px solid var(--neon-orange, #ff5f1f);
-            padding: 20px;
-            border-radius: var(--radius-elegant-md);
-            margin: 20px 0;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trabaja con Nosotros | ShopFusion</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --accent: #f97316;
+      --text: #0f172a;
+      --muted: #64748b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .nav {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 18px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 8px 10px;
+      border-radius: 10px;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .nav-links a:hover {
+      background: #fef3e6;
+      color: var(--text);
+    }
+    .shell {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 18px 60px rgba(15, 23, 42, 0.06);
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+    .title .icon { font-size: 1.6rem; }
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      max-width: 560px;
+      line-height: 1.5;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      text-decoration: none;
+      color: var(--text);
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(249,115,22,0.4);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+    .card .icon {
+      font-size: 1.4rem;
+      line-height: 1;
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: rgba(249,115,22,0.12);
+      border: 1px solid var(--border);
+    }
+    .card h3 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: 0.2px;
+    }
+    .card p {
+      margin: 6px 0 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+    .footer {
+      max-width: 1100px;
+      margin: 18px auto 0;
+      padding: 16px 18px 24px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .footer a { color: var(--muted); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; color: var(--text); }
+
+    /* Banner de incentivo (estilo comercial) */
+    .incentivo-banner {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      background: linear-gradient(90deg, #fff7ed 0%, #fff1f0 100%);
+      border: 1px solid rgba(249,115,22,0.12);
+      padding: 16px;
+      border-radius: 14px;
+      margin-bottom: 18px;
+      color: var(--text);
+      box-shadow: 0 10px 30px rgba(15,23,42,0.06);
+    }
+    .incentivo-left { flex: 0 0 56px; }
+    .incentivo-icon { font-size: 26px; width:56px; height:56px; display:grid; place-items:center; border-radius:10px; background: linear-gradient(135deg,#ffedd5,#fed7aa); }
+    .incentivo-content { flex: 1; }
+    .incentivo-content h3 { margin: 0 0 6px 0; font-size: 1.05rem; color: #111827; }
+    .incentivo-content p.muted { margin: 0 0 6px 0; color: #6b7280; }
+    .incentivo-list { margin: 8px 0 0 16px; color:#374151; }
+    .incentivo-actions { flex: 0 0 auto; }
+    .btn-lg { padding: 10px 14px; border-radius: 10px; font-weight: 800; background: linear-gradient(90deg,#fb923c,#f97316); color: #fff; text-decoration:none; box-shadow: 0 8px 24px rgba(249,115,22,0.16); }
+
+    /* Modal mejorado + animación */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.45); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 220ms ease; }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal { background: #fff; border-radius: 12px; padding: 20px; max-width: 680px; width: calc(100% - 40px); box-shadow: 0 20px 80px rgba(15,23,42,0.12); transform: translateY(6px) scale(0.98); opacity: 0; transition: transform 240ms cubic-bezier(.2,.9,.2,1), opacity 200ms ease; position: relative; }
+    .modal.open { transform: translateY(0) scale(1); opacity: 1; }
+    .modal h2 { margin: 0 0 8px 0; font-size: 1.3rem; }
+    .modal p { margin: 8px 0 0 0; color: #374151; line-height: 1.5; }
+    .modal .actions { display:flex; gap:12px; justify-content:flex-end; margin-top:18px; }
+    .modal .btn { padding: 10px 14px; border-radius: 10px; font-weight:700; text-decoration:none; }
+    .modal .btn.secondary { background:#94a3b8; color:#fff; }
+    .modal .modal-close.top { position:absolute; right:12px; top:12px; border:none; background:transparent; font-size:20px; cursor:pointer; color:#6b7280; }
+    .modal .modal-close.top:focus { outline:2px solid rgba(249,115,22,0.2); border-radius:8px; }
+    @media (max-width:700px) { .incentivo-banner { flex-direction:column; align-items:flex-start; } .incentivo-actions { width:100%; margin-top:8px; } .modal { width: calc(100% - 28px); } }
+  </style>
 </head>
 <body>
-    <header>
-        <a href="{{ url_for('index') }}">ShopFusion</a>
-        <nav>
-            <ul>
-                <li><a href="{{ url_for('index') }}">Inicio</a></li>
-                <li><a href="{{ url_for('afiliados_login') }}">Afiliados</a></li>
-                <li><a href="{{ url_for('contacto') }}">Contacto</a></li>
-            </ul>
-        </nav>
-    </header>
+  <header class="nav">
+    <a class="brand" href="{{ url_for('index') }}">
+      <span style="color: var(--accent);">🔥</span> ShopFusion
+    </a>
+    <div class="nav-links">
+      <a href="{{ url_for('trabaja_vacantes') }}">Vacantes</a>
+      <a href="{{ url_for('trabaja_afiliados') }}">Afiliados</a>
+      <a href="{{ url_for('trabaja_proveedores') }}">Proveedores</a>
+    </div>
+  </header>
+  <main class="shell">
+    <div class="header">
+      <div class="title">
+        <span class="icon">🤝</span>
+        <span>Trabaja con Nosotros</span>
+      </div>
+      <p class="subtitle">Elige cómo colaborar con ShopFusion: únete al equipo, afíliate o revisa las opciones de proveedor.</p>
+    </div>
 
-    <main style="padding-top: 100px; max-width: 1200px; margin: 0 auto; padding: 100px 20px 60px;">
-        <!-- TÍTULO PRINCIPAL -->
-        <section style="text-align: center; margin-bottom: 60px;">
-            <h1 style="font-size: 2.5rem; font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 20px;">
-                <i class="fas fa-handshake"></i> Trabaja con Nosotros
-            </h1>
-            <p style="font-size: 1.25rem; color: var(--text-elegant-light); max-width: 800px; margin: 0 auto;">
-                Únete a ShopFusion. Tenemos diferentes oportunidades para que formes parte de nuestro equipo y crezcas con nosotros.
-            </p>
-        </section>
-
-        <!-- PROGRAMA DE AFILIADOS -->
-        <section id="afiliados" style="scroll-margin-top: 100px; margin-bottom: 60px;">
-            <div class="info-card">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="font-size: 4rem; color: var(--elegant-accent); margin-bottom: 20px;">
-                        <i class="fas fa-handshake"></i>
-                    </div>
-                    <h2 class="section-header">Programa de Afiliados</h2>
-                    <p style="font-size: 1.125rem; color: var(--text-elegant-light); max-width: 700px; margin: 0 auto;">
-                        <strong>Cualquiera puede ser afiliado.</strong> Vende productos de ShopFusion ganando comisiones que van desde el 20% al 90% según tu rendimiento.
-                    </p>
-                </div>
-
-                <div class="highlight-box">
-                    <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 15px;">
-                        <i class="fas fa-gift"></i> Descuentos Exclusivos para Afiliados
-                    </h3>
-                    <p style="color: var(--text-elegant-light); line-height: 1.8;">
-                        Al alcanzar <strong>3 ventas</strong>, obtienes acceso a descuentos exclusivos en tus compras. 
-                        Solo pagas el <strong>precio final menos tu porcentaje de comisión</strong>. Este beneficio dura <strong>15 días</strong> y se renueva con más ventas.
-                    </p>
-                </div>
-
-                <h3 style="font-size: 1.75rem; font-weight: 700; color: var(--text-elegant-dark); margin: 30px 0 20px;">
-                    <i class="fas fa-chart-line"></i> Sistema Automático de Comisiones
-                </h3>
-                <p style="color: var(--text-elegant-light); line-height: 1.8; margin-bottom: 20px;">
-                    El sistema ajusta automáticamente tu comisión según tus ventas mensuales. 
-                    El sistema funciona de forma automática y transparente.
-                </p>
-                
-                <div class="highlight-box" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%); border-left-color: #3b82f6;">
-                    <h4 style="font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 10px;">
-                        <i class="fas fa-info-circle"></i> Transparencia en Comisiones
-                    </h4>
-                    <p style="color: var(--text-elegant-light); line-height: 1.8; margin: 0;">
-                        <strong>El administrador puede ajustar manualmente las comisiones cuando sea necesario.</strong> 
-                        Todos los ajustes son transparentes y se reflejan inmediatamente en tu panel de afiliado. 
-                        Puedes ver tu comisión actual en cualquier momento desde tu panel de control.
-                    </p>
-                </div>
-
-                <table class="commission-table">
-                    <thead>
-                        <tr>
-                            <th>Ventas en el Mes</th>
-                            <th>Comisión</th>
-                            <th>Beneficios Adicionales</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><span class="badge badge-new">Usuario Nuevo</span></td>
-                            <td><strong>50%</strong></td>
-                            <td>Comisión inicial predeterminada</td>
-                        </tr>
-                        <tr>
-                            <td>3 ventas</td>
-                            <td><strong>50%</strong></td>
-                            <td>✓ Descuentos exclusivos activados (15 días)</td>
-                        </tr>
-                        <tr>
-                            <td>4 ventas</td>
-                            <td><strong>55%</strong></td>
-                            <td>✓ Descuentos exclusivos activados</td>
-                        </tr>
-                        <tr>
-                            <td>5 ventas</td>
-                            <td><strong>60%</strong></td>
-                            <td>✓ Descuentos exclusivos activados</td>
-                        </tr>
-                        <tr>
-                            <td>7+ ventas</td>
-                            <td><strong>70%</strong></td>
-                            <td>✓ Descuentos exclusivos activados</td>
-                        </tr>
-                        <tr>
-                            <td>9 ventas</td>
-                            <td><strong>80%</strong></td>
-                            <td>✓ Descuentos exclusivos activados</td>
-                        </tr>
-                        <tr>
-                            <td>11+ ventas</td>
-                            <td><strong><span class="badge badge-max">90%</span> (Máximo)</strong></td>
-                            <td>✓ Descuentos exclusivos activados<br>✓ Se mantiene si las ventas son constantes</td>
-                        </tr>
-                        <tr>
-                            <td>No cumple 3 ventas en el mes</td>
-                            <td><strong>40%</strong></td>
-                            <td>Comisión se reduce</td>
-                        </tr>
-                        <tr>
-                            <td>No vende en el segundo mes</td>
-                            <td><strong>30%</strong></td>
-                            <td>Comisión se reduce</td>
-                        </tr>
-                        <tr>
-                            <td>No vende nada</td>
-                            <td><strong><span class="badge badge-min">20%</span> (Mínimo)</strong></td>
-                            <td>Comisión mínima. Al comenzar a vender, sube automáticamente</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <div class="highlight-box" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%); border-left-color: #10b981;">
-                    <h4 style="font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 10px;">
-                        <i class="fas fa-info-circle"></i> Información Importante
-                    </h4>
-                    <ul style="color: var(--text-elegant-light); line-height: 1.8; margin: 0; padding-left: 20px;">
-                        <li>El sistema se actualiza automáticamente según tus ventas mensuales</li>
-                        <li>Si empiezas con 20% pero vendes 9 productos, al siguiente mes recibirás el 80% correspondiente y un bono por las ventas de ese mes</li>
-                        <li><strong>No hay penalización por no vender</strong> - simplemente tu comisión se ajusta según tu rendimiento</li>
-                    </ul>
-                </div>
-
-                <h3 style="font-size: 1.75rem; font-weight: 700; color: var(--text-elegant-dark); margin: 30px 0 20px;">
-                    <i class="fas fa-money-bill-wave"></i> Retiros de Dinero
-                </h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 20px 0;">
-                    <div style="background: var(--bg-elegant-gray-50); padding: 20px; border-radius: var(--radius-elegant-md); text-align: center;">
-                        <i class="fas fa-calendar-week" style="font-size: 2.5rem; color: var(--elegant-accent); margin-bottom: 10px;"></i>
-                        <h4 style="font-weight: 700; margin: 10px 0;">Retiro Semanal</h4>
-                        <p style="color: var(--text-elegant-light); font-size: 0.95rem;">Disponible cada semana</p>
-                    </div>
-                    <div style="background: var(--bg-elegant-gray-50); padding: 20px; border-radius: var(--radius-elegant-md); text-align: center;">
-                        <i class="fas fa-calendar-alt" style="font-size: 2.5rem; color: var(--elegant-primary); margin-bottom: 10px;"></i>
-                        <h4 style="font-weight: 700; margin: 10px 0;">Retiro Quincenal</h4>
-                        <p style="color: var(--text-elegant-light); font-size: 0.95rem;">Disponible cada 15 días</p>
-                    </div>
-                    <div style="background: var(--bg-elegant-gray-50); padding: 20px; border-radius: var(--radius-elegant-md); text-align: center;">
-                        <i class="fas fa-calendar" style="font-size: 2.5rem; color: var(--neon-orange, #ff5f1f); margin-bottom: 10px;"></i>
-                        <h4 style="font-weight: 700; margin: 10px 0;">Retiro Mensual</h4>
-                        <p style="color: var(--text-elegant-light); font-size: 0.95rem;">Disponible cada mes</p>
-                    </div>
-                </div>
-
-                <div style="text-align: center; margin-top: 40px;">
-                    <a href="{{ url_for('afiliados_registro') }}" 
-                       style="display: inline-block; padding: 16px 40px; background: var(--elegant-accent); color: white; text-decoration: none; border-radius: var(--radius-elegant-lg); font-weight: 700; font-size: 1.125rem; transition: var(--transition-elegant); box-shadow: var(--shadow-elegant-lg);">
-                        <i class="fas fa-user-plus"></i> Registrarse como Afiliado
-                    </a>
-                    <p style="margin-top: 15px; color: var(--text-elegant-light);">
-                        ¿Ya tienes cuenta? <a href="{{ url_for('afiliados_login') }}" style="color: var(--elegant-accent); font-weight: 600;">Inicia sesión aquí</a>
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <!-- VACANTES SHOPFUSION -->
-        {% if vacantes and vacantes|length > 0 %}
-        <section id="vacantes" style="scroll-margin-top: 100px; margin-bottom: 60px;">
-            <div class="info-card">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="font-size: 4rem; color: var(--elegant-primary); margin-bottom: 20px;">
-                        <i class="fas fa-briefcase"></i>
-                    </div>
-                    <h2 class="section-header">Vacantes - ShopFusion</h2>
-                    <p style="font-size: 1.125rem; color: var(--text-elegant-light); max-width: 700px; margin: 0 auto;">
-                        Únete al equipo de ShopFusion. Buscamos talento apasionado para hacer crecer el e-commerce más innovador de Ecuador.
-                    </p>
-                </div>
-
-                <div style="margin-top: 40px;">
-                    <h3 style="font-size: 1.75rem; font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 25px; text-align: center;">
-                        <i class="fas fa-list-ul"></i> Ofertas de Empleo Disponibles
-                    </h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px;">
-                        {% for vacante in vacantes %}
-                        <div style="background: var(--bg-elegant-gray-50); border: 1px solid var(--border-elegant-light); border-radius: var(--radius-elegant-lg); padding: 25px; box-shadow: var(--shadow-elegant-md);">
-                            <h4 style="font-size: 1.25rem; font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 15px;">
-                                <i class="fas fa-briefcase" style="color: var(--elegant-primary); margin-right: 8px;"></i>
-                                {{ vacante.titulo }}
-                            </h4>
-                            <p style="color: var(--text-elegant-light); line-height: 1.6; margin-bottom: 15px;">
-                                {{ vacante.descripcion }}
-                            </p>
-                            {% if vacante.requisitos %}
-                            <div style="margin-bottom: 15px;">
-                                <strong style="color: var(--text-elegant-dark); display: block; margin-bottom: 8px;">Requisitos:</strong>
-                                <p style="color: var(--text-elegant-light); font-size: 0.95rem; line-height: 1.6; white-space: pre-line;">{{ vacante.requisitos }}</p>
-                            </div>
-                            {% endif %}
-                            <a href="{{ url_for('aplicar_vacante', vacante_id=vacante.id) }}" 
-                               style="display: inline-block; width: 100%; padding: 12px 24px; background: var(--elegant-primary); color: white; text-decoration: none; border-radius: var(--radius-elegant-md); font-weight: 600; text-align: center; transition: var(--transition-elegant);">
-                                <i class="fas fa-paper-plane"></i> Aplicar a esta Vacante
-                            </a>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </section>
-        {% endif %}
-
-        <!-- PROVEEDORES -->
-        <section id="proveedores" style="scroll-margin-top: 100px; margin-bottom: 60px;">
-            <div class="info-card">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="font-size: 4rem; color: var(--elegant-primary); margin-bottom: 20px;">
-                        <i class="fas fa-truck"></i>
-                    </div>
-                    <h2 class="section-header">Sé Nuestro Proveedor</h2>
-                    <p style="font-size: 1.125rem; color: var(--text-elegant-light); max-width: 700px; margin: 0 auto;">
-                        ¿Tienes productos de calidad? Únete como proveedor y vende tus productos a través de nuestra plataforma.
-                    </p>
-                </div>
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin: 30px 0;">
-                    <div style="background: var(--bg-elegant-gray-50); padding: 25px; border-radius: var(--radius-elegant-md); border-left: 4px solid var(--elegant-primary);">
-                        <i class="fas fa-box" style="font-size: 2.5rem; color: var(--elegant-primary); margin-bottom: 15px; display: block;"></i>
-                        <h4 style="font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 10px;">Registro de Productos</h4>
-                        <p style="color: var(--text-elegant-light); line-height: 1.6;">
-                            Registra tus productos con precio incluida la entrega. Tú defines el precio y nosotros te ayudamos a vender.
-                        </p>
-                    </div>
-                    <div style="background: var(--bg-elegant-gray-50); padding: 25px; border-radius: var(--radius-elegant-md); border-left: 4px solid var(--elegant-accent);">
-                        <i class="fas fa-eye" style="font-size: 2.5rem; color: var(--elegant-accent); margin-bottom: 15px; display: block;"></i>
-                        <h4 style="font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 10px;">Amplia Visibilidad</h4>
-                        <p style="color: var(--text-elegant-light); line-height: 1.6;">
-                            Tus productos estarán disponibles para miles de clientes en toda la plataforma ShopFusion.
-                        </p>
-                    </div>
-                    <div style="background: var(--bg-elegant-gray-50); padding: 25px; border-radius: var(--radius-elegant-md); border-left: 4px solid var(--neon-orange, #ff5f1f);">
-                        <i class="fas fa-cog" style="font-size: 2.5rem; color: var(--neon-orange, #ff5f1f); margin-bottom: 15px; display: block;"></i>
-                        <h4 style="font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 10px;">Gestión Completa</h4>
-                        <p style="color: var(--text-elegant-light); line-height: 1.6;">
-                            Panel de control profesional para gestionar tus productos, ventas y envíos desde un solo lugar.
-                        </p>
-                    </div>
-                </div>
-
-                <div style="text-align: center; margin-top: 40px;">
-                    <a href="{{ url_for('registro_vendedor') }}" 
-                       style="display: inline-block; padding: 16px 40px; background: var(--elegant-primary); color: white; text-decoration: none; border-radius: var(--radius-elegant-lg); font-weight: 700; font-size: 1.125rem; transition: var(--transition-elegant); box-shadow: var(--shadow-elegant-lg);">
-                        <i class="fas fa-store"></i> Registrarse como Proveedor
-                    </a>
-                    <p style="margin-top: 15px; color: var(--text-elegant-light);">
-                        ¿Ya tienes cuenta? <a href="{{ url_for('login_vendedor') }}" style="color: var(--elegant-primary); font-weight: 600;">Inicia sesión aquí</a>
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <!-- BENEFICIOS GENERALES -->
-        <section style="background: var(--bg-elegant-gray-50); border-radius: var(--radius-elegant-xl); padding: 50px 30px; margin-bottom: 60px;">
-            <h2 style="font-size: 2rem; font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 30px; text-align: center;">
-                <i class="fas fa-star"></i> Beneficios de Trabajar con ShopFusion
-            </h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; max-width: 1000px; margin: 0 auto;">
-                <div style="background: white; padding: 25px; border-radius: var(--radius-elegant-md); border-left: 4px solid var(--elegant-accent);">
-                    <i class="fas fa-dollar-sign" style="font-size: 2rem; color: var(--elegant-accent); margin-bottom: 15px; display: block;"></i>
-                    <h4 style="font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 10px;">Ganancias Competitivas</h4>
-                    <p style="color: var(--text-elegant-light); font-size: 0.95rem;">Comisiones y precios acordes al mercado</p>
-                </div>
-                <div style="background: white; padding: 25px; border-radius: var(--radius-elegant-md); border-left: 4px solid var(--elegant-primary);">
-                    <i class="fas fa-calendar-alt" style="font-size: 2rem; color: var(--elegant-primary); margin-bottom: 15px; display: block;"></i>
-                    <h4 style="font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 10px;">Horarios Flexibles</h4>
-                    <p style="color: var(--text-elegant-light); font-size: 0.95rem;">Trabaja a tu ritmo y desde donde quieras</p>
-                </div>
-                <div style="background: white; padding: 25px; border-radius: var(--radius-elegant-md); border-left: 4px solid var(--neon-orange, #ff5f1f);">
-                    <i class="fas fa-chart-line" style="font-size: 2rem; color: var(--neon-orange, #ff5f1f); margin-bottom: 15px; display: block;"></i>
-                    <h4 style="font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 10px;">Crecimiento Profesional</h4>
-                    <p style="color: var(--text-elegant-light); font-size: 0.95rem;">Oportunidades de desarrollo y crecimiento</p>
-                </div>
-                <div style="background: white; padding: 25px; border-radius: var(--radius-elegant-md); border-left: 4px solid var(--elegant-secondary, #10b981);">
-                    <i class="fas fa-users" style="font-size: 2rem; color: var(--elegant-secondary, #10b981); margin-bottom: 15px; display: block;"></i>
-                    <h4 style="font-weight: 700; color: var(--text-elegant-dark); margin-bottom: 10px;">Ambiente Dinámico</h4>
-                    <p style="color: var(--text-elegant-light); font-size: 0.95rem;">Equipo joven, proactivo e innovador</p>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <div class="footer-container">
-            <div class="footer-section">
-                <h3>ShopFusion</h3>
-                <p style="color: var(--text-elegant-light);">Tu tienda online de confianza</p>
-            </div>
-            <div class="footer-section">
-                <h3>Enlaces</h3>
-                <ul>
-                    <li><a href="{{ url_for('index') }}">Inicio</a></li>
-                    <li><a href="{{ url_for('afiliados_login') }}">Panel de Afiliados</a></li>
-                    <li><a href="{{ url_for('contacto') }}">Contacto</a></li>
-                </ul>
-            </div>
+    {# Banner de incentivo que aparece cuando venimos de una postulación #}
+    {% if request.args.get('postulado') == '1' %}
+      <div class="incentivo-banner" role="status" aria-live="polite">
+        <div class="incentivo-left">
+          <div class="incentivo-icon" aria-hidden="true">🧡</div>
         </div>
-        <div class="footer-bottom">
-            <p>&copy; <span id="current-year"></span> ShopFusion. Todos los derechos reservados.</p>
+        <div class="incentivo-content">
+          <h3>Hemos recibido tu postulación</h3>
+          <p class="muted">Hemos visto que postulaste a una vacante para vendedor o un puesto relacionado. Mientras revisamos tu postulación, te invitamos a conocer nuestro <strong>Programa de Afiliados</strong>: vende nuestros productos sin gestionar inventario y gana comisiones de hasta <strong>90%</strong>, ideal para generar ingresos extra mientras buscas tu trabajo deseado.</p>
+          <ul class="incentivo-list">
+            <li>Comisiones hasta <strong>90%</strong></li>
+            <li>Pagos: semanal / quincenal / mensual</li>
+            <li>Logística y stock a cargo de ShopFusion</li>
+            <li>Onboarding rápido, soporte y material comercial</li>
+          </ul>
         </div>
-    </footer>
-    <script>
-        document.getElementById('current-year').textContent = new Date().getFullYear();
-    </script>
+        <div class="incentivo-actions">
+          <a class="btn btn-primary btn-lg" href="{{ url_for('trabaja_afiliados') }}">Conoce cómo ganar</a>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="grid">
+      <a class="card" href="{{ url_for('trabaja_vacantes') }}">
+        <div class="icon">💼</div>
+        <div>
+          <h3>Vacantes - ShopFusion</h3>
+          <p>Mira las vacantes disponibles y únete al equipo experto de ShopFusion.</p>
+        </div>
+      </a>
+      <a class="card" href="{{ url_for('trabaja_afiliados') }}">
+        <div class="icon">🧑‍🤝‍🧑</div>
+        <div>
+          <h3>Afiliarte</h3>
+          <p>Vende nuestros productos y gana comisión hasta 90%. Configura tu tienda y gana sobre todas tus ventas y clientes fijos.</p>
+        </div>
+      </a>
+      <a class="card" href="{{ url_for('afiliados_login') }}">
+        <div class="icon">🔑</div>
+        <div>
+          <h3>Iniciar Sesión como Afiliado</h3>
+          <p>Inicio de sesión si ya tienes cuenta para gestionar tu panel y ventas.</p>
+        </div>
+      </a>
+      <a class="card" href="{{ url_for('trabaja_proveedores') }}">
+        <div class="icon">📦</div>
+        <div>
+          <h3>Ser Proveedor</h3>
+          <p>En mantenimiento. Preparando herramientas para que cargues y gestiones tu catálogo.</p>
+        </div>
+      </a>
+      <a class="card" href="{{ url_for('login_vendedor') }}">
+        <div class="icon">🚧</div>
+        <div>
+          <h3>Iniciar Sesión como Proveedor</h3>
+          <p>En mantenimiento. Pronto disponible para proveedores activos.</p>
+        </div>
+      </a>
+    </div>
+  </main>
+  <footer class="footer">
+    <div>© ShopFusion</div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <a href="{{ url_for('privacidad') }}">Privacidad</a>
+      <a href="{{ url_for('soporte') }}">Soporte</a>
+      <a href="{{ url_for('index') }}">Inicio</a>
+    </div>
+  </footer>
+
+  <!-- Modal de confirmación de postulación -->
+  <div class="modal-overlay" id="postulacion-modal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="modal-close top" aria-label="Cerrar">×</button>
+      <h2 id="modal-title" class="modal-title">Gracias</h2>
+      <div class="modal-body">
+        <p id="modal-body-text">Tu postulación ha sido recibida.</p>
+      </div>
+      <div class="actions">
+        <a class="btn" href="{{ url_for('trabaja_afiliados') }}">Conoce más sobre Afiliados</a>
+        <button class="btn modal-close secondary" style="background:#94a3b8;">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      try {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('postulado') === '1' || params.get('enviado') === '1') {
+          var modal = document.getElementById('postulacion-modal');
+          var titleEl = modal.querySelector('.modal-title');
+          var bodyEl = modal.querySelector('#modal-body-text');
+
+          if (params.get('duplicado') === '1') {
+            titleEl.textContent = '¡Ya recibimos tu postulación!';
+            bodyEl.innerHTML = '<p><strong>Hemos recibido una postulación tuya recientemente.</strong> Si necesitas actualizar tu información o enviar documentación adicional, contáctanos por <a href="{{ url_for("soporte") }}">Soporte</a>. Mientras revisamos tu postulación, te invitamos a conocer nuestro <a href="{{ url_for("trabaja_afiliados") }}">Programa de Afiliados</a>: comisiones de hasta <strong>90%</strong>, pagos semanales y soporte para empezar rápidamente.</p>';
+          } else {
+            titleEl.textContent = '¡Postulación recibida!';
+            bodyEl.innerHTML = '<p style="margin-top:6px;">Gracias por postularte — revisaremos tu perfil y nos pondremos en contacto pronto. Mientras tanto, te invitamos a explorar nuestro <a href="{{ url_for("trabaja_afiliados") }}">Programa de Afiliados</a>, una forma profesional de generar ingresos extra: vende sin preocuparte por inventario y recibe comisiones de hasta <strong>90%</strong>.</p><ul style="margin:10px 0 0 18px;color:#374151;"><li>Comisiones hasta <strong>90%</strong></li><li>Pagos: semanal / quincenal / mensual</li><li>Logística y stock gestionados por ShopFusion</li><li>Soporte y materiales para vender desde el primer día</li></ul><p style="margin-top:8px;">¿Te interesa? <a href="{{ url_for("trabaja_afiliados") }}">Descubre cómo unirte</a> y empieza a generar ingresos mientras buscas el trabajo ideal.</p>';
+          }
+
+          var overlay = modal; // overlay element
+          var box = overlay.querySelector('.modal');
+          overlay.style.display = 'flex';
+          setTimeout(function(){ overlay.classList.add('open'); box.classList.add('open'); overlay.setAttribute('aria-hidden','false'); }, 20);
+
+          function closeModal(){
+            overlay.classList.remove('open'); box.classList.remove('open');
+            setTimeout(function(){ overlay.style.display='none'; overlay.setAttribute('aria-hidden','true'); }, 220);
+          }
+
+          // close handlers
+          Array.from(overlay.querySelectorAll('.modal-close')).forEach(function(btn){ btn.addEventListener('click', closeModal); });
+          overlay.addEventListener('click', function(e){ if (e.target === overlay) closeModal(); });
+          document.addEventListener('keydown', function escHandler(e){ if (e.key === 'Escape') { closeModal(); document.removeEventListener('keydown', escHandler); } });
+        }
+      } catch (ex) { console.warn('[POSTULACION_MODAL] ', ex); }
+    })();
+  </script>
 </body>
 </html>

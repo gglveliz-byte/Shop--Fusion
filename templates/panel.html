@@ -70,6 +70,10 @@
           <i class="fas fa-comments"></i>
           <span>Sugerencias</span>
         </a>
+        <a href="#" class="nav-item" data-section="soporte">
+          <i class="fas fa-life-ring"></i>
+          <span>Soporte</span>
+        </a>
         <a href="#" class="nav-item" data-section="sorteos">
           <i class="fas fa-gift"></i>
           <span>Sorteos</span>
@@ -546,7 +550,8 @@
                     <th>Email</th>
                     <th>Código</th>
                     <th style="text-align: center;">Comisión (%)</th>
-                    <th style="text-align: right;">Ganancias</th>
+                    <th style="text-align: right;">Pendiente</th>
+                    <th style="text-align: right;">Pagado</th>
                     <th style="text-align: center;">Ventas</th>
                     <th>Pago</th>
                     <th style="text-align: center;">Frecuencia solicitada</th>
@@ -577,7 +582,8 @@
                         </small>
                       {% endif %}
                     </td>
-                    <td style="text-align: right; color: #10b981; font-weight: 600;">${{ '%.2f'|format(afiliado.total_ganancias or 0) }}</td>
+                    <td style="text-align: right; color: #10b981; font-weight: 600;">${{ '%.2f'|format(afiliado.saldo_pendiente or 0) }}</td>
+                    <td style="text-align: right; color: #6b7280; font-weight: 600;">${{ '%.2f'|format(afiliado.total_pagado or 0) }}</td>
                     <td style="text-align: center;">{{ afiliado.total_ventas or 0 }}</td>
                     <td>
                       {% if afiliado.metodo_pago %}
@@ -601,23 +607,31 @@
                     <td style="text-align: center;">
                       <span>{{ afiliado.frecuencia_pago|title if afiliado.frecuencia_pago else 'Pendiente' }}</span>
                     </td>
-                    <td style="text-align: center;">
-                      <span class="badge badge-{{ 'success' if afiliado.estado == 'activo' else 'danger' }}">
-                        {{ afiliado.estado|title }}
-                      </span>
-                    </td>
-                    <td style="text-align: center;">
-                      <form method="POST" action="{{ url_for('cambiar_estado_afiliado', afiliado_id=afiliado.id) }}" style="display: inline;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <button type="submit" class="btn-sm btn-{{ 'danger' if afiliado.estado == 'activo' else 'success' }}">
-                          {{ 'Desactivar' if afiliado.estado == 'activo' else 'Activar' }}
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+                  <td style="text-align: center;">
+                    <span class="badge badge-{{ 'success' if afiliado.estado == 'activo' else 'danger' }}">
+                      {{ afiliado.estado|title }}
+                    </span>
+                  </td>
+                  <td style="text-align: center;">
+                    <form method="POST" action="{{ url_for('cambiar_estado_afiliado', afiliado_id=afiliado.id) }}" style="display: inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                      <button type="submit" class="btn-sm btn-{{ 'danger' if afiliado.estado == 'activo' else 'success' }}">
+                        {{ 'Desactivar' if afiliado.estado == 'activo' else 'Activar' }}
+                      </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('pagar_parcial_afiliado', afiliado_id=afiliado.id) }}" style="display: inline-flex; gap: 0.25rem; align-items: center; margin-top: 0.35rem;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                      <input type="number" name="monto" min="0" step="0.01" placeholder="Monto" style="width: 90px; padding: 0.2rem; font-size: 0.85rem;">
+                      <input type="text" name="nota" placeholder="Nota" style="width: 120px; padding: 0.2rem; font-size: 0.85rem;">
+                      <button type="submit" class="btn-sm btn-primary">
+                        <i class="fas fa-wallet"></i> Pagar
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
             </div>
           </div>
         {% else %}
@@ -641,14 +655,17 @@
                   <tr>
                     <th>Factura #</th>
                     <th>Cliente</th>
+                    <th>Datos Envío</th>
                     <th>Producto</th>
                     <th style="text-align: center;">Cantidad</th>
                     <th style="text-align: right;">Precio Unit.</th>
                     <th style="text-align: right;">Total</th>
-                    <th>Estado</th>
+                    <th>Estado Pago</th>
+                    <th>Entrega</th>
                     <th>Fecha</th>
                     <th>PayPal Info</th>
                     <th>Afiliado</th>
+                    <th style="text-align:center;">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -667,6 +684,18 @@
                             <i class="fas fa-map-marker-alt"></i> {{ pedido.pais or '' }} {% if pedido.direccion %}- {{ pedido.direccion[:30] }}{% if pedido.direccion|length > 30 %}...{% endif %}{% endif %}
                           </small>
                         {% endif %}
+                      </div>
+                    </td>
+                    <td>
+                      <div style="display:flex; flex-direction:column; gap:0.25rem; color: var(--panel-text); font-size:0.9rem;">
+                        <strong>{{ pedido.nombre_envio or pedido.nombre }} {{ pedido.apellido_envio or pedido.apellido }}</strong>
+                        {% if pedido.envio_tipo_identificacion or pedido.envio_numero_identificacion %}
+                          <span><small>ID:</small> {{ pedido.envio_tipo_identificacion|upper }} {{ pedido.envio_numero_identificacion }}</span>
+                        {% endif %}
+                        <span><small>Provincia:</small> {{ pedido.envio_provincia or 'N/D' }}</span>
+                        <span><small>Ciudad:</small> {{ pedido.envio_ciudad or 'N/D' }}</span>
+                        <span><small>Dirección:</small> {{ pedido.direccion_envio or pedido.direccion }}</span>
+                        <span><small>Tel:</small> {{ pedido.telefono_envio or pedido.telefono }}</span>
                       </div>
                     </td>
                     <td>
@@ -696,6 +725,23 @@
                         <i class="fas fa-{{ 'check-circle' if pedido.estado_pago == 'pagado' else 'clock' if pedido.estado_pago == 'pendiente' else 'exclamation-triangle' }}"></i>
                         {{ pedido.estado_pago|title if pedido.estado_pago else 'N/A' }}
                       </span>
+                    </td>
+                    <td>
+                      {% set entregado = pedido.entregado if pedido.entregado is not none else (pedido.estado_entrega == 'entregado') %}
+                      {% if entregado %}
+                        <span class="badge badge-success" style="display:inline-flex; align-items:center; gap:0.35rem;">
+                          <i class="fas fa-check-circle"></i> Entregado
+                        </span>
+                        {% if pedido.fecha_entrega %}
+                          <small style="display:block; color: var(--panel-text-light); font-size:0.8rem; margin-top:0.25rem;">
+                            {{ pedido.fecha_entrega.strftime('%d/%m/%Y %H:%M') }}
+                          </small>
+                        {% endif %}
+                      {% else %}
+                        <span class="badge badge-secondary" style="display:inline-flex; align-items:center; gap:0.35rem;">
+                          <i class="fas fa-envelope-open-text"></i> Pendiente
+                        </span>
+                      {% endif %}
                     </td>
                     <td>
                       <div style="display: flex; flex-direction: column;">
@@ -741,6 +787,21 @@
                           <i class="fas fa-user-slash"></i> Sin afiliado
                         </span>
                       {% endif %}
+                    </td>
+                    <td style="text-align:center;">
+                      {% set entregado = pedido.entregado if pedido.entregado is not none else (pedido.estado_entrega == 'entregado') %}
+                      <form action="{{ url_for('admin_actualizar_estado_entrega', pedido_id=pedido.numero_factura) }}" method="post" style="display:flex; gap:0.5rem; align-items:center; justify-content:center; flex-wrap:wrap;">
+                        <input type="hidden" name="entregado" value="{{ 1 if not entregado else 0 }}">
+                        {% if entregado %}
+                          <button type="submit" class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:0.35rem;">
+                            <i class="fas fa-undo"></i> Marcar como pendiente
+                          </button>
+                        {% else %}
+                          <button type="submit" class="btn btn-success btn-sm" style="display:inline-flex; align-items:center; gap:0.35rem;">
+                            <i class="fas fa-check"></i> Marcar entregado
+                          </button>
+                        {% endif %}
+                      </form>
                     </td>
                   </tr>
                   {% endfor %}
@@ -837,14 +898,68 @@
                   <div class="sugerencia-mensaje">{{ sug.mensaje }}</div>
                   <div class="sugerencia-footer">
                     <small>{{ sug.created_at.strftime('%d/%m/%Y %H:%M') if sug.created_at else 'Fecha no disponible' }}</small>
+                    <div class="sugerencia-actions" style="display:flex; gap:0.35rem; flex-wrap:wrap; margin-top:0.35rem;">
+                      <a class="btn-sm btn-success" href="{{ url_for('marcar_sugerencia_atendida', id=sug.id) }}">Atendida</a>
+                      <a class="btn-sm btn-warning" href="{{ url_for('marcar_sugerencia_urgente', id=sug.id) }}">
+                        {{ 'Quitar urgente' if sug.urgente else 'Marcar urgente' }}
+                      </a>
+                      <a class="btn-sm btn-danger" href="{{ url_for('eliminar_sugerencia', id=sug.id) }}" onclick="return confirm('Eliminar sugerencia?');">Eliminar</a>
+                    </div>
                   </div>
                 </div>
               {% endfor %}
             </div>
           </div>
         {% else %}
+            <div class="content-card">
+              <p>No hay sugerencias aún.</p>
+            </div>
+        {% endif %}
+      </section>
+
+      <!-- Soporte Section -->
+      <section class="content-section" id="soporte">
+        <div class="section-header">
+          <h1><i class="fas fa-life-ring"></i> Tickets de Soporte</h1>
+          <p>Consulta los tickets enviados por usuarios</p>
+        </div>
+        {% if tickets_soporte %}
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Mensaje</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for t in tickets_soporte %}
+                <tr>
+                  <td>{{ t.id }}</td>
+                  <td>{{ t.nombre }}</td>
+                  <td>{{ t.email }}</td>
+                  <td>{{ t.mensaje }}</td>
+                  <td>{{ t.estado }}</td>
+                  <td>{{ t.creado_en }}</td>
+                  <td>
+                    <form method="POST" action="{{ url_for('admin_eliminar_ticket', ticket_id=t.id) }}" onsubmit="return confirm('¿Eliminar ticket?');">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn-sm btn-danger">Eliminar</button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
           <div class="content-card">
-            <p>No hay sugerencias aún.</p>
+            <p>No hay tickets de soporte.</p>
           </div>
         {% endif %}
       </section>
@@ -944,6 +1059,7 @@
                     <th>Título</th>
                     <th>Descripción</th>
                     <th>Imagen</th>
+                    <th>Inscritos</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
@@ -960,7 +1076,14 @@
                         <span style="color: var(--panel-text-light);">Sin imagen</span>
                       {% endif %}
                     </td>
+                    <td>{{ sorteo.total_boletos or 0 }}</td>
                     <td>
+                      <a href="{{ url_for('admin_editar_sorteo', sorteo_id=sorteo.id) }}" class="btn-sm btn-primary" data-panel-action="true">
+                        <i class="fas fa-edit"></i> Editar
+                      </a>
+                      <a href="{{ url_for('admin_sorteo_inscritos', sorteo_id=sorteo.id) }}" class="btn-sm btn-secondary" data-panel-action="true">
+                        <i class="fas fa-list"></i> Inscritos
+                      </a>
                       <a href="{{ url_for('eliminar_sorteo', id=sorteo.id) }}" class="btn-sm btn-danger" data-panel-action="true" onclick="return confirm('¿Estás seguro de eliminar este sorteo?');">
                         <i class="fas fa-trash"></i> Eliminar
                       </a>

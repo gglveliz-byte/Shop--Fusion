@@ -397,6 +397,16 @@ p {
   object-fit: cover;
 }
 
+/* Responsive para formularios y previews de imagen */
+@media (max-width: 700px) {
+  .form-row { grid-template-columns: 1fr; }
+  .bloque-formulario, .bloque-listado { padding: 1.25rem; }
+  .imagenes-preview { display: flex; gap: 0.75rem; overflow-x: auto; grid-auto-flow: column; grid-auto-columns: 120px; }
+  .img-thumb { min-width: 120px; min-height: 120px; aspect-ratio: auto; }
+  .form-admin { gap: 1rem; }
+  .btn-primario, .btn-secundario { width: 100%; }
+}
+
 code {
   background: var(--admin-bg);
   padding: 0.25rem 0.5rem;

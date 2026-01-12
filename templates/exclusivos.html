@@ -283,12 +283,12 @@
                                     <div class="carousel">
                                         {% if producto.imagenes %}
                                             {% for img in producto.imagenes %}
-                                                <img src="{{ img or 'https://via.placeholder.com/300x200?text=Sin+imagen' }}"
+                                                <img src="{{ img or url_for('static', filename='images/placeholder.svg') }}"
                                                      alt="Imagen de {{ producto.titulo }}"
                                                      class="product-media">
                                             {% endfor %}
                                         {% else %}
-                                            <img src="https://via.placeholder.com/300x200?text=Sin+imagen"
+                                            <img src="{{ url_for('static', filename='images/placeholder.svg') }}"
                                                  alt="Sin imagen"
                                                  class="product-media">
                                         {% endif %}
@@ -915,7 +915,7 @@
                         const productDiv = document.createElement('div');
                         productDiv.classList.add('search-result-item');
                         productDiv.innerHTML = `
-                            <img src="${(producto.imagenes && producto.imagenes[0]) || 'https://via.placeholder.com/100x100?text=Sin+imagen'}" alt="Imagen de ${producto.nombre}" class="search-result-img">
+                            <img src="${(producto.imagenes && producto.imagenes[0]) || '/static/images/placeholder.svg'}" alt="Imagen de ${producto.nombre}" class="search-result-img">
                             <div class="search-result-content">
                                 <h3>${producto.nombre}</h3>
                                 <p>${producto.descripcion}</p>
@@ -1056,6 +1056,23 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
+  <script>
+    // Reemplazo automático para placeholders externos (evita errores si no hay internet)
+    (function(){
+      window.addEventListener('error', function(e){
+        try {
+          var target = e.target || e.srcElement;
+          if (target && target.tagName === 'IMG') {
+            var src = (target.getAttribute && target.getAttribute('src')) || '';
+            if (src && src.indexOf('via.placeholder.com') !== -1) {
+              target.src = '/static/images/placeholder.svg';
+              target.onerror = null;
+            }
+          }
+        } catch(err) {}
+      }, true);
+    })();
+  </script>
 
     <!-- Script del sorteo (mismo que en index) -->
     <script defer src="{{ url_for('static', filename='js/sorteo.js') }}"></script>

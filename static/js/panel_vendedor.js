@@ -118,10 +118,22 @@
 
   function openModal(sel){
     const dlg = $(sel);
-    if (dlg && typeof dlg.showModal === "function") dlg.showModal();
+    if (!dlg) return;
+    // Si el navegador soporta <dialog>
+    if (typeof dlg.showModal === "function") {
+      dlg.showModal();
+      // Aplicar estilo de pantalla completa en dispositivos pequeños
+      if (window.innerWidth < 700) dlg.classList.add('mobile-full');
+    } else {
+      // Fallback: mostrar como bloque y añadir atributo open
+      dlg.setAttribute('open','');
+      if (window.innerWidth < 700) dlg.classList.add('mobile-full');
+    }
   }
   function closeModal(dlg){
-    if (dlg && typeof dlg.close === "function") dlg.close();
+    if (!dlg) return;
+    dlg.classList.remove('mobile-full');
+    if (typeof dlg.close === "function") dlg.close(); else dlg.removeAttribute('open');
   }
   function initModals(){
     // abrir
@@ -218,7 +230,7 @@
     const tpl = $("#tpl-product-row");
     if (tpl){
       const tr = tpl.content.cloneNode(true);
-      tr.querySelector(".prod-thumb").src = "https://via.placeholder.com/80x80?text=P";
+      tr.querySelector(".prod-thumb").src = "/static/images/placeholder.svg";
       tr.querySelector(".prod-name").textContent = "Producto demo";
       tr.querySelector(".prod-sku").textContent = "SKU-0001";
       tr.querySelector(".cell-price").textContent = "$ 10.00";

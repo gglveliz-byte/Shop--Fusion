@@ -32,684 +32,289 @@
   </script>
   <title>Panel de Afiliado | ShopFusion</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <style>
+<style>
+    /* =========================================
+       1. BASE Y RESETS
+       ========================================= */
     * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
     }
-    
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: #f8fafc;
-      color: #1e293b;
-      line-height: 1.6;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background: #f1f5f9;
+        color: #1e293b;
+        line-height: 1.5;
     }
-    
-    /* Layout Principal */
+
+    /* =========================================
+       2. ESTRUCTURA PARA ESCRITORIO (PC)
+       ========================================= */
     .dashboard-container {
-      display: flex;
-      min-height: 100vh;
+        display: flex;
+        min-height: 100vh;
     }
-    
-    /* Sidebar */
+
     .sidebar {
-      width: 280px;
-      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-      color: white;
-      position: fixed;
-      height: 100vh;
-      overflow-y: auto;
-      z-index: 1000;
-      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        width: 280px;
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        color: white;
+        position: fixed;
+        height: 100vh;
+        z-index: 1000;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.1);
     }
-    
+
     .sidebar-header {
-      padding: 2rem 1.5rem;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.05);
+        padding: 1.5rem;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
     }
-    
+
     .sidebar-header h1 {
-      font-size: 1.5rem;
-      margin-bottom: 0.5rem;
-      background: linear-gradient(135deg, #ff5f1f 0%, #ff0080 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+        font-size: 1.4rem;
+        background: linear-gradient(135deg, #ff5f1f 0%, #ff0080 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 5px;
     }
-    
-    .sidebar-header p {
-      font-size: 0.9rem;
-      opacity: 0.8;
-      color: #cbd5e1;
-    }
-    
+
     .sidebar-nav {
-      padding: 1rem 0;
+        display: flex;
+        flex-direction: column;
+        padding: 1rem 0;
     }
-    
+
     .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.875rem 1.5rem;
-      color: #cbd5e1;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      border-left: 3px solid transparent;
-      cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 20px;
+        color: #cbd5e1;
+        text-decoration: none;
+        transition: 0.3s;
+        border-left: 4px solid transparent;
     }
-    
-    .nav-item:hover {
-      background: rgba(255,255,255,0.1);
-      color: white;
-      border-left-color: #ff5f1f;
+
+    .nav-item:hover, .nav-item.active {
+        background: rgba(255,255,255,0.1);
+        color: white;
+        border-left-color: #ff5f1f;
     }
-    
-    .nav-item.active {
-      background: rgba(255, 95, 31, 0.15);
-      color: white;
-      border-left-color: #ff5f1f;
-    }
-    
-    .nav-item i {
-      width: 20px;
-      text-align: center;
-    }
-    
+
     .sidebar-footer {
-      padding: 1.5rem;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      margin-top: auto;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        padding: 1.5rem;
     }
-    
+
     .btn-logout {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      width: 100%;
-      padding: 0.75rem;
-      background: rgba(239, 68, 68, 0.2);
-      color: #fca5a5;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      border-radius: 8px;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px;
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        width: 100%;
     }
-    
-    .btn-logout:hover {
-      background: rgba(239, 68, 68, 0.3);
-      color: white;
-    }
-    
-    /* Contenido Principal */
+
+    /* Contenido principal al lado del sidebar */
     .main-content {
-      flex: 1;
-      margin-left: 280px;
-      padding: 2rem;
+        flex: 1;
+        margin-left: 280px;
+        padding: 2rem;
     }
-    
-    /* Secciones */
-    .section {
-      display: none;
-      animation: fadeIn 0.3s ease;
+
+    /* Ocultar botón toggle y backdrop (no se usarán) */
+    .sidebar-toggle, .sidebar-backdrop {
+        display: none !important;
     }
-    
-    .section.active {
-      display: block;
+
+    /* =========================================
+       3. NAVEGACIÓN HORIZONTAL PARA MÓVIL
+       ========================================= */
+    @media (max-width: 768px) {
+        .sidebar {
+            width: 100%;
+            height: auto;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: #1e293b;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .sidebar-header {
+            display: none; /* Ocultamos el logo grande en móvil */
+        }
+
+        .sidebar-nav {
+            flex-direction: row; /* Menú horizontal */
+            padding: 0;
+            justify-content: space-around;
+            overflow-x: auto; /* Scroll si hay muchos items */
+        }
+
+        .nav-item {
+            flex-direction: column; /* Icono arriba, texto abajo */
+            padding: 10px 5px;
+            gap: 4px;
+            font-size: 0.75rem;
+            border-left: none;
+            border-bottom: 3px solid transparent;
+            flex: 1;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .nav-item i {
+            font-size: 1.2rem;
+        }
+
+        .nav-item.active {
+            border-left-color: transparent;
+            border-bottom-color: #ff5f1f;
+            background: rgba(255, 95, 31, 0.1);
+        }
+
+        .sidebar-footer {
+            display: none; /* Quitamos el logout del menú superior móvil */
+        }
+
+        .main-content {
+            margin-left: 0;
+            padding: 1rem;
+            padding-top: 80px; /* Espacio para que el contenido no quede debajo del menú */
+        }
     }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    /* Header de Sección */
-    .section-header {
-      margin-bottom: 2rem;
-    }
-    
-    .section-header h2 {
-      font-size: 2rem;
-      color: #1e293b;
-      margin-bottom: 0.5rem;
-    }
-    
-    .section-header p {
-      color: #64748b;
-    }
-    
-    /* Cards */
+
+    /* =========================================
+       4. COMPONENTES (CARDS, GRIDS, TABLAS)
+       ========================================= */
+    .section { display: none; animation: fadeIn 0.3s ease; }
+    .section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
     .card {
-      background: white;
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin-bottom: 1.5rem;
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
     }
-    
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    
-    .card-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #1e293b;
-    }
-    
-    /* Stats Grid */
+
+    /* Grid de Estadísticas */
     .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
     }
-    
+
     .stat-card {
-      background: white;
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      border-left: 4px solid #ff5f1f;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border-left: 4px solid #ff5f1f;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    
-    .stat-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    
-    .stat-card h3 {
-      font-size: 0.875rem;
-      color: #64748b;
-      margin-bottom: 0.5rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      font-weight: 600;
-    }
-    
-    .stat-card .value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #1e293b;
-    }
-    
-    .stat-card .value.currency {
-      color: #10b981;
-    }
-    
-    /* Productos Grid */
+
+    .stat-card h3 { font-size: 0.85rem; color: #64748b; text-transform: uppercase; margin-bottom: 8px; }
+    .stat-card .value { font-size: 1.8rem; font-weight: 700; color: #1e293b; }
+
+    /* Grid de Productos */
     .products-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.5rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
     }
-    
+
     .product-card {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
-      border: 2px solid transparent;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
     }
-    
-    .product-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(255, 95, 31, 0.2);
-      border-color: #ff5f1f;
-    }
-    
+
     .product-image {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-      background: #f1f5f9;
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
     }
-    
-    .product-content {
-      padding: 1rem;
-    }
-    
-    .product-title {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #1e293b;
-      margin-bottom: 0.5rem;
-      line-height: 1.4;
-    }
-    
-    .product-desc {
-      font-size: 0.875rem;
-      color: #64748b;
-      margin-bottom: 0.75rem;
-      line-height: 1.5;
-      min-height: 2.5rem;
-    }
-    
+
+    .product-content { padding: 1.2rem; flex: 1; display: flex; flex-direction: column; }
+    .product-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
+    .product-desc { font-size: 0.9rem; color: #64748b; margin-bottom: 1rem; }
+
     .product-prices {
-      background: #f8fafc;
-      padding: 0.75rem;
-      border-radius: 8px;
-      margin-bottom: 0.75rem;
-      font-size: 0.875rem;
+        background: #f8fafc;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 1rem;
     }
-    
+
     .price-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 0.5rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    
-    .price-row:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-    
-    .price-label {
-      color: #64748b;
-    }
-    
-    .price-value {
-      font-weight: 600;
-      color: #1e293b;
-    }
-    
-    .price-value.highlight {
-      color: #10b981;
-      font-size: 1.1rem;
-    }
-    
-    .product-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
     }
 
-    .affiliate-link {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 0.5rem;
-    }
-
-    .affiliate-link-input {
-      flex: 1;
-      border: none;
-      background: transparent;
-      font-size: 0.75rem;
-      color: #475569;
-      outline: none;
-    }
-
-    .affiliate-link .btn {
-      padding: 0.45rem 0.6rem;
-      font-size: 0.75rem;
-      border-radius: 6px;
-    }
-    
+    /* Botones */
     .btn {
-      padding: 0.75rem;
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: 0.2s;
     }
-    
-    .btn-primary {
-      background: linear-gradient(135deg, #ff5f1f 0%, #ff0080 100%);
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(255, 95, 31, 0.4);
-    }
-    
-    .btn-secondary {
-      background: #3b82f6;
-      color: white;
-    }
-    
-    .btn-secondary:hover {
-      background: #2563eb;
-    }
-    
-    .btn-success {
-      background: #10b981;
-      color: white;
-    }
-    
-    .btn-success:hover {
-      background: #059669;
-    }
-    
-    .btn-outline {
-      background: transparent;
-      border: 2px solid #e2e8f0;
-      color: #64748b;
-    }
-    
-    .btn-outline:hover {
-      border-color: #ff5f1f;
-      color: #ff5f1f;
-    }
-    
-    /* Carrito */
-    .cart-item {
-      display: flex;
-      gap: 1rem;
-      padding: 1rem;
-      background: #f8fafc;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-      border: 1px solid #e2e8f0;
-    }
-    
-    .cart-item-image {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 8px;
-      background: white;
-    }
-    
-    .cart-item-content {
-      flex: 1;
-    }
-    
-    .cart-item-title {
-      font-weight: 600;
-      margin-bottom: 0.25rem;
-      color: #1e293b;
-    }
-    
-    .cart-item-desc {
-      font-size: 0.875rem;
-      color: #64748b;
-      margin-bottom: 0.75rem;
-    }
-    
-    .cart-item-actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .cart-quantity {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    
-    .cart-quantity input {
-      width: 60px;
-      padding: 0.5rem;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      text-align: center;
-    }
-    
-    .cart-item-price {
-      text-align: right;
-    }
-    
-    .cart-item-price .price {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #10b981;
-    }
-    
-    .cart-item-price .price-old {
-      font-size: 0.875rem;
-      color: #94a3b8;
-      text-decoration: line-through;
-    }
-    
-    .cart-total {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 12px;
-      margin-top: 1.5rem;
-      border: 2px solid #e2e8f0;
-    }
-    
-    .cart-total-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    
-    .cart-total-row:last-child {
-      border-bottom: none;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #1e293b;
-    }
-    
+
+    .btn-primary { background: linear-gradient(135deg, #ff5f1f 0%, #ff0080 100%); color: white; }
+    .btn-outline { background: white; border: 1px solid #e2e8f0; color: #64748b; }
+
+    /* Tablas responsivas */
+    .table-container { overflow-x: auto; }
+    .table { width: 100%; border-collapse: collapse; min-width: 600px; }
+    .table th { text-align: left; padding: 12px; background: #f8fafc; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+    .table td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+
+    .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+    .badge-success { background: #d1fae5; color: #065f46; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+
     /* Buscador */
-    .search-bar {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    
-    .search-input {
-      flex: 1;
-      padding: 0.875rem 1rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 8px;
-      font-size: 1rem;
-    }
-    
-    .search-input:focus {
-      outline: none;
-      border-color: #ff5f1f;
-    }
-    
-    .filter-select {
-      padding: 0.875rem 1rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 8px;
-      font-size: 1rem;
-      background: white;
-    }
-    
-    /* Tabla de Comisiones */
-    .table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    
-    .table th,
-    .table td {
-      padding: 1rem;
-      text-align: left;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    
-    .table th {
-      background: #f8fafc;
-      font-weight: 600;
-      color: #64748b;
-      text-transform: uppercase;
-      font-size: 0.875rem;
-    }
-    
-    .table tr:hover {
-      background: #f8fafc;
-    }
-    
-    .badge {
-      padding: 0.25rem 0.75rem;
-      border-radius: 20px;
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-    
-    .badge-success {
-      background: #d1fae5;
-      color: #065f46;
-    }
-    
-    .badge-warning {
-      background: #fef3c7;
-      color: #92400e;
-    }
-    
-    /* Alerts */
-    .alert {
-      padding: 1rem;
-      border-radius: 8px;
-      margin-bottom: 1rem;
-    }
-    
-    .alert-success {
-      background: #d1fae5;
-      color: #065f46;
-      border: 1px solid #a7f3d0;
-    }
-    
-    .alert-info {
-      background: #dbeafe;
-      color: #1e40af;
-      border: 1px solid #93c5fd;
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-      .sidebar {
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-      }
-      
-      .sidebar.open {
-        transform: translateX(0);
-      }
-      
-      .main-content {
-        margin-left: 0;
-        padding: 1rem;
-      }
-      
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .products-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-    
-    /* Empty State */
-    .empty-state {
-      text-align: center;
-      padding: 3rem 1rem;
-      color: #64748b;
-    }
-    
-    .empty-state i {
-      font-size: 4rem;
-      margin-bottom: 1rem;
-      opacity: 0.5;
-    }
-    
-    @media (max-width: 768px) {
-      .stats-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .card canvas {
-        max-height: 250px !important;
-      }
-    }
-  
-    /* Modal afiliado */
-    .afiliado-modal {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9000;
-    }
+    .search-bar { display: flex; gap: 10px; margin-bottom: 1.5rem; }
+    .search-input { flex: 1; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; }
 
-    .afiliado-modal.is-open {
-      display: flex;
-    }
-
-    .afiliado-modal-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.65);
-    }
-
-    .afiliado-modal-content {
-      position: relative;
-      width: min(1100px, 92vw);
-      height: min(85vh, 820px);
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      overflow: hidden;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .afiliado-modal-close {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      border: none;
-      background: rgba(15, 23, 42, 0.12);
-      color: #1e293b;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2;
-    }
-
-    .afiliado-modal-close:hover {
-      background: rgba(15, 23, 42, 0.2);
-    }
-
-    #afiliado-modal-iframe {
-      border: none;
-      width: 100%;
-      height: 100%;
-    }
+    /* Modales */
+    .afiliado-modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 2000; }
+    .afiliado-modal.is-open { display: flex; }
+    .afiliado-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.6); }
+    .afiliado-modal-content { position: relative; width: 95%; max-width: 1000px; height: 90vh; background: white; border-radius: 12px; overflow: hidden; z-index: 2001; }
+    .afiliado-modal-close { position: absolute; top: 10px; right: 10px; border: none; background: #eee; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; }
 </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
   <div class="dashboard-container">
+    <!-- Sidebar toggle (visible en móvil, integrado al layout) -->
+    <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Abrir menú" aria-expanded="false" title="Menú"><i class="fas fa-bars" aria-hidden="true"></i></button>
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside id="sidebar" class="sidebar" aria-hidden="false">
       <div class="sidebar-header">
         <h1><i class="fas fa-store"></i> ShopFusion</h1>
         <p>Panel de Afiliado</p>
@@ -725,15 +330,22 @@
           <i class="fas fa-tags"></i>
           <span>Venta Productos</span>
         </a>
+
+    <!-- Contenido Principal 
+
         <a href="#" class="nav-item" data-section="compra-productos">
           <i class="fas fa-shopping-bag"></i>
           <span>Compra Productos</span>
         </a>
+
+
         <a href="#" class="nav-item" data-section="carrito" onclick="if(document.getElementById('section-carrito').classList.contains('active')) { updateCarrito(); attachCarritoListeners(); }">
           <i class="fas fa-shopping-cart"></i>
           <span>Mi Carrito</span>
           <span id="cart-badge" style="margin-left: auto; background: #ff5f1f; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem; display: none;">0</span>
         </a>
+
+        -->
         <a href="#" class="nav-item" data-section="comisiones">
           <i class="fas fa-dollar-sign"></i>
           <span>Comisiones</span>
@@ -751,6 +363,7 @@
         </a>
       </div>
     </aside>
+    <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
     
     <!-- Contenido Principal -->
     <main class="main-content">
@@ -809,17 +422,7 @@
           </div>
         </div>
         
-        {% if descuento_disponible and descuento_disponible > 0 %}
-        <div class="card alert-info">
-          <h3 class="card-title"><i class="fas fa-gift"></i> Descuento Exclusivo Disponible</h3>
-          <p style="margin-top: 0.5rem; font-size: 1.1rem;">
-            <strong>Tienes ${{ "%.2f"|format(descuento_disponible) }} en descuento disponible</strong> para usar en tus compras.
-          </p>
-          <p style="margin-top: 0.5rem; color: #475569; font-size: 0.9rem;">
-            💡 Este descuento se acumula con cada 3 ventas y tiene una duración de 15 días.
-          </p>
-        </div>
-        {% endif %}
+        <!-- Descuentos de afiliado desactivados: los afiliados solo venden, no compran -->
       </div>
       
       <!-- Sección: Venta Productos -->
@@ -833,11 +436,12 @@
         <div class="card" style="margin-bottom: 1.5rem;">
           <h3 class="card-title"><i class="fas fa-store"></i> Tu tienda ShopFusion</h3>
           <p style="margin-top: 0.5rem; color: #64748b; font-size: 0.9rem;">
-            Genera tu link de tienda: no almacenas nada, compartes el catalogo completo y recibes tu comision persistente.
+            Genera tu link de tienda: es un enlace a una tienda ShopFusion con el catálogo completo; puedes compartirla como tu propia tienda y recibir comisiones persistentes por las ventas que generes.
           </p>
           <p style="margin-top: 0.4rem; color: #64748b; font-size: 0.85rem;">
-            Tu te encargas de vender, nosotros controlamos todo. Las compras quedan asociadas a tu comision durante 15 dias.
+            Tú solo te encargas de vender. Nosotros gestionamos stock, envíos y devoluciones — si un cliente se registra en tu tienda en línea y mantiene actividad constante (por ejemplo, compras recurrentes), recibirás su comisión de forma continua mientras siga comprando a través de tu tienda generada. Los pagos se envían directamente a tu método de retiro configurado (PayPal, Skrill o transferencia). Ideal para vender en volumen o para empezar tu negocio online asociado a la marca ShopFusion.
           </p>
+          <p style="margin-top:6px; color:#52606a; font-size:0.83rem;">Consejo: copia tu link y compártelo en redes, grupos o tu sitio web para maximizar conversiones.</p>
           <div class="affiliate-link" style="margin-top: 0.75rem;">
             <input class="affiliate-link-input" type="text" readonly value="{{ link_tienda|e }}">
             <button type="button" class="btn btn-primary copy-affiliate-link-btn" data-link="{{ link_tienda|e }}">
@@ -885,17 +489,17 @@
                   {# Precio que paga el afiliado: precio final - comisión ganada #}
                   {% set precio_afiliado = (precio_final - comision_ganada) | float(0) %}
                   
-                  {# Precio con descuento extra si tiene descuento acumulado disponible #}
-                  {% set precio_con_descuento_extra = (precio_afiliado - descuento_disponible) | float(0) if (descuento_disponible and descuento_disponible > 0) else precio_afiliado %}
+                  {# Nota: los afiliados no reciben descuento extra en sus compras; no aplica #}
+                  {% set precio_con_descuento_extra = precio_afiliado %}
 
                   {# Link unico por producto para afiliados #}
                   {% set link_afiliado = url_for('index', _external=True, ref=afiliado.codigo_afiliado, producto=producto.id) %}
                   
                   <div class="product-card" data-producto-id="{{ producto.id }}" data-categoria="{{ producto.categoria | lower if producto.categoria else '' }}">
-                    <img src="{{ producto.imagenes[0] if producto.imagenes and producto.imagenes|length > 0 else 'https://via.placeholder.com/280x200?text=Sin+imagen' }}" 
+                    <img src="{{ producto.imagenes[0] if producto.imagenes and producto.imagenes|length > 0 else url_for('static', filename='images/placeholder.svg') }}" 
                          alt="{{ producto.titulo }}" 
                          class="product-image"
-                         onerror="this.src='https://via.placeholder.com/280x200?text=Sin+imagen'">
+                         onerror="this.src='{{ url_for('static', filename='images/placeholder.svg') }}'">
                     <div class="product-content">
                       <h3 class="product-title">{{ producto.titulo }}</h3>
                       <p class="product-desc">{{ producto.descripcion[:80] }}{% if producto.descripcion|length > 80 %}...{% endif %}</p>
@@ -920,10 +524,23 @@
                         <div class="price-row" style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">
                           Esta es tu comisión: ganas esto si vendes este producto.
                         </div>
+                        <div class="price-row" style="margin-top:0.35rem; gap:0.5rem; flex-wrap:wrap;">
+                          {% if producto.envio_gratis %}
+                            <span class="badge badge-success" style="background:#10b981;color:white;">Envío gratis</span>
+                          {% endif %}
+                          {% if producto.importado %}
+                            <span class="badge badge-warning" style="background:#f59e0b;color:white;">Importado (20-30 días)</span>
+                          {% endif %}
+                        </div>
                       </div>
                       
                       <div class="product-actions">
-                        <button type="button" class="btn btn-outline view-more-btn" data-product-id="{{ producto.id }}">
+                        <button
+                          type="button"
+                          class="btn btn-outline view-more-btn"
+                          data-product-id="{{ producto.id }}"
+                          data-link="{{ url_for('afiliados_producto_detalle', producto_id=producto.id) }}"
+                        >
                           <i class="fas fa-eye"></i> Ver detalles
                         </button>
                         <div class="affiliate-link">
@@ -947,201 +564,7 @@
         </div>
       </div>
       
-      <!-- Sección: Compra Productos -->
-      <div id="section-compra-productos" class="section">
-        <div class="section-header">
-          <h2><i class="fas fa-shopping-bag"></i> Compra Productos</h2>
-          <p>Compra con tu precio de afiliado y descuento extra si aplica</p>
-        </div>
-        
-        <div class="search-bar">
-          <input type="text" id="search-input-compra" class="search-input" placeholder="Buscar productos...">
-          <select id="filter-categoria-compra" class="filter-select">
-            <option value="">Todas las categorías</option>
-            {% if categorias %}
-              {% for cat in categorias %}
-                <option value="{{ cat.nombre }}">{{ cat.nombre }}</option>
-              {% endfor %}
-            {% endif %}
-          </select>
-        </div>
-        
-        <div id="products-container-compra" class="products-grid">
-          {% if productos_por_categoria %}
-            {% for categoria, productos_cat in productos_por_categoria.items() %}
-              {% if productos_cat %}
-                {% for producto in productos_cat %}
-                  {# Precio final que paga el cliente: precio_oferta si existe y es menor, si no precio #}
-                  {% if producto.precio_oferta and producto.precio_oferta < producto.precio %}
-                    {% set precio_final = producto.precio_oferta | float(0) %}
-                  {% else %}
-                    {% set precio_final = producto.precio | float(0) %}
-                  {% endif %}
-                  
-                  {# Precio proveedor (costo al proveedor) #}
-                  {% set precio_proveedor = (producto.precio_proveedor or 0) | float(0) %}
-                  
-                  {# Margen: diferencia entre precio final del cliente y precio proveedor #}
-                  {% set margen = (precio_final - precio_proveedor) | float(0) %}
-                  
-                  {# Comisión del afiliado como porcentaje #}
-                  {% set comision_pct = (afiliado.comision_porcentaje or 0) | float(0) %}
-                  
-                  {# Comisión que ganará el afiliado: se calcula sobre el margen #}
-                  {% set comision_ganada = (margen * comision_pct / 100) | float(0) %}
-                  
-                  {# Precio que paga el afiliado: precio final - comisión ganada #}
-                  {% set precio_afiliado = (precio_final - comision_ganada) | float(0) %}
-                  
-                  {# Precio con descuento extra si tiene descuento acumulado disponible #}
-                  {% set precio_con_descuento_extra = (precio_afiliado - descuento_disponible) | float(0) if (descuento_disponible and descuento_disponible > 0) else precio_afiliado %}
-                  
-                  <div class="product-card" data-producto-id="{{ producto.id }}" data-categoria="{{ producto.categoria | lower if producto.categoria else '' }}">
-                    <img src="{{ producto.imagenes[0] if producto.imagenes and producto.imagenes|length > 0 else 'https://via.placeholder.com/280x200?text=Sin+imagen' }}" 
-                         alt="{{ producto.titulo }}" 
-                         class="product-image"
-                         onerror="this.src='https://via.placeholder.com/280x200?text=Sin+imagen'">
-                    <div class="product-content">
-                      <h3 class="product-title">{{ producto.titulo }}</h3>
-                      <p class="product-desc">{{ producto.descripcion[:80] }}{% if producto.descripcion|length > 80 %}...{% endif %}</p>
-                      
-                      <div class="product-prices">
-                        <div class="price-row">
-                          <span class="price-label"><i class="fas fa-tag"></i> Precio Cliente:</span>
-                          <span class="price-value">${{ "%.2f"|format(precio_final) }}</span>
-                        </div>
-                        <div class="price-row" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%); padding: 0.5rem; border-radius: 6px; margin-top: 0.5rem; border: 2px solid #10b981;">
-                          <span class="price-label"><i class="fas fa-user-tag"></i> <strong>Tú pagas:</strong></span>
-                          <span class="price-value highlight">${{ "%.2f"|format(precio_afiliado) }}</span>
-                        </div>
-                      </div>
-                      
-                      {% if descuento_disponible and descuento_disponible > 0 %}
-                        <div style="background: #d1fae5; padding: 0.5rem; border-radius: 6px; margin-bottom: 0.75rem; font-size: 0.85rem; border: 1px solid #10b981;">
-                          <div style="display: flex; justify-content: space-between;">
-                            <span style="color: #065f46;"><i class="fas fa-gift"></i> Con descuento extra:</span>
-                            <strong style="color: #10b981;">${{ "%.2f"|format(precio_con_descuento_extra) }}</strong>
-                          </div>
-                        </div>
-                      {% endif %}
-                      
-                      <div class="product-actions">
-                        <button type="button" class="btn btn-outline view-more-btn" data-product-id="{{ producto.id }}">
-                          <i class="fas fa-eye"></i> Ver detalles
-                        </button>
-                        {% if producto.stock > 0 %}
-                          <button class="btn btn-secondary add-to-cart-btn"
-                                  data-product-id="{{ producto.id }}"
-                                  data-product-titulo="{{ producto.titulo|e }}"
-                                  data-product-precio="{{ '%.2f'|format(precio_final) }}"
-                                  data-product-precio-afiliado="{{ '%.2f'|format(precio_afiliado) }}"
-                                  data-product-precio-descuento="{{ '%.2f'|format(precio_con_descuento_extra) if (descuento_disponible and descuento_disponible > 0) else '%.2f'|format(precio_afiliado) }}"
-                                  data-product-precio-proveedor="{{ '%.2f'|format(precio_proveedor) }}"
-                                  data-product-margen="{{ '%.2f'|format(margen) }}"
-                                  data-product-comision-pct="{{ '%.1f'|format(comision_pct) }}"
-                                  data-comision-ganada="{{ '%.2f'|format(comision_ganada) }}">
-                            <i class="fas fa-cart-plus"></i> Agregar al carrito
-                          </button>
-                          <button class="btn btn-primary buy-now-btn" 
-                                  data-product-id="{{ producto.id }}"
-                                  data-product-titulo="{{ producto.titulo|e }}"
-                                  data-product-precio="{{ '%.2f'|format(precio_final) }}"
-                                  data-product-precio-afiliado="{{ '%.2f'|format(precio_afiliado) }}"
-                                  data-product-precio-descuento="{{ '%.2f'|format(precio_con_descuento_extra) if (descuento_disponible and descuento_disponible > 0) else '%.2f'|format(precio_afiliado) }}"
-                                  data-product-precio-proveedor="{{ '%.2f'|format(precio_proveedor) }}"
-                                  data-product-margen="{{ '%.2f'|format(margen) }}"
-                                  data-product-comision-pct="{{ '%.1f'|format(comision_pct) }}"
-                                  data-comision-ganada="{{ '%.2f'|format(comision_ganada) }}">
-                            <i class="fas fa-shopping-cart"></i> Comprar ahora
-                          </button>
-                        {% endif %}
-                      </div>
-                    </div>
-                  </div>
-                {% endfor %}
-              {% endif %}
-            {% endfor %}
-          {% else %}
-            <div class="empty-state">
-              <i class="fas fa-box-open"></i>
-              <p>No hay productos disponibles en este momento.</p>
-            </div>
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Sección: Carrito -->
-      <div id="section-carrito" class="section">
-        <div class="section-header">
-          <h2><i class="fas fa-shopping-cart"></i> Mi Carrito</h2>
-          <p>Gestiona los productos en tu carrito</p>
-        </div>
-        
-        <div id="carrito-container">
-          {% if carrito and carrito|length > 0 %}
-            <div id="carrito-items">
-              {% for item in carrito %}
-                <div class="cart-item" data-producto-id="{{ item.producto_id }}">
-                  <img src="{{ item.imagen }}" alt="{{ item.nombre }}" class="cart-item-image" onerror="this.src='https://via.placeholder.com/80x80?text=Sin+imagen'">
-                  <div class="cart-item-content">
-                    <h4 class="cart-item-title">{{ item.nombre }}</h4>
-                    <p class="cart-item-desc">{{ item.descripcion[:60] }}{% if item.descripcion|length > 60 %}...{% endif %}</p>
-                    <div class="cart-item-actions">
-                      <div class="cart-quantity">
-                        <label>Cantidad:</label>
-                        <input type="number" 
-                               class="cart-quantity-input" 
-                               data-producto-id="{{ item.producto_id }}"
-                               value="{{ item.cantidad }}" 
-                               min="1" 
-                               max="{{ item.stock }}">
-                      </div>
-                      <div class="cart-item-price">
-                        <div class="price">${{ "%.2f"|format(item.precio * item.cantidad) }}</div>
-                        <div class="price-old">${{ "%.2f"|format(item.precio) }} c/u</div>
-                        {% if item.precio_normal and item.precio_normal > item.precio %}
-                          <div style="font-size: 0.75rem; color: #10b981; margin-top: 0.25rem;">
-                            Ahorras: ${{ "%.2f"|format((item.precio_normal - item.precio) * item.cantidad) }}
-                          </div>
-                        {% endif %}
-                      </div>
-                      <button class="btn btn-outline eliminar-carrito-btn" data-producto-id="{{ item.producto_id }}">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
-            
-            <div class="cart-total">
-              <div class="cart-total-row">
-                <span>Subtotal:</span>
-                <span>${{ "%.2f"|format(total_carrito) }}</span>
-              </div>
-              <div class="cart-total-row">
-                <span><strong>Total:</strong></span>
-                <span><strong>${{ "%.2f"|format(total_carrito) }}</strong></span>
-              </div>
-            </div>
-            
-            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-              <button id="limpiar-carrito-btn" class="btn btn-outline" style="flex: 1;">
-                <i class="fas fa-trash-alt"></i> Limpiar Carrito
-              </button>
-              <button id="checkout-carrito-btn" class="btn btn-primary" style="flex: 1;">
-                <i class="fas fa-credit-card"></i> Proceder al Pago
-              </button>
-            </div>
-          {% else %}
-            <div class="empty-state">
-              <i class="fas fa-shopping-cart"></i>
-              <p>Tu carrito está vacío</p>
-              <p style="margin-top: 0.5rem; font-size: 0.9rem;">Agrega productos desde la sección de Compra Productos</p>
-            </div>
-          {% endif %}
-        </div>
-      </div>
+      <!-- Compra y carrito para afiliados eliminados: los afiliados solo venden, no compran -->
       
       <!-- Sección: Comisiones -->
       <div id="section-comisiones" class="section">
@@ -1283,6 +706,68 @@
             {{ afiliado.frecuencia_pago|title if afiliado.frecuencia_pago else 'Pendiente' }} 
           </p>
         </div>
+
+        <div class="card" style="margin-top: 1.5rem;">
+          <h3 class="card-title">Historial de pagos recibidos</h3>
+          {% if pagos_recibidos and pagos_recibidos|length > 0 %}
+            <table class="table" style="margin-top: 0.75rem;">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Monto</th>
+                  <th>Nota</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for pago in pagos_recibidos %}
+                <tr>
+                  <td>{{ pago.creado_en.strftime('%d/%m/%Y') if pago.creado_en else 'N/A' }}</td>
+                  <td><strong>${{ '%.2f'|format(pago.monto or 0) }}</strong></td>
+                  <td>{{ pago.nota or 'Sin nota' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <p style="color:#64748b; margin-top:0.5rem;">No tienes pagos registrados aún.</p>
+          {% endif %}
+        </div>
+
+        <div class="card" style="margin-top: 1.5rem;">
+          <h3 class="card-title">Compras realizadas</h3>
+          {% if compras_afiliado and compras_afiliado|length > 0 %}
+            <table class="table" style="margin-top: 0.75rem;">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Producto</th>
+                  <th>Cantidad</th>
+                  <th>Monto</th>
+                  <th>Estado</th>
+                  <th>Factura</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for compra in compras_afiliado %}
+                <tr>
+                  <td>{{ compra.fecha_compra.strftime('%d/%m/%Y %H:%M') if compra.fecha_compra else 'N/A' }}</td>
+                  <td>{{ compra.producto_titulo or 'Producto' }}</td>
+                  <td>{{ compra.cantidad }}</td>
+                  <td><strong>${{ '%.2f'|format(compra.monto_total|float(0)) }}</strong> {{ compra.moneda or 'USD' }}</td>
+                  <td>
+                    <span class="badge badge-{{ 'success' if compra.estado_pago == 'pagado' else 'warning' }}">
+                      {{ compra.estado_pago|title if compra.estado_pago else 'N/A' }}
+                    </span>
+                  </td>
+                  <td><a href="{{ url_for('factura_compra', compra_id=compra.id) }}" target="_blank">Ver factura</a></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <p style="color:#64748b; margin-top:0.5rem;">Aún no has realizado compras.</p>
+          {% endif %}
+        </div>
       </div>
     </main>
   </div>
@@ -1401,7 +886,7 @@
               
               html += `
                 <div class="cart-item" data-producto-id="${item.producto_id}">
-                  <img src="${item.imagen || 'https://via.placeholder.com/80x80?text=Sin+imagen'}" alt="${item.nombre}" class="cart-item-image" onerror="this.src='https://via.placeholder.com/80x80?text=Sin+imagen'">
+                  <img src="${item.imagen || '/static/images/placeholder.svg'}" alt="${item.nombre}" class="cart-item-image" onerror="this.src='/static/images/placeholder.svg'">
                   <div class="cart-item-content">
                     <h4 class="cart-item-title">${item.nombre || 'Producto'}</h4>
                     <p class="cart-item-desc">${(item.descripcion || '').substring(0, 60)}${(item.descripcion || '').length > 60 ? '...' : ''}</p>
@@ -1648,6 +1133,7 @@
 
       updateVentasMensualesFromDoc(doc);
       restoreActiveSection(activeSectionId);
+      closeAfiliadoModal();
       initAffiliatePanel();
       if (activeSectionId === 'section-carrito') {
         updateCarrito();
@@ -1955,204 +1441,15 @@
       });
     }
 
-    // Modal de checkout
-    window.openCheckoutModalAfiliado = function(productoId, productoTitulo, precioAfiliado, precioCliente, comisionGanada, usarDescuentoExtra, precioProveedor, margen, comisionPct) {
-      const modal = document.getElementById('checkout-modal');
-      const title = document.getElementById('checkout-title');
-      const price = document.getElementById('checkout-price');
-      const form = document.getElementById('checkout-form');
-      const paypalContainer = document.getElementById('paypal-button-container');
-      const message = document.getElementById('checkout-message');
-      
-      if (!modal || !title || !price) return;
-      
-      // Asegurar que todos los valores sean números válidos
-      precioCliente = parseFloat(precioCliente || 0);
-      precioProveedor = parseFloat(precioProveedor || 0);
-      margen = parseFloat(margen || 0);
-      comisionPct = parseFloat(comisionPct || 0);
-      comisionGanada = parseFloat(comisionGanada || 0);
-      precioAfiliado = parseFloat(precioAfiliado || 0);
-      
-      title.textContent = productoTitulo;
-      const precioFinalPago = precioAfiliado;
-      
-      let precioHTML = `<div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.15) 100%); padding: 1rem; border-radius: 8px; border: 2px solid #10b981; margin-bottom: 1rem;">
-        <div style="text-align: center; margin-bottom: 1rem;">
-          <span style="color: #059669; font-weight: 700; font-size: 1rem;"><i class="fas fa-info-circle"></i> Desglose de Precios</span>
-        </div>
-        
-        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; padding: 0.5rem; background: white; border-radius: 6px;">
-          <span style="color: #666; font-weight: 600;"><i class="fas fa-truck"></i> Precio Proveedor:</span>
-          <strong style="color: #666; font-size: 1rem;">$${precioProveedor.toFixed(2)}</strong>
-        </div>
-        
-        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; padding: 0.5rem; background: white; border-radius: 6px; border-left: 4px solid #ff5f1f;">
-          <span style="color: #666; font-weight: 600;"><i class="fas fa-tag"></i> Precio Cliente:</span>
-          <strong style="color: #ff5f1f; font-size: 1.1rem;">$${precioCliente.toFixed(2)}</strong>
-        </div>
-        
-        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; padding: 0.5rem; background: white; border-radius: 6px;">
-          <span style="color: #666; font-weight: 600;"><i class="fas fa-chart-line"></i> Margen:</span>
-          <strong style="color: #666; font-size: 1rem;">$${margen.toFixed(2)}</strong>
-        </div>
-        
-        <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; padding: 0.75rem; background: rgba(255, 95, 31, 0.1); border-radius: 6px; border-left: 4px solid #ff5f1f;">
-          <span style="color: #ff5f1f; font-weight: 600;"><i class="fas fa-dollar-sign"></i> Tu Comisión (${comisionPct.toFixed(1)}%):</span>
-          <strong style="color: #ff5f1f; font-size: 1.1rem;">$${comisionGanada.toFixed(2)}</strong>
-        </div>
-        
-        <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: white; border-radius: 6px; border-left: 4px solid #10b981; margin-top: 0.75rem; border-top: 2px solid #d1fae5; border-bottom: 2px solid #d1fae5;">
-          <span style="color: #059669; font-weight: 700; font-size: 1rem;"><i class="fas fa-user-tag"></i> Tú pagas (por ser afiliado):</span>
-          <strong style="color: #10b981; font-size: 1.5rem;">$${precioAfiliado.toFixed(2)}</strong>
-        </div>
-        
-        <div style="text-align: center; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #d1fae5;">
-          <span style="color: #047857; font-size: 0.95rem; font-weight: 600;">
-            <i class="fas fa-piggy-bank"></i> Ahorras: $${comisionGanada.toFixed(2)}
-          </span>
-        </div>`;
-      
-      if (usarDescuentoExtra) {
-        precioHTML += `<div style="background: #d1fae5; padding: 0.75rem; border-radius: 6px; margin-top: 0.75rem; border: 1px solid #10b981;">
-          <div style="display: flex; justify-content: space-between;">
-            <span style="color: #065f46; font-weight: 600;"><i class="fas fa-gift"></i> Con descuento extra:</span>
-            <strong style="color: #10b981; font-size: 1.2rem;">$${precioAfiliado.toFixed(2)}</strong>
-          </div>
-        </div>`;
-      }
-      
-      precioHTML += `</div>`;
-      price.innerHTML = precioHTML;
-      form.reset();
-      paypalContainer.innerHTML = '';
-      message.textContent = '';
-      modal.style.display = 'flex';
-      
-      if (window.paypal && paypal.Buttons) {
-        paypal.Buttons({
-          onClick: function(data, actions) {
-            const required = ['nombre','apellido','email','telefono','pais','direccion'];
-            let valid = true;
-            required.forEach(function(name) {
-              const input = form.querySelector('[name="' + name + '"]');
-              if (!input || !input.value.trim()) {
-                valid = false;
-                input.style.borderColor = '#ef4444';
-              } else {
-                input.style.borderColor = '#e2e8f0';
-              }
-            });
-            if (!valid) {
-              message.textContent = 'Por favor completa todos los campos';
-              message.style.color = '#ef4444';
-              return actions.reject();
-            }
-            message.textContent = '';
-            return actions.resolve();
-          },
-          createOrder: function(data, actions) {
-            return actions.order.create({
-              purchase_units: [{ description: productoTitulo, amount: { currency_code: 'USD', value: precioFinalPago.toFixed(2) } }]
-            });
-          },
-          onApprove: function(data, actions) {
-            const formData = new FormData(form);
-            return fetch('/api/afiliados/checkout', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                orderID: data.orderID,
-                producto_id: parseInt(productoId),
-                cantidad: 1,
-                usar_descuento: usarDescuentoExtra,
-                nombre: formData.get('nombre'),
-                apellido: formData.get('apellido'),
-                email: formData.get('email'),
-                telefono: formData.get('telefono'),
-                pais: formData.get('pais'),
-                direccion: formData.get('direccion')
-              })
-            })
-            .then(res => res.json())
-            .then(resp => {
-              if (resp.status === 'success') {
-                message.textContent = '✅ Pago completado. Tu compra se procesará pronto.';
-                message.style.color = '#10b981';
-                setTimeout(() => { closeCheckoutModal(); refreshAfiliadoPanel(); }, 3000);
-              } else {
-                message.textContent = '⚠️ Error: ' + (resp.error || 'Error al procesar el pago');
-                message.style.color = '#ef4444';
-              }
-            })
-            .catch(err => {
-              console.error(err);
-              message.textContent = '⚠️ Error al procesar el pago';
-              message.style.color = '#ef4444';
-            });
-          },
-          onError: function(err) {
-            console.error(err);
-            message.textContent = '⚠️ Error con PayPal';
-            message.style.color = '#ef4444';
-          }
-        }).render('#paypal-button-container');
-      }
-    };
-
-    function closeCheckoutModal() {
-      const modal = document.getElementById('checkout-modal');
-      const message = document.getElementById('checkout-message');
-      const paypalContainer = document.getElementById('paypal-button-container');
-      if (modal) modal.style.display = 'none';
-      if (message) message.textContent = '';
-      if (paypalContainer) paypalContainer.innerHTML = '';
-    }
-    
-    document.getElementById('close-checkout-modal')?.addEventListener('click', function() {
-      closeCheckoutModal();
-    });
-    
-    document.getElementById('checkout-modal')?.addEventListener('click', function(e) {
-      if (e.target === this) closeCheckoutModal();
-    });
-    
-    // Boton comprar ahora
-    function bindBuyNowButtons() {
-      document.querySelectorAll('.buy-now-btn').forEach(btn => {
-        if (btn.dataset.boundBuyNow == 'true') return;
-        btn.dataset.boundBuyNow = 'true';
-        btn.addEventListener('click', function(e) {
-          e.preventDefault();
-          const productoId = this.dataset.productId;
-          const productoTitulo = this.dataset.productTitulo;
-          const precioAfiliado = parseFloat(this.dataset.productPrecioAfiliado || 0);
-          const precioDescuentoExtra = parseFloat(this.dataset.productPrecioDescuento || precioAfiliado);
-          const precioCliente = parseFloat(this.dataset.productPrecio || 0); // Precio final que paga el cliente
-          const comisionGanada = parseFloat(this.dataset.comisionGanada || 0);
-          const precioProveedor = parseFloat(this.dataset.productPrecioProveedor || 0);
-          const margen = parseFloat(this.dataset.productMargen || 0);
-          const comisionPct = parseFloat(this.dataset.productComisionPct || 0);
-          const usarDescuento = precioDescuentoExtra < precioAfiliado;
-          const precioFinal = usarDescuento ? precioDescuentoExtra : precioAfiliado;
-
-          if (typeof window.openCheckoutModalAfiliado === 'function') {
-            window.openCheckoutModalAfiliado(productoId, productoTitulo, precioFinal, precioCliente, comisionGanada, usarDescuento, precioProveedor, margen, comisionPct);
-          }
-        });
-      });
-    }
+    // Checkout para afiliados removido: los afiliados no pueden comprar.
 
     function initAffiliatePanel() {
       bindNavItems();
-      bindAddToCartButtons();
       bindViewMoreButtons();
       bindAffiliateLinkButtons();
-      bindBuyNowButtons();
       bindAfiliadoForms();
       bindAfiliadoModalControls();
       setupProductFilters('section-venta-productos');
-      setupProductFilters('section-compra-productos');
       initPagoConfig();
     }
 
@@ -2348,26 +1645,78 @@
         initCharts();
       }
       
-      // Actualizar carrito solo si estamos en la sección de carrito
-      if (document.getElementById('section-carrito').classList.contains('active')) {
-        updateCarrito();
-        attachCarritoListeners();
-      } else {
-        // Solo actualizar badge
-        updateCartBadge();
-      }
-      
-      // Si hay items en el carrito, mostrar badge
-      const carritoItems = {{ carrito|length if carrito else 0 }};
-      if (carritoItems > 0) {
-        const totalItems = {{ carrito|sum(attribute='cantidad') if carrito else 0 }};
-        const badge = document.getElementById('cart-badge');
-        if (badge) {
-          badge.textContent = totalItems;
-          badge.style.display = 'block';
+      // Actualizar badge del carrito (si existe)
+      try { updateCartBadge(); } catch (e) { /* noop */ }
+
+      // Mobile sidebar toggle + backdrop
+      (function(){
+        const menuBtn = document.getElementById('sidebar-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        if (!menuBtn || !sidebar || !backdrop) return;
+
+        // initial aria state
+        menuBtn.setAttribute('aria-expanded', 'false');
+        sidebar.setAttribute('aria-hidden', 'true');
+
+        const icon = menuBtn.querySelector('i');
+        function openSidebar(open) {
+          if (open) {
+            sidebar.classList.add('open');
+            backdrop.classList.add('open');
+            document.body.classList.add('no-scroll');
+            menuBtn.classList.add('open');
+            menuBtn.setAttribute('aria-expanded', 'true');
+            sidebar.setAttribute('aria-hidden', 'false');
+            if (icon) { icon.classList.remove('fa-bars'); icon.classList.add('fa-times'); }
+          } else {
+            sidebar.classList.remove('open');
+            backdrop.classList.remove('open');
+            document.body.classList.remove('no-scroll');
+            menuBtn.classList.remove('open');
+            menuBtn.setAttribute('aria-expanded', 'false');
+            sidebar.setAttribute('aria-hidden', 'true');
+            if (icon) { icon.classList.remove('fa-times'); icon.classList.add('fa-bars'); }
+          }
         }
-      }
+
+        menuBtn.addEventListener('click', function(){
+          const isOpen = sidebar.classList.contains('open') ? false : true;
+          openSidebar(isOpen);
+        });
+
+        backdrop.addEventListener('click', function(){ openSidebar(false); });
+
+        // Close on nav-item click when mobile
+        sidebar.querySelectorAll('.nav-item').forEach(function(el){
+          el.addEventListener('click', function(){ if (window.innerWidth <= 768) { openSidebar(false); } });
+        });
+
+        // Accessibility: open with Enter/Space
+        menuBtn.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); menuBtn.click(); } });
+
+        // Close on Escape
+        document.addEventListener('keydown', function(e){ if (e.key === 'Escape') { openSidebar(false); } });
+      })();
     });
+  </script>
+
+  <script>
+    // Reemplazo automático para placeholders externos (evita errores si no hay internet)
+    (function(){
+      window.addEventListener('error', function(e){
+        try {
+          var target = e.target || e.srcElement;
+          if (target && target.tagName === 'IMG') {
+            var src = (target.getAttribute && target.getAttribute('src')) || '';
+            if (src && src.indexOf('via.placeholder.com') !== -1) {
+              target.src = '/static/images/placeholder.svg';
+              target.onerror = null;
+            }
+          }
+        } catch(err) {}
+      }, true);
+    })();
   </script>
 </body>
 </html>

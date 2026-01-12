@@ -123,10 +123,10 @@
       <div class="detail-grid">
         <div>
           <img
-            src="{{ producto.imagenes[0] if producto.imagenes and producto.imagenes|length > 0 else 'https://via.placeholder.com/500x400?text=Sin+imagen' }}"
+            src="{{ producto.imagenes[0] if producto.imagenes and producto.imagenes|length > 0 else url_for('static', filename='images/placeholder.svg') }}"
             alt="{{ producto.titulo }}"
             class="detail-image"
-            onerror="this.src='https://via.placeholder.com/500x400?text=Sin+imagen'">
+            onerror="this.src='{{ url_for('static', filename='images/placeholder.svg') }}'">
         </div>
         <div>
           <p class="detail-desc">{{ producto.descripcion }}</p>
