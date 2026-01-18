@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Afiliado - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>✏️ Editar Afiliado</h1>
+
+    <form method="POST" action="{{ url_for('admin.editar_afiliado', id=afiliado.id) }}" class="form-afiliado">
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="nombre">Nombre Completo *</label>
+                <input type="text" id="nombre" name="nombre" class="form-control" value="{{ afiliado.nombre }}" required>
+            </div>
+
+            <div class="form-group col-md-6">
+                <label for="email">Email *</label>
+                <input type="email" id="email" name="email" class="form-control" value="{{ afiliado.email }}" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="codigo">Código Único</label>
+                <input type="text" id="codigo" name="codigo" class="form-control" value="{{ afiliado.codigo }}" disabled>
+                <small class="form-text text-muted">El código no se puede modificar</small>
+            </div>
+
+            <div class="form-group col-md-6">
+                <label for="porcentaje_comision">Porcentaje de Comisión (%) *</label>
+                <input type="number" id="porcentaje_comision" name="porcentaje_comision" class="form-control" step="0.01" min="0" max="100" value="{{ afiliado.porcentaje_comision }}" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="password">Nueva Contraseña (opcional)</label>
+                <input type="password" id="password" name="password" class="form-control">
+                <small class="form-text text-muted">Deja vacío para mantener la contraseña actual</small>
+            </div>
+
+            <div class="form-group col-md-6">
+                <label for="activo">Estado</label>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="activo" name="activo" {% if afiliado.activo %}checked{% endif %}>
+                    <label for="activo">Activo</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">Guardar Cambios</button>
+            <a href="{{ url_for('admin.afiliados') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

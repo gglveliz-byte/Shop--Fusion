@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Afiliados - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>👥 Gestión de Afiliados</h1>
+        <a href="{{ url_for('admin.crear_afiliado') }}" class="btn btn-success">+ Nuevo Afiliado</a>
+    </div>
+
+    {% if afiliados_data %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Código</th>
+                    <th>% Comisión</th>
+                    <th>Ventas</th>
+                    <th>💰 Ganado</th>
+                    <th>⏳ Pendiente</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in afiliados_data %}
+                    {% set afiliado = data.afiliado %}
+                    <tr>
+                        <td>{{ afiliado.id }}</td>
+                        <td><strong>{{ afiliado.nombre }}</strong></td>
+                        <td>{{ afiliado.email }}</td>
+                        <td><span class="badge badge-info">{{ afiliado.codigo }}</span></td>
+                        <td><span class="badge badge-warning">{{ afiliado.porcentaje_comision }}%</span></td>
+                        <td><span class="badge badge-primary">{{ data.num_ventas }}</span></td>
+                        <td><strong class="text-success">${{ "%.2f"|format(data.total_ganado) }}</strong></td>
+                        <td><strong class="text-warning">${{ "%.2f"|format(data.total_pendiente) }}</strong></td>
+                        <td>
+                            {% if afiliado.activo %}
+                                <span class="badge badge-success">Activo</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.editar_afiliado', id=afiliado.id) }}" class="btn btn-sm btn-primary">Editar</a>
+                            {% if data.total_pendiente > 0 %}
+                                {% set monto = '%.2f'|format(data.total_pendiente) %}
+                                <form method="POST" action="{{ url_for('admin.pagar_comisiones_afiliado', id=afiliado.id) }}" style="display: inline;" onsubmit="return confirm('Confirmar pago de ${{ monto }} a {{ afiliado.nombre }}?')">
+                                    <button type="submit" class="btn btn-sm btn-success">💵 Pagar</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No hay afiliados creados todavía.</p>
+    {% endif %}
+</div>
+{% endblock %}

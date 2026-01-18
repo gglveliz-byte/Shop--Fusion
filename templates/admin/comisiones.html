@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Comisiones - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>💰 Gestión de Comisiones</h1>
+
+    <div class="comisiones-resumen">
+        <div class="resumen-card">
+            <h3>Comisiones Generadas</h3>
+            <p class="resumen-monto">${{ "%.2f"|format(total_generadas) }}</p>
+            <small>Por pagar</small>
+        </div>
+
+        <div class="resumen-card">
+            <h3>Comisiones Pagadas</h3>
+            <p class="resumen-monto">${{ "%.2f"|format(total_pagadas) }}</p>
+            <small>Total pagado</small>
+        </div>
+    </div>
+
+    <div class="filtros">
+        <a href="{{ url_for('admin.comisiones', estado='todos') }}" class="btn {% if estado_filter == 'todos' %}btn-primary{% else %}btn-secondary{% endif %}">Todas</a>
+        <a href="{{ url_for('admin.comisiones', estado='generada') }}" class="btn {% if estado_filter == 'generada' %}btn-info{% else %}btn-secondary{% endif %}">Generadas</a>
+        <a href="{{ url_for('admin.comisiones', estado='pagada') }}" class="btn {% if estado_filter == 'pagada' %}btn-success{% else %}btn-secondary{% endif %}">Pagadas</a>
+    </div>
+
+    {% if comisiones %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Pedido</th>
+                    <th>Afiliado</th>
+                    <th>Margen</th>
+                    <th>Comisión</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for comision in comisiones %}
+                    <tr>
+                        <td>#{{ comision.id }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.ver_pedido', id=comision.pedido_id) }}">
+                                Pedido #{{ comision.pedido_id }}
+                            </a>
+                        </td>
+                        <td>{{ comision.afiliado.nombre }} ({{ comision.afiliado.codigo }})</td>
+                        <td>${{ "%.2f"|format(comision.margen) }}</td>
+                        <td><strong>${{ "%.2f"|format(comision.monto) }}</strong></td>
+                        <td>
+                            {% if comision.estado == 'generada' %}
+                                <span class="badge badge-info">Generada</span>
+                            {% elif comision.estado == 'pagada' %}
+                                <span class="badge badge-success">Pagada</span>
+                            {% else %}
+                                <span class="badge badge-warning">{{ comision.estado }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ comision.creado_en.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            {% if comision.estado == 'generada' %}
+                                <form method="POST" action="{{ url_for('admin.marcar_comision_pagada', id=comision.id) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('¿Marcar esta comisión como PAGADA?')">
+                                        ✓ Marcar Pagada
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No hay comisiones para mostrar.</p>
+    {% endif %}
+</div>
+{% endblock %}

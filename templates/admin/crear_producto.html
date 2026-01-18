@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Producto - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>📦 Crear Nuevo Producto</h1>
+
+    <form method="POST" action="{{ url_for('admin.crear_producto') }}" enctype="multipart/form-data" class="form-producto">
+        <div class="form-row">
+            <div class="form-group col-md-8">
+                <label for="nombre">Nombre del Producto *</label>
+                <input type="text" id="nombre" name="nombre" class="form-control" required>
+            </div>
+
+            <div class="form-group col-md-4">
+                <label for="activo">Estado</label>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="activo" name="activo" checked>
+                    <label for="activo">Activo</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="descripcion">Descripción</label>
+            <textarea id="descripcion" name="descripcion" class="form-control" rows="4"></textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="precio_final">Precio Final (venta) *</label>
+                <input type="number" id="precio_final" name="precio_final" class="form-control" step="0.01" min="0" required>
+            </div>
+
+            <div class="form-group col-md-4">
+                <label for="precio_proveedor">Precio Proveedor (costo) *</label>
+                <input type="number" id="precio_proveedor" name="precio_proveedor" class="form-control" step="0.01" min="0" required>
+            </div>
+
+            <div class="form-group col-md-4">
+                <label for="precio_oferta">Precio Oferta (opcional)</label>
+                <input type="number" id="precio_oferta" name="precio_oferta" class="form-control" step="0.01" min="0">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="imagenes">Imágenes del Producto (hasta 4)</label>
+            <input type="file" id="imagenes" name="imagenes" class="form-control" accept="image/*" multiple>
+            <small class="form-text text-muted">Formatos permitidos: JPG, PNG, WEBP, GIF (Máx. 16MB cada una). Puedes seleccionar hasta 4 imágenes.</small>
+
+            <!-- Preview de imágenes -->
+            <div id="imagenes-preview" class="imagenes-preview-grid"></div>
+        </div>
+
+        <div class="alert alert-info">
+            💡 <strong>Nota:</strong> El margen se calcula automáticamente (Precio Final - Precio Proveedor). Si hay precio de oferta, se usa ese para calcular el margen.
+        </div>
+
+<style>
+.imagenes-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.imagen-preview-item {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 1;
+    background: #f1f5f9;
+    border: 2px dashed #e2e8f0;
+}
+
+.imagen-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.imagen-preview-item .badge-principal {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.imagen-preview-item .btn-remove {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .imagenes-preview-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+
+<script>
+document.getElementById('imagenes').addEventListener('change', function(e) {
+    const preview = document.getElementById('imagenes-preview');
+    preview.innerHTML = '';
+
+    const files = Array.from(e.target.files).slice(0, 4); // Máximo 4 imágenes
+
+    if (files.length > 4) {
+        alert('Solo puedes subir hasta 4 imágenes');
+    }
+
+    files.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const div = document.createElement('div');
+            div.className = 'imagen-preview-item';
+            div.innerHTML = `
+                <img src="${e.target.result}" alt="Preview ${index + 1}">
+                ${index === 0 ? '<span class="badge-principal">Principal</span>' : ''}
+            `;
+            preview.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+    });
+});
+</script>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">Crear Producto</button>
+            <a href="{{ url_for('admin.productos') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

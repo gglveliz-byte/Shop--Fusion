@@ -1,0 +1,216 @@
+╔════════════════════════════════════════════════════════════════════════╗
+║                    SHOP FUSION - INICIO RÁPIDO                         ║
+║                  Sistema de Tienda con Afiliados                       ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+📋 PASOS PARA INICIAR:
+
+1️⃣  CREAR ENTORNO VIRTUAL
+   Windows:
+   > python -m venv venv
+   > venv\Scripts\activate
+
+   Linux/Mac:
+   > python3 -m venv venv
+   > source venv/bin/activate
+
+2️⃣  INSTALAR DEPENDENCIAS
+   > pip install -r requirements.txt
+
+3️⃣  INICIALIZAR BASE DE DATOS (solo primera vez)
+   > python init_db.py
+
+4️⃣  CONFIGURAR WHATSAPP
+   Editar config.py línea 27:
+   WHATSAPP_NUMBER = '593999999999'  # Tu número aquí
+
+5️⃣  INICIAR APLICACIÓN
+   > python app.py
+
+6️⃣  ABRIR NAVEGADOR
+   http://localhost:5000
+
+────────────────────────────────────────────────────────────────────────
+
+🔐 CREDENCIALES POR DEFECTO:
+
+ADMINISTRADOR:
+   URL: http://localhost:5000/auth/admin/login
+   Usuario: admin
+   Password: admin123
+
+AFILIADO DE EJEMPLO:
+   URL: http://localhost:5000/auth/afiliado/login
+   Email: juan@email.com
+   Password: afiliado123
+   Código: AFI001
+
+────────────────────────────────────────────────────────────────────────
+
+📂 ESTRUCTURA DEL PROYECTO:
+
+SHOP FUSION NUEVO/
+├── 📄 app.py                    # Aplicación principal
+├── 📄 config.py                 # Configuración
+├── 📄 models.py                 # Modelos de BD
+├── 📄 init_db.py                # Inicializar BD
+├── 📄 requirements.txt          # Dependencias
+├── 📄 .env                      # Variables de entorno
+├── 📄 README.md                 # Documentación completa
+├── 📄 INSTALACION.md            # Guía de instalación
+├── 📄 run.bat                   # Script de inicio (Windows)
+│
+├── 📁 routes/                   # Rutas de la aplicación
+│   ├── auth.py                  # Autenticación
+│   ├── admin.py                 # Panel admin
+│   ├── afiliado.py              # Panel afiliado
+│   └── tienda.py                # Tienda pública
+│
+├── 📁 templates/                # Templates HTML
+│   ├── base.html                # Template base
+│   ├── auth/                    # Login
+│   ├── admin/                   # Admin (9 templates)
+│   ├── afiliado/                # Afiliado (4 templates)
+│   └── tienda/                  # Tienda (6 templates)
+│
+└── 📁 static/                   # Archivos estáticos
+    ├── css/style.css            # Estilos responsive
+    ├── js/
+    └── uploads/                 # Imágenes de productos
+
+────────────────────────────────────────────────────────────────────────
+
+✨ CARACTERÍSTICAS IMPLEMENTADAS:
+
+PARA CLIENTES:
+   ✅ Compra sin registro
+   ✅ Carrito de compras
+   ✅ Checkout por WhatsApp
+   ✅ Productos con ofertas
+   ✅ Diseño responsive
+
+PARA AFILIADOS:
+   ✅ Links únicos de referencia
+   ✅ Panel de control personal
+   ✅ Ver productos con comisiones
+   ✅ Seguimiento de ventas
+   ✅ Estados de comisión (Pendiente/Generada/Pagada)
+
+PARA ADMINISTRADORES:
+   ✅ Gestión de productos (CRUD)
+   ✅ Gestión de afiliados
+   ✅ Gestión de pedidos
+   ✅ Control de comisiones
+   ✅ Dashboard con estadísticas
+
+────────────────────────────────────────────────────────────────────────
+
+💰 CÓMO FUNCIONA EL SISTEMA DE COMISIONES:
+
+1. Admin crea producto:
+   - Precio final: $50
+   - Precio proveedor: $25
+   - Margen: $25
+
+2. Admin crea afiliado:
+   - Código: AFI001
+   - Comisión: 80%
+
+3. Afiliado comparte link:
+   https://tienda.com/producto/5?ref=AFI001
+
+4. Cliente compra por WhatsApp
+
+5. Admin marca pedido como "Pagado"
+
+6. Sistema calcula automáticamente:
+   Comisión = $25 × 80% = $20
+
+7. Afiliado ve su comisión en el panel
+
+────────────────────────────────────────────────────────────────────────
+
+🔧 CONFIGURACIÓN IMPORTANTE:
+
+1. Cambiar número de WhatsApp:
+   Editar config.py línea 27
+
+2. Cambiar contraseña del admin:
+   Desde el panel admin después del primer login
+
+3. Base de datos:
+   Ya configurada en .env con PostgreSQL en Render
+
+4. Secret Key:
+   Ya configurada en .env
+
+────────────────────────────────────────────────────────────────────────
+
+🚀 PRIMEROS PASOS DESPUÉS DE INSTALAR:
+
+1. ✅ Cambiar contraseña de admin
+2. ✅ Configurar número de WhatsApp
+3. ✅ Eliminar productos de ejemplo
+4. ✅ Crear tus productos reales
+5. ✅ Crear tus afiliados
+6. ✅ Compartir links de afiliados
+7. ✅ ¡Comenzar a vender!
+
+────────────────────────────────────────────────────────────────────────
+
+📞 FLUJO DE VENTA:
+
+1. Afiliado copia link de producto
+2. Cliente hace clic en el link
+3. Sistema guarda código del afiliado (AFI001)
+4. Cliente navega y agrega productos al carrito
+5. Cliente hace checkout
+6. Sistema abre WhatsApp con mensaje pre-llenado
+7. Cliente envía mensaje al vendedor
+8. Vendedor confirma pago
+9. Admin marca pedido como "Pagado"
+10. Sistema genera comisión automáticamente
+11. Afiliado ve su comisión en el panel
+
+────────────────────────────────────────────────────────────────────────
+
+🐛 SOLUCIÓN DE PROBLEMAS:
+
+Error: "No module named 'flask'"
+→ Activa el entorno virtual: venv\Scripts\activate
+
+Error: "Could not connect to database"
+→ Verifica DATABASE_URL en .env
+
+Error: Puerto 5000 ocupado
+→ Cambia el puerto en app.py o cierra la app que lo usa
+
+────────────────────────────────────────────────────────────────────────
+
+📚 DOCUMENTACIÓN:
+
+- README.md          → Documentación completa
+- INSTALACION.md     → Guía detallada de instalación
+- SRS (tu documento) → Especificaciones del sistema
+
+────────────────────────────────────────────────────────────────────────
+
+✅ SISTEMA COMPLETO Y FUNCIONAL
+
+Total de archivos creados: 40+
+- 5 modelos de base de datos
+- 4 blueprints (rutas)
+- 20 templates HTML
+- 1 archivo CSS responsive
+- Scripts de inicialización
+- Documentación completa
+
+────────────────────────────────────────────────────────────────────────
+
+¡TODO LISTO PARA USAR! 🎉
+
+Versión: 1.0
+Fecha: 17 de Enero de 2026
+Estado: ✅ Producción Ready
+
+════════════════════════════════════════════════════════════════════════

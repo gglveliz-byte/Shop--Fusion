@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Productos - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>📦 Gestión de Productos</h1>
+        <a href="{{ url_for('admin.crear_producto') }}" class="btn btn-success">+ Nuevo Producto</a>
+    </div>
+
+    {% if productos %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Precio Final</th>
+                    <th>Precio Proveedor</th>
+                    <th>Precio Oferta</th>
+                    <th>Margen</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos %}
+                    <tr>
+                        <td>{{ producto.id }}</td>
+                        <td>{{ producto.nombre }}</td>
+                        <td>${{ "%.2f"|format(producto.precio_final) }}</td>
+                        <td>${{ "%.2f"|format(producto.precio_proveedor) }}</td>
+                        <td>
+                            {% if producto.precio_oferta %}
+                                <span class="badge badge-info">${{ "%.2f"|format(producto.precio_oferta) }}</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>${{ "%.2f"|format(producto.calcular_margen()) }}</td>
+                        <td>
+                            {% if producto.activo %}
+                                <span class="badge badge-success">Activo</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.editar_producto', id=producto.id) }}" class="btn btn-sm btn-primary">Editar</a>
+                            {% if producto.activo %}
+                                <form method="POST" action="{{ url_for('admin.eliminar_producto', id=producto.id) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Desactivar este producto?')">Desactivar</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No hay productos creados todavía.</p>
+    {% endif %}
+</div>
+{% endblock %}

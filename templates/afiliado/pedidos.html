@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Pedidos - Afiliado{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>🛒 Pedidos que Generé</h1>
+
+    {% if pedidos %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Pedido #</th>
+                    <th>Fecha</th>
+                    <th>Productos</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pedido in pedidos %}
+                    <tr>
+                        <td>#{{ pedido.id }}</td>
+                        <td>{{ pedido.creado_en.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <ul class="lista-productos-simple">
+                                {% for item in pedido.productos_json %}
+                                    <li>{{ item.nombre }} x{{ item.cantidad }}</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>${{ "%.2f"|format(pedido.total) }}</td>
+                        <td>
+                            {% if pedido.estado == 'pendiente' %}
+                                <span class="badge badge-warning">Pendiente</span>
+                            {% else %}
+                                <span class="badge badge-success">Pagado</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-state">
+            <p>Aún no has generado pedidos.</p>
+            <p>Comparte tus links de productos para comenzar a ganar comisiones.</p>
+            <a href="{{ url_for('afiliado.productos') }}" class="btn btn-primary">Ver Productos</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

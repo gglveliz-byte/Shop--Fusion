@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Login Afiliado - Shop Fusion{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="login-container">
+        <div class="login-box">
+            <h1>👥 Login Afiliado</h1>
+            <p class="subtitle">Acceso al panel de afiliado</p>
+
+            <form method="POST" action="{{ url_for('auth.afiliado_login') }}">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-control" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" class="form-control" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Iniciar Sesión</button>
+            </form>
+
+            <div class="login-footer">
+                <p><a href="{{ url_for('tienda.unete') }}">¿No tienes cuenta? Únete aquí</a></p>
+                <p><a href="{{ url_for('auth.admin_login') }}">¿Eres administrador? Ingresa aquí</a></p>
+                <p><a href="{{ url_for('tienda.index') }}">← Volver a la tienda</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

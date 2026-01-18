@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Productos - Afiliado{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>📦 Productos para Compartir</h1>
+    <p class="subtitle">Comparte estos links y gana comisiones por cada venta</p>
+
+    <div class="afiliado-info-banner">
+        <p><strong>Tu porcentaje de comisión:</strong> {{ afiliado.porcentaje_comision }}% del margen de cada producto</p>
+    </div>
+
+    {% if productos %}
+        <div class="productos-afiliado-grid">
+            {% for item in productos %}
+                <div class="producto-afiliado-card">
+                    <div class="producto-imagen-section">
+                        {% if item.producto.imagen %}
+                            <img src="{{ url_for('static', filename='uploads/' + item.producto.imagen) }}" alt="{{ item.producto.nombre }}">
+                        {% else %}
+                            <div class="sin-imagen">📦</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="producto-info-section">
+                        <h3>{{ item.producto.nombre }}</h3>
+                        <p class="producto-descripcion-corta">{{ item.producto.descripcion[:80] if item.producto.descripcion else 'Sin descripción' }}...</p>
+
+                        <div class="producto-precios">
+                            <div class="precio-item">
+                                <span class="precio-label">Precio Final:</span>
+                                <span class="precio-valor">${{ "%.2f"|format(item.producto.precio_final) }}</span>
+                            </div>
+
+                            {% if item.producto.precio_oferta %}
+                                <div class="precio-item precio-oferta">
+                                    <span class="precio-label">Precio Oferta:</span>
+                                    <span class="precio-valor">${{ "%.2f"|format(item.producto.precio_oferta) }}</span>
+                                </div>
+                            {% endif %}
+
+                            <div class="precio-item">
+                                <span class="precio-label">Precio Proveedor:</span>
+                                <span class="precio-valor">${{ "%.2f"|format(item.producto.precio_proveedor) }}</span>
+                            </div>
+
+                            <div class="precio-item margen">
+                                <span class="precio-label">Margen:</span>
+                                <span class="precio-valor">${{ "%.2f"|format(item.margen) }}</span>
+                            </div>
+
+                            <div class="precio-item comision-highlight">
+                                <span class="precio-label">Tu Comisión:</span>
+                                <span class="precio-valor-grande">${{ "%.2f"|format(item.comision) }}</span>
+                                <span class="comision-porcentaje">({{ afiliado.porcentaje_comision }}%)</span>
+                            </div>
+                        </div>
+
+                        <div class="link-compartir">
+                            <input type="text" class="form-control link-input" value="{{ item.link }}" readonly>
+                            <button class="btn btn-success btn-copiar" onclick="copiarLink(this, '{{ item.link }}')">
+                                📋 Copiar Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>No hay productos activos en este momento.</p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function copiarLink(btn, link) {
+    navigator.clipboard.writeText(link).then(function() {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '✓ Copiado!';
+        btn.classList.add('copiado');
+        setTimeout(function() {
+            btn.innerHTML = originalText;
+            btn.classList.remove('copiado');
+        }, 2000);
+    }).catch(function(err) {
+        alert('Error al copiar: ' + err);
+    });
+}
+</script>
+{% endblock %}

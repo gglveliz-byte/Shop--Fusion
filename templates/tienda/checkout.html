@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout - Shop Fusion{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Finalizar Compra</h1>
+
+    <div class="checkout-contenedor">
+        <div class="checkout-form">
+            <h2>Datos de Envío</h2>
+
+            <form id="checkout-form">
+                <div class="form-group">
+                    <label for="nombre">Nombre Completo *</label>
+                    <input type="text" id="nombre" name="nombre" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="telefono">Teléfono *</label>
+                    <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="0999999999" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="direccion">Dirección de Entrega *</label>
+                    <textarea id="direccion" name="direccion" class="form-control" rows="3" placeholder="Calle, número, ciudad..." required></textarea>
+                </div>
+
+                <!-- Selector de método de pago -->
+                <div class="metodo-pago-section">
+                    <h3>Método de Pago</h3>
+
+                    <div class="metodo-pago-opciones">
+                        <label class="metodo-pago-opcion">
+                            <input type="radio" name="metodo_pago" value="whatsapp" checked>
+                            <div class="metodo-pago-card">
+                                <span class="metodo-icono">💬</span>
+                                <div class="metodo-info">
+                                    <strong>WhatsApp</strong>
+                                    <small>Coordina el pago directamente</small>
+                                </div>
+                            </div>
+                        </label>
+
+                        <label class="metodo-pago-opcion">
+                            <input type="radio" name="metodo_pago" value="paypal">
+                            <div class="metodo-pago-card">
+                                <span class="metodo-icono">💳</span>
+                                <div class="metodo-info">
+                                    <strong>PayPal / Tarjeta</strong>
+                                    <small>Pago seguro en línea</small>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Botón WhatsApp (por defecto) -->
+                <div id="btn-whatsapp-container">
+                    <div class="form-info">
+                        <p>Al hacer clic en "Comprar por WhatsApp", se abrirá una conversación con todos los datos del pedido.</p>
+                        <p>El pago se coordina directamente con el vendedor.</p>
+                    </div>
+                    <button type="button" id="btn-whatsapp" class="btn btn-success btn-block btn-lg">
+                        💬 Comprar por WhatsApp
+                    </button>
+                </div>
+
+                <!-- Botón PayPal (oculto inicialmente) -->
+                <div id="btn-paypal-container" style="display: none;">
+                    <div class="form-info">
+                        <p>Paga de forma segura con PayPal o tarjeta de crédito/débito.</p>
+                        <p>Tu pedido será procesado automáticamente.</p>
+                    </div>
+                    <div id="paypal-button-container"></div>
+                </div>
+            </form>
+        </div>
+
+        <div class="checkout-resumen">
+            <h2>Resumen del Pedido</h2>
+
+            {% for item in productos %}
+                <div class="resumen-item">
+                    <span>{{ item.nombre }} x{{ item.cantidad }}</span>
+                    <span>${{ "%.2f"|format(item.subtotal) }}</span>
+                </div>
+            {% endfor %}
+
+            <div class="resumen-total">
+                <span><strong>Total:</strong></span>
+                <span><strong>${{ "%.2f"|format(total) }}</strong></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.metodo-pago-section {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+.metodo-pago-section h3 {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    color: #334155;
+}
+
+.metodo-pago-opciones {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.metodo-pago-opcion {
+    flex: 1;
+    min-width: 200px;
+    cursor: pointer;
+}
+
+.metodo-pago-opcion input {
+    display: none;
+}
+
+.metodo-pago-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.metodo-pago-opcion input:checked + .metodo-pago-card {
+    border-color: #6366f1;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(6, 182, 212, 0.05));
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+}
+
+.metodo-icono {
+    font-size: 2rem;
+}
+
+.metodo-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.metodo-info strong {
+    color: #1e293b;
+    font-size: 1rem;
+}
+
+.metodo-info small {
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.form-info {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(6, 182, 212, 0.1));
+    padding: 1rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+}
+
+.form-info p {
+    margin: 0.5rem 0;
+    color: #475569;
+    font-size: 0.9rem;
+}
+
+#paypal-button-container {
+    min-height: 55px;
+}
+
+@media (max-width: 768px) {
+    .metodo-pago-opciones {
+        flex-direction: column;
+    }
+
+    .metodo-pago-opcion {
+        min-width: 100%;
+    }
+}
+</style>
+
+<!-- PayPal SDK -->
+<script src="https://www.paypal.com/sdk/js?client-id={{ config.PAYPAL_CLIENT_ID }}&currency=USD"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const metodoPagoInputs = document.querySelectorAll('input[name="metodo_pago"]');
+    const whatsappContainer = document.getElementById('btn-whatsapp-container');
+    const paypalContainer = document.getElementById('btn-paypal-container');
+    const btnWhatsapp = document.getElementById('btn-whatsapp');
+
+    // Carrito de productos
+    const carrito = {{ productos | tojson | safe }};
+    const total = {{ total }};
+
+    // Cambiar método de pago
+    metodoPagoInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.value === 'whatsapp') {
+                whatsappContainer.style.display = 'block';
+                paypalContainer.style.display = 'none';
+            } else {
+                whatsappContainer.style.display = 'none';
+                paypalContainer.style.display = 'block';
+            }
+        });
+    });
+
+    // Validar formulario
+    function validarFormulario() {
+        const nombre = document.getElementById('nombre').value.trim();
+        const telefono = document.getElementById('telefono').value.trim();
+        const direccion = document.getElementById('direccion').value.trim();
+
+        if (!nombre || !telefono || !direccion) {
+            alert('Por favor completa todos los campos');
+            return false;
+        }
+        return true;
+    }
+
+    // WhatsApp checkout
+    btnWhatsapp.addEventListener('click', function() {
+        if (!validarFormulario()) return;
+
+        const nombre = document.getElementById('nombre').value.trim();
+        const telefono = document.getElementById('telefono').value.trim();
+        const direccion = document.getElementById('direccion').value.trim();
+
+        // Crear mensaje para WhatsApp
+        let mensaje = "¡Hola! Quiero comprar:\n\n";
+
+        carrito.forEach(item => {
+            mensaje += `- ${item.nombre} x${item.cantidad} - $${item.subtotal.toFixed(2)}\n`;
+        });
+
+        mensaje += `\nTotal: $${total.toFixed(2)}\n\n`;
+        mensaje += `Mis datos:\n`;
+        mensaje += `👤 ${nombre}\n`;
+        mensaje += `📱 ${telefono}\n`;
+        mensaje += `📍 ${direccion}`;
+
+        // Abrir WhatsApp
+        const whatsappNumero = '{{ config.WHATSAPP_NUMBER }}';
+        const whatsappUrl = `https://wa.me/${whatsappNumero}?text=${encodeURIComponent(mensaje)}`;
+        window.open(whatsappUrl, '_blank');
+
+        // Crear pedido en el servidor
+        fetch('/api/crear-pedido', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                nombre: nombre,
+                telefono: telefono,
+                direccion: direccion,
+                carrito: carrito.map(item => ({id: item.id, cantidad: item.cantidad}))
+            })
+        });
+    });
+
+    // PayPal Buttons
+    if (typeof paypal !== 'undefined') {
+        paypal.Buttons({
+            style: {
+                layout: 'vertical',
+                color: 'blue',
+                shape: 'rect',
+                label: 'paypal'
+            },
+
+            // Crear orden
+            createOrder: function(data, actions) {
+                if (!validarFormulario()) {
+                    return Promise.reject(new Error('Formulario inválido'));
+                }
+
+                return fetch('/api/paypal/create-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        carrito: carrito.map(item => ({id: item.id, cantidad: item.cantidad}))
+                    })
+                })
+                .then(response => response.json())
+                .then(order => {
+                    if (order.error) {
+                        throw new Error(order.error);
+                    }
+                    return order.id;
+                });
+            },
+
+            // Capturar pago
+            onApprove: function(data, actions) {
+                const nombre = document.getElementById('nombre').value.trim();
+                const telefono = document.getElementById('telefono').value.trim();
+                const direccion = document.getElementById('direccion').value.trim();
+
+                return fetch('/api/paypal/capture-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        orderID: data.orderID,
+                        nombre: nombre,
+                        telefono: telefono,
+                        direccion: direccion,
+                        carrito: carrito.map(item => ({id: item.id, cantidad: item.cantidad}))
+                    })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        // Redirigir a página de éxito
+                        window.location.href = `/pedido-exitoso/${result.pedido_id}`;
+                    } else {
+                        alert('Error: ' + (result.error || 'Pago no completado'));
+                    }
+                });
+            },
+
+            onError: function(err) {
+                console.error('Error PayPal:', err);
+                alert('Hubo un error con el pago. Por favor intenta de nuevo.');
+            },
+
+            onCancel: function(data) {
+                console.log('Pago cancelado');
+            }
+        }).render('#paypal-button-container');
+    }
+});
+</script>
+{% endblock %}

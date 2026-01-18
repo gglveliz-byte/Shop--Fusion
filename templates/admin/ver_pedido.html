@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedido #{{ pedido.id }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>🛒 Pedido #{{ pedido.id }}</h1>
+        {% if pedido.estado == 'pendiente' %}
+            <span class="badge badge-warning badge-lg">Pendiente</span>
+        {% else %}
+            <span class="badge badge-success badge-lg">Pagado ✓</span>
+        {% endif %}
+    </div>
+
+    <div class="pedido-detalle">
+        <div class="pedido-seccion">
+            <h3>👤 Datos del Cliente</h3>
+            <p><strong>Nombre:</strong> {{ pedido.cliente_nombre }}</p>
+            <p><strong>Teléfono:</strong> {{ pedido.cliente_telefono }}</p>
+            <p><strong>Dirección:</strong> {{ pedido.cliente_direccion }}</p>
+        </div>
+
+        <div class="pedido-seccion">
+            <h3>📦 Productos</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unit.</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in pedido.productos_json %}
+                        <tr>
+                            <td>{{ item.nombre }}</td>
+                            <td>{{ item.cantidad }}</td>
+                            <td>${{ "%.2f"|format(item.precio) }}</td>
+                            <td>${{ "%.2f"|format(item.subtotal) }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-right"><strong>Total:</strong></td>
+                        <td><strong>${{ "%.2f"|format(pedido.total) }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="pedido-seccion">
+            <h3>📊 Información del Pedido</h3>
+            <p><strong>Fecha de creación:</strong> {{ pedido.creado_en.strftime('%d/%m/%Y %H:%M') }}</p>
+            {% if pedido.pagado_en %}
+                <p><strong>Fecha de pago:</strong> {{ pedido.pagado_en.strftime('%d/%m/%Y %H:%M') }}</p>
+            {% endif %}
+            <p><strong>Afiliado:</strong>
+                {% if pedido.afiliado %}
+                    {{ pedido.afiliado.nombre }} ({{ pedido.afiliado.codigo }})
+                {% else %}
+                    Sin afiliado
+                {% endif %}
+            </p>
+        </div>
+
+        {% if pedido.afiliado and pedido.estado == 'pagado' %}
+            <div class="pedido-seccion pedido-comision">
+                <h3>💰 Comisión Generada</h3>
+                {% set comision = pedido.comisiones.first() %}
+                {% if comision %}
+                    <p><strong>Margen total:</strong> ${{ "%.2f"|format(comision.margen) }}</p>
+                    <p><strong>Porcentaje afiliado:</strong> {{ pedido.afiliado.porcentaje_comision }}%</p>
+                    <p><strong>Comisión:</strong> <span class="precio-comision">${{ "%.2f"|format(comision.monto) }}</span></p>
+                    <p><strong>Estado comisión:</strong>
+                        {% if comision.estado == 'generada' %}
+                            <span class="badge badge-info">Generada</span>
+                        {% elif comision.estado == 'pagada' %}
+                            <span class="badge badge-success">Pagada</span>
+                        {% endif %}
+                    </p>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <div class="pedido-acciones">
+            {% if pedido.estado == 'pendiente' %}
+                <form method="POST" action="{{ url_for('admin.marcar_pedido_pagado', id=pedido.id) }}">
+                    <button type="submit" class="btn btn-success btn-lg" onclick="return confirm('¿Marcar este pedido como PAGADO? Esto generará la comisión automáticamente.')">
+                        ✓ Marcar como Pagado
+                    </button>
+                </form>
+            {% else %}
+                <p class="text-success">✅ Este pedido ya fue marcado como pagado</p>
+            {% endif %}
+
+            <a href="{{ url_for('admin.pedidos') }}" class="btn btn-secondary">← Volver a Pedidos</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

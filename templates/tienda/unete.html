@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Únete como Afiliado - Shop Fusion{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="unete-container">
+        <h1>💼 Trabaja con Nosotros</h1>
+        <h2>Únete como Afiliado</h2>
+
+        <div class="unete-beneficios">
+            <h3>¿Por qué ser afiliado?</h3>
+            <ul class="beneficios-lista">
+                <li>💰 Gana comisiones por cada venta</li>
+                <li>📱 Trabaja desde cualquier lugar</li>
+                <li>🔗 Comparte links únicos en tus redes sociales</li>
+                <li>📊 Panel personal para ver tus ganancias</li>
+                <li>⚡ Sin inversión inicial</li>
+                <li>🎯 Comisiones sobre el margen de cada producto</li>
+            </ul>
+        </div>
+
+        <div class="unete-proceso">
+            <h3>¿Cómo funciona?</h3>
+            <div class="proceso-pasos">
+                <div class="paso">
+                    <div class="paso-numero">1</div>
+                    <p>Contáctanos por WhatsApp expresando tu interés</p>
+                </div>
+                <div class="paso">
+                    <div class="paso-numero">2</div>
+                    <p>Te explicamos las condiciones y porcentaje de comisión</p>
+                </div>
+                <div class="paso">
+                    <div class="paso-numero">3</div>
+                    <p>Creamos tu cuenta de afiliado con código único</p>
+                </div>
+                <div class="paso">
+                    <div class="paso-numero">4</div>
+                    <p>¡Comienza a compartir y ganar!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="unete-cta">
+            <a href="{{ whatsapp_url }}" target="_blank" class="btn btn-success btn-lg">
+                💬 Contactar por WhatsApp
+            </a>
+        </div>
+
+        <div class="unete-footer">
+            <p>¿Ya tienes cuenta? <a href="{{ url_for('auth.afiliado_login') }}">Inicia sesión aquí</a></p>
+            <p><a href="{{ url_for('tienda.index') }}">← Volver a la tienda</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

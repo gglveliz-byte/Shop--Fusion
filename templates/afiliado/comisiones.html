@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Comisiones - Afiliado{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>💰 Mis Comisiones</h1>
+
+    <div class="comisiones-resumen-afiliado">
+        <div class="resumen-card">
+            <div class="resumen-icon">⏳</div>
+            <div class="resumen-info">
+                <p class="resumen-label">Pendientes</p>
+                <p class="resumen-valor">${{ "%.2f"|format(total_pendiente) }}</p>
+            </div>
+        </div>
+
+        <div class="resumen-card">
+            <div class="resumen-icon">✅</div>
+            <div class="resumen-info">
+                <p class="resumen-label">Generadas</p>
+                <p class="resumen-valor">${{ "%.2f"|format(total_generado) }}</p>
+            </div>
+        </div>
+
+        <div class="resumen-card">
+            <div class="resumen-icon">💰</div>
+            <div class="resumen-info">
+                <p class="resumen-label">Pagadas</p>
+                <p class="resumen-valor">${{ "%.2f"|format(total_pagado) }}</p>
+            </div>
+        </div>
+
+        <div class="resumen-card resumen-total">
+            <div class="resumen-icon">🎯</div>
+            <div class="resumen-info">
+                <p class="resumen-label">Total Ganado</p>
+                <p class="resumen-valor-grande">${{ "%.2f"|format(total_ganado) }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="filtros">
+        <a href="{{ url_for('afiliado.comisiones', estado='todos') }}" class="btn {% if estado_filter == 'todos' %}btn-primary{% else %}btn-secondary{% endif %}">Todas</a>
+        <a href="{{ url_for('afiliado.comisiones', estado='pendiente') }}" class="btn {% if estado_filter == 'pendiente' %}btn-warning{% else %}btn-secondary{% endif %}">Pendientes</a>
+        <a href="{{ url_for('afiliado.comisiones', estado='generada') }}" class="btn {% if estado_filter == 'generada' %}btn-info{% else %}btn-secondary{% endif %}">Generadas</a>
+        <a href="{{ url_for('afiliado.comisiones', estado='pagada') }}" class="btn {% if estado_filter == 'pagada' %}btn-success{% else %}btn-secondary{% endif %}">Pagadas</a>
+    </div>
+
+    {% if comisiones %}
+        <div class="comisiones-lista">
+            {% for comision in comisiones %}
+                <div class="comision-card">
+                    <div class="comision-header">
+                        <div>
+                            <h3>Pedido #{{ comision.pedido_id }}</h3>
+                            <p class="comision-fecha">{{ comision.creado_en.strftime('%d/%m/%Y %H:%M') }}</p>
+                        </div>
+                        <div class="comision-estado">
+                            {% if comision.estado == 'pendiente' %}
+                                <span class="badge badge-warning badge-lg">⏳ Pendiente</span>
+                            {% elif comision.estado == 'generada' %}
+                                <span class="badge badge-info badge-lg">✅ Generada</span>
+                            {% else %}
+                                <span class="badge badge-success badge-lg">💰 Pagada</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="comision-detalles">
+                        <h4>Productos Vendidos:</h4>
+                        <ul class="productos-vendidos">
+                            {% for item in comision.pedido.productos_json %}
+                                <li>{{ item.nombre }} x{{ item.cantidad }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="comision-numeros">
+                        <div class="numero-item">
+                            <span class="numero-label">Margen Total:</span>
+                            <span class="numero-valor">${{ "%.2f"|format(comision.margen) }}</span>
+                        </div>
+                        <div class="numero-item numero-comision">
+                            <span class="numero-label">Tu Comisión:</span>
+                            <span class="numero-valor-grande">${{ "%.2f"|format(comision.monto) }}</span>
+                        </div>
+                    </div>
+
+                    {% if comision.pagada_en %}
+                        <p class="comision-pagada-fecha">Pagada el {{ comision.pagada_en.strftime('%d/%m/%Y') }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>No tienes comisiones para mostrar con los filtros seleccionados.</p>
+            <a href="{{ url_for('afiliado.productos') }}" class="btn btn-primary">Ir a Productos</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

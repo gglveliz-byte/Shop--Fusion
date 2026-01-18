@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedido Confirmado - Shop Fusion{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="confirmacion-box">
+        <div class="confirmacion-icono">✅</div>
+        <h1>¡Pedido Registrado!</h1>
+        <p class="pedido-numero">Pedido #{{ pedido.id }}</p>
+
+        <p>Tu pedido ha sido registrado exitosamente. Ahora completa tu compra contactándonos por WhatsApp.</p>
+
+        <div class="confirmacion-detalles">
+            <h3>Datos del Pedido:</h3>
+            <p><strong>Nombre:</strong> {{ pedido.cliente_nombre }}</p>
+            <p><strong>Teléfono:</strong> {{ pedido.cliente_telefono }}</p>
+            <p><strong>Dirección:</strong> {{ pedido.cliente_direccion }}</p>
+            <p><strong>Total:</strong> ${{ "%.2f"|format(pedido.total) }}</p>
+        </div>
+
+        <a href="{{ whatsapp_url }}" target="_blank" class="btn btn-success btn-lg">
+            💬 Abrir WhatsApp
+        </a>
+
+        <div class="mensaje-preview">
+            <h4>Vista previa del mensaje:</h4>
+            <pre>{{ mensaje }}</pre>
+        </div>
+
+        <div class="confirmacion-footer">
+            <a href="{{ url_for('tienda.index') }}" class="btn btn-secondary">← Volver a la tienda</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

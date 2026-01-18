@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedidos - Admin{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>🛒 Gestión de Pedidos</h1>
+
+    <div class="filtros">
+        <a href="{{ url_for('admin.pedidos', estado='todos') }}" class="btn {% if estado_filter == 'todos' %}btn-primary{% else %}btn-secondary{% endif %}">Todos</a>
+        <a href="{{ url_for('admin.pedidos', estado='pendiente') }}" class="btn {% if estado_filter == 'pendiente' %}btn-warning{% else %}btn-secondary{% endif %}">Pendientes</a>
+        <a href="{{ url_for('admin.pedidos', estado='pagado') }}" class="btn {% if estado_filter == 'pagado' %}btn-success{% else %}btn-secondary{% endif %}">Pagados</a>
+    </div>
+
+    {% if pedidos %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Cliente</th>
+                    <th>Teléfono</th>
+                    <th>Total</th>
+                    <th>Afiliado</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pedido in pedidos %}
+                    <tr>
+                        <td>#{{ pedido.id }}</td>
+                        <td>{{ pedido.cliente_nombre }}</td>
+                        <td>{{ pedido.cliente_telefono }}</td>
+                        <td>${{ "%.2f"|format(pedido.total) }}</td>
+                        <td>
+                            {% if pedido.afiliado %}
+                                <span class="badge badge-info">{{ pedido.afiliado.codigo }}</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if pedido.estado == 'pendiente' %}
+                                <span class="badge badge-warning">Pendiente</span>
+                            {% else %}
+                                <span class="badge badge-success">Pagado</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ pedido.creado_en.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.ver_pedido', id=pedido.id) }}" class="btn btn-sm btn-primary">Ver Detalle</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No hay pedidos para mostrar.</p>
+    {% endif %}
+</div>
+{% endblock %}

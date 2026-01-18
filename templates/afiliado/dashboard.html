@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Afiliado - Shop Fusion{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>👋 Bienvenido, {{ afiliado.nombre }}</h1>
+    <p class="subtitle">Tu código de afiliado: <strong class="codigo-afiliado">{{ afiliado.codigo }}</strong></p>
+
+    <div class="dashboard-grid">
+        <div class="stat-card stat-pendiente">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-info">
+                <h3>${{ "%.2f"|format(total_pendiente) }}</h3>
+                <p>Comisiones Pendientes</p>
+            </div>
+        </div>
+
+        <div class="stat-card stat-generada">
+            <div class="stat-icon">💵</div>
+            <div class="stat-info">
+                <h3>${{ "%.2f"|format(total_generado) }}</h3>
+                <p>Comisiones Generadas</p>
+            </div>
+        </div>
+
+        <div class="stat-card stat-pagada">
+            <div class="stat-icon">💰</div>
+            <div class="stat-info">
+                <h3>${{ "%.2f"|format(total_pagado) }}</h3>
+                <p>Comisiones Pagadas</p>
+            </div>
+        </div>
+
+        <div class="stat-card stat-total">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-info">
+                <h3>${{ "%.2f"|format(total_ganado) }}</h3>
+                <p>Total Ganado</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="afiliado-info-card">
+        <h3>📊 Tu Información</h3>
+        <p><strong>Porcentaje de comisión:</strong> {{ afiliado.porcentaje_comision }}% del margen</p>
+        <p><strong>Total de pedidos generados:</strong> {{ total_pedidos }}</p>
+        <p><strong>Miembro desde:</strong> {{ afiliado.creado_en.strftime('%d/%m/%Y') }}</p>
+    </div>
+
+    {% if ultimas_comisiones %}
+        <div class="dashboard-section">
+            <h2>💰 Últimas Comisiones</h2>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Pedido</th>
+                        <th>Fecha</th>
+                        <th>Margen</th>
+                        <th>Comisión</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for comision in ultimas_comisiones %}
+                        <tr>
+                            <td>Pedido #{{ comision.pedido_id }}</td>
+                            <td>{{ comision.creado_en.strftime('%d/%m/%Y') }}</td>
+                            <td>${{ "%.2f"|format(comision.margen) }}</td>
+                            <td><strong>${{ "%.2f"|format(comision.monto) }}</strong></td>
+                            <td>
+                                {% if comision.estado == 'pendiente' %}
+                                    <span class="badge badge-warning">⏳ Pendiente</span>
+                                {% elif comision.estado == 'generada' %}
+                                    <span class="badge badge-info">✅ Generada</span>
+                                {% else %}
+                                    <span class="badge badge-success">💰 Pagada</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <a href="{{ url_for('afiliado.comisiones') }}" class="btn btn-secondary">Ver todas mis comisiones →</a>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>Aún no has generado comisiones. ¡Comparte tus links de productos para comenzar a ganar!</p>
+            <a href="{{ url_for('afiliado.productos') }}" class="btn btn-primary">Ver Productos</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

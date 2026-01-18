@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Shop Fusion{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% block body %}
+    <nav class="navbar">
+        <div class="container">
+            <a href="{{ url_for('tienda.index') }}" class="logo">🛍️ Shop Fusion</a>
+
+            <div class="nav-links">
+                {% if current_user.is_authenticated %}
+                    {% if current_user.__class__.__name__ == 'Admin' %}
+                        <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+                        <a href="{{ url_for('admin.productos') }}">Productos</a>
+                        <a href="{{ url_for('admin.pedidos') }}">Pedidos</a>
+                        <a href="{{ url_for('admin.afiliados') }}">Afiliados</a>
+                        <a href="{{ url_for('admin.comisiones') }}">Comisiones</a>
+                        <a href="{{ url_for('auth.logout') }}" class="btn-logout">Cerrar Sesión</a>
+                    {% elif current_user.__class__.__name__ == 'Afiliado' %}
+                        <a href="{{ url_for('afiliado.dashboard') }}">Dashboard</a>
+                        <a href="{{ url_for('afiliado.productos') }}">Productos</a>
+                        <a href="{{ url_for('afiliado.comisiones') }}">Mis Comisiones</a>
+                        <a href="{{ url_for('auth.logout') }}" class="btn-logout">Cerrar Sesión</a>
+                    {% endif %}
+                {% else %}
+                    <a href="{{ url_for('tienda.index') }}">Inicio</a>
+                    <a href="{{ url_for('tienda.carrito') }}">🛒 Carrito</a>
+                    <a href="{{ url_for('tienda.unete') }}" class="btn-primary">Únete como Afiliado</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                        <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 Shop Fusion - Sistema de Afiliados</p>
+        </div>
+    </footer>
+    {% endblock %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

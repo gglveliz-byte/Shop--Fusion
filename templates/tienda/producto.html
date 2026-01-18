@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ producto.nombre }} - Shop Fusion{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="breadcrumb">
+        <a href="{{ url_for('tienda.index') }}">Inicio</a> / {{ producto.nombre }}
+    </div>
+
+    <div class="producto-detalle">
+        <div class="producto-imagen-grande">
+            {% if producto.imagen %}
+                <img src="{{ url_for('static', filename='uploads/' + producto.imagen) }}" alt="{{ producto.nombre }}">
+            {% else %}
+                <div class="sin-imagen-grande">📦</div>
+            {% endif %}
+        </div>
+
+        <div class="producto-info-detalle">
+            <h1>{{ producto.nombre }}</h1>
+
+            <div class="producto-precio-detalle">
+                {% if producto.precio_oferta %}
+                    <span class="precio-anterior">${{ "%.2f"|format(producto.precio_final) }}</span>
+                    <span class="precio-actual">${{ "%.2f"|format(producto.precio_oferta) }}</span>
+                    <span class="precio-badge">¡Oferta!</span>
+                    <p class="ahorro">¡Ahorras ${{ "%.2f"|format(producto.precio_final - producto.precio_oferta) }}!</p>
+                {% else %}
+                    <span class="precio-actual">${{ "%.2f"|format(producto.precio_final) }}</span>
+                {% endif %}
+            </div>
+
+            <div class="producto-descripcion-completa">
+                <h3>Descripción</h3>
+                <p>{{ producto.descripcion if producto.descripcion else 'Sin descripción disponible.' }}</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('tienda.agregar_carrito', id=producto.id) }}" class="form-agregar-carrito">
+                <div class="form-group">
+                    <label for="cantidad">Cantidad:</label>
+                    <input type="number" id="cantidad" name="cantidad" value="1" min="1" max="99" class="form-control" style="width: 100px;">
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg">🛒 Agregar al Carrito</button>
+            </form>
+
+            {% if afiliado_codigo %}
+                <div class="afiliado-info">
+                    ✨ Comprando a través del afiliado: <strong>{{ afiliado_codigo }}</strong>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="volver">
+        <a href="{{ url_for('tienda.index') }}" class="btn btn-secondary">← Volver a la tienda</a>
+    </div>
+</div>
+{% endblock %}

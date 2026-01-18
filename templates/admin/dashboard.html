@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Admin - Shop Fusion{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>📊 Dashboard Administrador</h1>
+
+    <div class="dashboard-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-info">
+                <h3>{{ total_productos }}</h3>
+                <p>Productos Activos</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">🛒</div>
+            <div class="stat-info">
+                <h3>{{ total_pedidos }}</h3>
+                <p>Total Pedidos</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-info">
+                <h3>{{ pedidos_pendientes }}</h3>
+                <p>Pedidos Pendientes</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-info">
+                <h3>{{ pedidos_pagados }}</h3>
+                <p>Pedidos Pagados</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-info">
+                <h3>{{ total_afiliados }}</h3>
+                <p>Afiliados Activos</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-info">
+                <h3>${{ "%.2f"|format(comisiones_pendientes) }}</h3>
+                <p>Comisiones por Pagar</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-section">
+        <h2>Últimos Pedidos</h2>
+
+        {% if ultimos_pedidos %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Cliente</th>
+                        <th>Total</th>
+                        <th>Afiliado</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in ultimos_pedidos %}
+                        <tr>
+                            <td>#{{ pedido.id }}</td>
+                            <td>{{ pedido.cliente_nombre }}</td>
+                            <td>${{ "%.2f"|format(pedido.total) }}</td>
+                            <td>
+                                {% if pedido.afiliado %}
+                                    {{ pedido.afiliado.codigo }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if pedido.estado == 'pendiente' %}
+                                    <span class="badge badge-warning">Pendiente</span>
+                                {% else %}
+                                    <span class="badge badge-success">Pagado</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ pedido.creado_en.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.ver_pedido', id=pedido.id) }}" class="btn btn-sm btn-primary">Ver</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <a href="{{ url_for('admin.pedidos') }}" class="btn btn-secondary">Ver todos los pedidos →</a>
+        {% else %}
+            <p class="text-muted">No hay pedidos todavía.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
