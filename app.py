@@ -9,6 +9,7 @@ from models import db, setup_login_manager
 # Inicializar login manager
 login_manager = LoginManager()
 
+
 def create_app(config_class=Config):
     """Factory para crear la aplicación Flask"""
     app = Flask(__name__)
@@ -36,31 +37,39 @@ def create_app(config_class=Config):
     # Manejadores de errores
     @app.errorhandler(404)
     def page_not_found(e):
-        return render_template('error.html',
-                             error_code=404,
-                             error_title='Página no encontrada',
-                             error_message='La página que buscas no existe o fue movida.'), 404
+        return render_template(
+            'error.html',
+            error_code=404,
+            error_title='Página no encontrada',
+            error_message='La página que buscas no existe o fue movida.'
+        ), 404
 
     @app.errorhandler(500)
     def internal_error(e):
-        return render_template('error.html',
-                             error_code=500,
-                             error_title='Error del servidor',
-                             error_message='Algo salió mal en nuestro servidor. Intenta de nuevo más tarde.'), 500
+        return render_template(
+            'error.html',
+            error_code=500,
+            error_title='Error del servidor',
+            error_message='Algo salió mal en nuestro servidor. Intenta de nuevo más tarde.'
+        ), 500
 
     @app.errorhandler(403)
     def forbidden(e):
-        return render_template('error.html',
-                             error_code=403,
-                             error_title='Acceso denegado',
-                             error_message='No tienes permiso para acceder a esta página.'), 403
+        return render_template(
+            'error.html',
+            error_code=403,
+            error_title='Acceso denegado',
+            error_message='No tienes permiso para acceder a esta página.'
+        ), 403
 
     @app.errorhandler(400)
     def bad_request(e):
-        return render_template('error.html',
-                             error_code=400,
-                             error_title='Solicitud incorrecta',
-                             error_message='La solicitud no pudo ser procesada.'), 400
+        return render_template(
+            'error.html',
+            error_code=400,
+            error_title='Solicitud incorrecta',
+            error_message='La solicitud no pudo ser procesada.'
+        ), 400
 
     # Crear tablas en la base de datos
     with app.app_context():
@@ -68,6 +77,10 @@ def create_app(config_class=Config):
 
     return app
 
-if __name__ == '__main__':
-    app = create_app()
+
+# 👇👇👇 ESTO ES LO QUE ARREGLA RENDER 👇👇👇
+app = create_app()
+
+
+if __name__ == "__main__":
     app.run(debug=True)
