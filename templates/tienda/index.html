@@ -41,6 +41,39 @@
     </div>
 </div>
 
+<!-- Banner de Garantía y Pago Contra Entrega -->
+<div class="garantia-banner" id="garantia-banner">
+    <div class="garantia-banner-content">
+        <button class="garantia-close" onclick="cerrarBannerGarantia()">&times;</button>
+        <div class="garantia-icon-main">🛡️</div>
+        <h3 class="garantia-titulo">¡Compra con Confianza!</h3>
+        <div class="garantia-items">
+            <div class="garantia-item">
+                <span class="garantia-item-icon">🚚</span>
+                <div class="garantia-item-text">
+                    <strong>Envíos a Todo el País</strong>
+                    <p>Llegamos a cualquier parte de Ecuador</p>
+                </div>
+            </div>
+            <div class="garantia-item destacado-verde">
+                <span class="garantia-item-icon">📱💻</span>
+                <div class="garantia-item-text">
+                    <strong>1 Año de Garantía</strong>
+                    <p>Solo en Teléfonos y Computadoras</p>
+                </div>
+            </div>
+            <div class="garantia-item destacado">
+                <span class="garantia-item-icon">💵</span>
+                <div class="garantia-item-text">
+                    <strong>Pago Contra Entrega</strong>
+                    <p>Paga cuando recibas tu producto (excepto celulares y computadoras)</p>
+                </div>
+            </div>
+        </div>
+        <button class="garantia-btn-entendido" onclick="cerrarBannerGarantia()">¡Entendido!</button>
+    </div>
+</div>
+
 <!-- Carrito Flotante -->
 <div id="carrito-flotante" class="carrito-flotante" onclick="toggleCarrito()">
     <span class="carrito-icono">🛒</span>
@@ -974,6 +1007,39 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
         setTimeout(() => notif.remove(), 300);
     }, 3000);
 }
+
+// ========================================
+// BANNER DE GARANTÍA
+// ========================================
+function cerrarBannerGarantia() {
+    const banner = document.getElementById('garantia-banner');
+    if (banner) {
+        banner.classList.add('hidden');
+        // Guardar en localStorage que ya se vio el banner (expira en 24 horas)
+        const expiracion = new Date().getTime() + (24 * 60 * 60 * 1000);
+        localStorage.setItem('garantia_banner_visto', expiracion);
+        setTimeout(() => banner.remove(), 300);
+    }
+}
+
+function verificarBannerGarantia() {
+    const banner = document.getElementById('garantia-banner');
+    const visto = localStorage.getItem('garantia_banner_visto');
+
+    if (visto) {
+        const expiracion = parseInt(visto);
+        if (new Date().getTime() < expiracion) {
+            // Aún no ha expirado, ocultar el banner
+            if (banner) banner.remove();
+            return;
+        }
+    }
+    // Mostrar el banner
+    if (banner) banner.style.display = 'flex';
+}
+
+// Verificar al cargar la página
+document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
 </script>
 
 <style>
@@ -2365,6 +2431,204 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
     .producto-acciones .btn { padding: 0.4rem; font-size: 0.7rem; }
     .oferta-tag { font-size: 0.6rem; padding: 0.25rem 0.5rem; }
     .img-counter { display: none; }
+}
+
+/* ========================================
+   BANNER DE GARANTÍA Y PAGO CONTRA ENTREGA
+   ======================================== */
+.garantia-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+    padding: 20px;
+}
+
+.garantia-banner.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.garantia-banner-content {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+    border-radius: 24px;
+    padding: 2rem;
+    max-width: 450px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 25px 80px rgba(102, 126, 234, 0.4);
+    animation: bannerEntrada 0.4s ease-out;
+    border: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+@keyframes bannerEntrada {
+    from {
+        transform: scale(0.8) translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+.garantia-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #f1f5f9;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 24px;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.garantia-close:hover {
+    background: #ef4444;
+    color: white;
+    transform: rotate(90deg);
+}
+
+.garantia-icon-main {
+    font-size: 4rem;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    animation: escudoPulse 2s ease-in-out infinite;
+}
+
+@keyframes escudoPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.garantia-titulo {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin: 0 0 1.5rem 0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.garantia-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.garantia-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: white;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border-left: 4px solid #667eea;
+    transition: transform 0.3s ease;
+}
+
+.garantia-item:hover {
+    transform: translateX(5px);
+}
+
+.garantia-item.destacado {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-left-color: #f59e0b;
+}
+
+.garantia-item.destacado-verde {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border-left-color: #10b981;
+}
+
+.garantia-item-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.garantia-item-text strong {
+    display: block;
+    font-size: 1rem;
+    color: #1e293b;
+    margin-bottom: 2px;
+}
+
+.garantia-item-text p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.garantia-btn-entendido {
+    width: 100%;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.garantia-btn-entendido:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+}
+
+@media (max-width: 500px) {
+    .garantia-banner-content {
+        padding: 1.5rem;
+        border-radius: 20px;
+    }
+
+    .garantia-icon-main {
+        font-size: 3rem;
+    }
+
+    .garantia-titulo {
+        font-size: 1.25rem;
+    }
+
+    .garantia-item {
+        padding: 0.875rem;
+    }
+
+    .garantia-item-icon {
+        font-size: 1.5rem;
+    }
+
+    .garantia-item-text strong {
+        font-size: 0.9rem;
+    }
+
+    .garantia-item-text p {
+        font-size: 0.8rem;
+    }
 }
 </style>
 {% endblock %}

@@ -3,6 +3,40 @@
 {% block title %}Productos - Afiliado{% endblock %}
 
 {% block content %}
+<!-- Banner de Garantía y Pago Contra Entrega -->
+<div class="garantia-banner" id="garantia-banner">
+    <div class="garantia-banner-content">
+        <button class="garantia-close" onclick="cerrarBannerGarantia()">&times;</button>
+        <div class="garantia-icon-main">🛡️</div>
+        <h3 class="garantia-titulo">¡Información Importante para tus Clientes!</h3>
+        <div class="garantia-items">
+            <div class="garantia-item">
+                <span class="garantia-item-icon">🚚</span>
+                <div class="garantia-item-text">
+                    <strong>Envíos a Todo el País</strong>
+                    <p>Llegamos a cualquier parte de Ecuador</p>
+                </div>
+            </div>
+            <div class="garantia-item destacado-verde">
+                <span class="garantia-item-icon">📱💻</span>
+                <div class="garantia-item-text">
+                    <strong>1 Año de Garantía</strong>
+                    <p>Solo en Teléfonos y Computadoras</p>
+                </div>
+            </div>
+            <div class="garantia-item destacado">
+                <span class="garantia-item-icon">💵</span>
+                <div class="garantia-item-text">
+                    <strong>Pago Contra Entrega</strong>
+                    <p>Excepto celulares y computadoras</p>
+                </div>
+            </div>
+        </div>
+        <p class="garantia-nota">Comparte esta información con tus clientes para generar más confianza</p>
+        <button class="garantia-btn-entendido" onclick="cerrarBannerGarantia()">¡Entendido!</button>
+    </div>
+</div>
+
 <div class="container">
     <h1>📦 Productos para Compartir</h1>
     <p class="subtitle">Comparte estos links y gana comisiones por cada venta</p>
@@ -178,6 +212,34 @@
                                 <input type="text" class="link-input" value="{{ item.link }}" readonly>
                                 <button class="btn-copiar" onclick="copiarLink(this, '{{ item.link }}')">
                                     📋 Copiar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Botones de Compartir en Redes Sociales -->
+                        <div class="compartir-section">
+                            <label>Compartir en redes:</label>
+                            <div class="compartir-botones">
+                                <!-- Botón principal para Estados/Historias -->
+                                <button class="btn-share btn-estado" onclick="compartirEstado('{{ imagen_principal }}', '{{ item.producto.nombre|replace("'", "") }}', '{{ item.producto.descripcion[:100]|replace("'", "")|replace("\n", " ") if item.producto.descripcion else "Producto disponible" }}', '{{ "%.2f"|format(item.producto.precio_oferta if item.producto.precio_oferta else item.producto.precio_final) }}', '{{ item.link }}')" title="Compartir en Estado/Historia (WhatsApp, Instagram, Facebook)">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                                    <span>Estado</span>
+                                </button>
+                                <button class="btn-share btn-whatsapp" onclick="compartirWhatsApp('{{ item.producto.nombre|replace("'", "") }}', '{{ item.producto.descripcion[:100]|replace("'", "")|replace("\n", " ") if item.producto.descripcion else "Producto disponible" }}', '{{ "%.2f"|format(item.producto.precio_oferta if item.producto.precio_oferta else item.producto.precio_final) }}', '{{ item.link }}')" title="Compartir en WhatsApp Chat">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                    <span>Chat</span>
+                                </button>
+                                <button class="btn-share btn-facebook" onclick="compartirFacebook('{{ item.link }}')" title="Compartir en Facebook">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                                    <span>Facebook</span>
+                                </button>
+                                <button class="btn-share btn-descargar" onclick="descargarParaInstagram('{{ imagen_principal }}', '{{ item.producto.nombre|replace("'", "") }}', '{{ item.producto.descripcion[:100]|replace("'", "")|replace("\n", " ") if item.producto.descripcion else "" }}', '{{ "%.2f"|format(item.producto.precio_oferta if item.producto.precio_oferta else item.producto.precio_final) }}', '{{ item.link }}')" title="Descargar imagen + texto">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                                    <span>Descargar</span>
+                                </button>
+                                <button class="btn-share btn-copiar-texto" onclick="copiarTextoCompleto('{{ item.producto.nombre|replace("'", "") }}', '{{ item.producto.descripcion[:150]|replace("'", "")|replace("\n", " ") if item.producto.descripcion else "" }}', '{{ "%.2f"|format(item.producto.precio_oferta if item.producto.precio_oferta else item.producto.precio_final) }}', '{{ item.link }}')" title="Copiar texto completo">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                                    <span>Texto</span>
                                 </button>
                             </div>
                         </div>
@@ -382,6 +444,263 @@ function aplicarFiltros() {
     const hayFiltros = categoriaActual !== 'todos' || marcaActual !== 'todas' || busquedaActual !== '';
     btnLimpiar.style.display = hayFiltros ? 'inline-block' : 'none';
 }
+
+// ========================================
+// FUNCIONES DE COMPARTIR EN REDES SOCIALES
+// ========================================
+
+// Función principal para compartir a Estados/Historias
+async function compartirEstado(imagenUrl, nombre, descripcion, precio, link) {
+    const textoCompartir = `🔥 ${nombre}\n\n${descripcion}\n\n💰 Precio: $${precio}\n\n👉 ${link}`;
+
+    // Verificar si el navegador soporta Web Share API con archivos
+    if (navigator.share && navigator.canShare) {
+        try {
+            // Intentar obtener la imagen como archivo
+            if (imagenUrl && imagenUrl !== '/static/img/no-image.png' && imagenUrl !== '') {
+                const response = await fetch(imagenUrl);
+                const blob = await response.blob();
+                const file = new File([blob], 'producto.jpg', { type: 'image/jpeg' });
+
+                // Verificar si se puede compartir con archivo
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: nombre,
+                        text: textoCompartir,
+                        files: [file]
+                    });
+                    mostrarNotificacion('¡Selecciona WhatsApp Status, Instagram Stories o Facebook Stories!');
+                    return;
+                }
+            }
+
+            // Si no hay imagen o no se puede compartir archivo, compartir solo texto
+            await navigator.share({
+                title: nombre,
+                text: textoCompartir,
+                url: link
+            });
+            mostrarNotificacion('¡Compartido! Selecciona tu app favorita.');
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                // Si falla, usar método alternativo
+                compartirEstadoAlternativo(imagenUrl, nombre, descripcion, precio, link);
+            }
+        }
+    } else {
+        // Navegador no soporta Web Share API
+        compartirEstadoAlternativo(imagenUrl, nombre, descripcion, precio, link);
+    }
+}
+
+// Método alternativo cuando Web Share no está disponible
+function compartirEstadoAlternativo(imagenUrl, nombre, descripcion, precio, link) {
+    const texto = `🔥 ${nombre}
+
+${descripcion}
+
+💰 Precio: $${precio}
+
+👉 Comprar aquí: ${link}
+
+#ofertas #productos #tiendaonline`;
+
+    // Copiar texto al portapapeles
+    navigator.clipboard.writeText(texto).then(function() {
+        // Si hay imagen, descargarla
+        if (imagenUrl && imagenUrl !== '/static/img/no-image.png' && imagenUrl !== '') {
+            fetch(imagenUrl)
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = nombre.replace(/[^a-zA-Z0-9]/g, '_') + '.jpg';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    mostrarNotificacionEstado();
+                })
+                .catch(() => {
+                    mostrarNotificacionEstado();
+                });
+        } else {
+            mostrarNotificacionEstado();
+        }
+    });
+}
+
+function mostrarNotificacionEstado() {
+    // Crear modal con instrucciones
+    const modal = document.createElement('div');
+    modal.className = 'modal-estado';
+    modal.innerHTML = `
+        <div class="modal-estado-content">
+            <h3>¡Listo para compartir!</h3>
+            <p class="modal-estado-texto">📋 Texto copiado + 📷 Imagen descargada</p>
+            <div class="modal-estado-pasos">
+                <div class="paso">
+                    <span class="paso-num">1</span>
+                    <span>Abre WhatsApp, Instagram o Facebook</span>
+                </div>
+                <div class="paso">
+                    <span class="paso-num">2</span>
+                    <span>Ve a crear Estado/Historia</span>
+                </div>
+                <div class="paso">
+                    <span class="paso-num">3</span>
+                    <span>Selecciona la imagen descargada</span>
+                </div>
+                <div class="paso">
+                    <span class="paso-num">4</span>
+                    <span>Pega el texto (Ctrl+V o mantén presionado)</span>
+                </div>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()">¡Entendido!</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function compartirWhatsApp(nombre, descripcion, precio, link) {
+    const mensaje = `🔥 *${nombre}*\n\n${descripcion}\n\n💰 *Precio: $${precio}*\n\n👉 Comprar aquí: ${link}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+}
+
+function compartirFacebook(link) {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+}
+
+function compartirTwitter(nombre, precio, link) {
+    const texto = `🔥 ${nombre}\n💰 Precio: $${precio}\n\n👉 `;
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(texto)}&url=${encodeURIComponent(link)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+}
+
+function copiarTextoCompleto(nombre, descripcion, precio, link) {
+    const texto = `🔥 ${nombre}
+
+${descripcion}
+
+💰 Precio: $${precio}
+
+👉 Comprar aquí: ${link}
+
+¡Envíame un mensaje si te interesa!`;
+
+    navigator.clipboard.writeText(texto).then(function() {
+        mostrarNotificacion('Texto copiado. Pégalo en cualquier red social.');
+    }).catch(function(err) {
+        // Fallback para navegadores antiguos
+        const textarea = document.createElement('textarea');
+        textarea.value = texto;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        mostrarNotificacion('Texto copiado. Pégalo en cualquier red social.');
+    });
+}
+
+function descargarParaInstagram(imagenUrl, nombre, descripcion, precio, link) {
+    // Crear el texto para copiar al portapapeles
+    const texto = `🔥 ${nombre}
+
+${descripcion}
+
+💰 Precio: $${precio}
+
+👉 Link en mi bio o escríbeme para más info
+${link}
+
+#ofertas #productos #tiendaonline`;
+
+    // Copiar el texto al portapapeles
+    navigator.clipboard.writeText(texto).then(function() {
+        // Si hay imagen, intentar descargarla
+        if (imagenUrl && imagenUrl !== '/static/img/no-image.png') {
+            // Crear link de descarga
+            const a = document.createElement('a');
+            a.href = imagenUrl;
+            a.download = nombre.replace(/[^a-zA-Z0-9]/g, '_') + '.jpg';
+            a.target = '_blank';
+
+            // Intentar descargar
+            fetch(imagenUrl)
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    a.href = url;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    mostrarNotificacion('Imagen descargada y texto copiado. ¡Listo para Instagram!');
+                })
+                .catch(() => {
+                    // Si falla la descarga, abrir en nueva pestaña
+                    window.open(imagenUrl, '_blank');
+                    mostrarNotificacion('Texto copiado. Guarda la imagen manualmente.');
+                });
+        } else {
+            mostrarNotificacion('Texto copiado. No hay imagen disponible.');
+        }
+    });
+}
+
+function mostrarNotificacion(mensaje) {
+    // Remover notificación anterior si existe
+    const existente = document.querySelector('.notificacion-share');
+    if (existente) existente.remove();
+
+    // Crear nueva notificación
+    const notif = document.createElement('div');
+    notif.className = 'notificacion-share';
+    notif.innerHTML = `<span class="notif-icon">✓</span><span>${mensaje}</span>`;
+    document.body.appendChild(notif);
+
+    // Animar entrada
+    setTimeout(() => notif.classList.add('visible'), 10);
+
+    // Remover después de 4 segundos
+    setTimeout(() => {
+        notif.classList.remove('visible');
+        setTimeout(() => notif.remove(), 300);
+    }, 4000);
+}
+
+// ========================================
+// BANNER DE GARANTÍA
+// ========================================
+function cerrarBannerGarantia() {
+    const banner = document.getElementById('garantia-banner');
+    if (banner) {
+        banner.classList.add('hidden');
+        // Guardar en localStorage que ya se vio (expira en 24 horas)
+        const expiracion = new Date().getTime() + (24 * 60 * 60 * 1000);
+        localStorage.setItem('garantia_banner_afiliado_visto', expiracion);
+        setTimeout(() => banner.remove(), 300);
+    }
+}
+
+function verificarBannerGarantia() {
+    const banner = document.getElementById('garantia-banner');
+    const visto = localStorage.getItem('garantia_banner_afiliado_visto');
+
+    if (visto) {
+        const expiracion = parseInt(visto);
+        if (new Date().getTime() < expiracion) {
+            if (banner) banner.remove();
+            return;
+        }
+    }
+    if (banner) banner.style.display = 'flex';
+}
+
+document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
 </script>
 
 <style>
@@ -951,6 +1270,492 @@ function aplicarFiltros() {
 
     .tienda-icon {
         align-self: center;
+    }
+}
+
+/* ========================================
+   BOTONES DE COMPARTIR EN REDES SOCIALES
+   ======================================== */
+.compartir-section {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.compartir-section label {
+    display: block;
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.compartir-botones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.btn-share {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: white;
+}
+
+.btn-share svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.btn-share:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.btn-share:active {
+    transform: translateY(0);
+}
+
+/* WhatsApp */
+.btn-whatsapp {
+    background: linear-gradient(135deg, #25D366, #128C7E);
+}
+
+.btn-whatsapp:hover {
+    background: linear-gradient(135deg, #128C7E, #075E54);
+}
+
+/* Facebook */
+.btn-facebook {
+    background: linear-gradient(135deg, #1877F2, #0d5bbd);
+}
+
+.btn-facebook:hover {
+    background: linear-gradient(135deg, #0d5bbd, #094a9b);
+}
+
+/* Twitter/X */
+.btn-twitter {
+    background: linear-gradient(135deg, #1DA1F2, #0d8bd9);
+}
+
+.btn-twitter:hover {
+    background: linear-gradient(135deg, #0d8bd9, #0a6eb3);
+}
+
+/* Instagram/Descargar */
+.btn-descargar {
+    background: linear-gradient(135deg, #E4405F, #C13584, #833AB4);
+}
+
+.btn-descargar:hover {
+    background: linear-gradient(135deg, #C13584, #833AB4, #5851DB);
+}
+
+/* Copiar Texto */
+.btn-copiar-texto {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.btn-copiar-texto:hover {
+    background: linear-gradient(135deg, #5a6fd6, #6a4190);
+}
+
+/* Botón Estado/Historia - DESTACADO */
+.btn-estado {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    animation: pulseEstado 2s ease-in-out infinite;
+}
+
+.btn-estado:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+}
+
+@keyframes pulseEstado {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+}
+
+/* Modal de instrucciones para estado */
+.modal-estado {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10001;
+    padding: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-estado-content {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-estado-content h3 {
+    font-size: 1.5rem;
+    color: #1e293b;
+    margin: 0 0 0.5rem 0;
+}
+
+.modal-estado-texto {
+    color: #10b981;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.modal-estado-pasos {
+    text-align: left;
+    margin-bottom: 1.5rem;
+}
+
+.modal-estado-pasos .paso {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: #f8fafc;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #475569;
+}
+
+.modal-estado-pasos .paso-num {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.modal-estado-content button {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-estado-content button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+/* Notificacion de compartir */
+.notificacion-share {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    z-index: 10000;
+    opacity: 0;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    max-width: 90%;
+}
+
+.notificacion-share.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.notif-icon {
+    background: rgba(255,255,255,0.2);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+/* Responsive para botones de compartir */
+@media (max-width: 768px) {
+    .compartir-botones {
+        gap: 0.4rem;
+    }
+
+    .btn-share {
+        padding: 0.45rem 0.6rem;
+        font-size: 0.7rem;
+    }
+
+    .btn-share svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .btn-share span {
+        display: none;
+    }
+
+    .btn-share {
+        padding: 0.6rem;
+        border-radius: 50%;
+    }
+}
+
+@media (max-width: 400px) {
+    .compartir-botones {
+        justify-content: center;
+    }
+}
+
+/* ========================================
+   BANNER DE GARANTÍA Y PAGO CONTRA ENTREGA
+   ======================================== */
+.garantia-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+    padding: 20px;
+}
+
+.garantia-banner.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.garantia-banner-content {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+    border-radius: 24px;
+    padding: 2rem;
+    max-width: 450px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 25px 80px rgba(102, 126, 234, 0.4);
+    animation: bannerEntrada 0.4s ease-out;
+    border: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+@keyframes bannerEntrada {
+    from {
+        transform: scale(0.8) translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+.garantia-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #f1f5f9;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 24px;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.garantia-close:hover {
+    background: #ef4444;
+    color: white;
+    transform: rotate(90deg);
+}
+
+.garantia-icon-main {
+    font-size: 4rem;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    animation: escudoPulse 2s ease-in-out infinite;
+}
+
+@keyframes escudoPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.garantia-titulo {
+    text-align: center;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin: 0 0 1.5rem 0;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.garantia-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.garantia-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: white;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border-left: 4px solid #667eea;
+    transition: transform 0.3s ease;
+}
+
+.garantia-item:hover {
+    transform: translateX(5px);
+}
+
+.garantia-item.destacado {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-left-color: #f59e0b;
+}
+
+.garantia-item.destacado-verde {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border-left-color: #10b981;
+}
+
+.garantia-item-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.garantia-item-text strong {
+    display: block;
+    font-size: 1rem;
+    color: #1e293b;
+    margin-bottom: 2px;
+}
+
+.garantia-item-text p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.garantia-nota {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 0 0 1rem 0;
+    font-style: italic;
+}
+
+.garantia-btn-entendido {
+    width: 100%;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.garantia-btn-entendido:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+}
+
+@media (max-width: 500px) {
+    .garantia-banner-content {
+        padding: 1.5rem;
+        border-radius: 20px;
+    }
+
+    .garantia-icon-main {
+        font-size: 3rem;
+    }
+
+    .garantia-titulo {
+        font-size: 1.2rem;
+    }
+
+    .garantia-item {
+        padding: 0.875rem;
+    }
+
+    .garantia-item-icon {
+        font-size: 1.5rem;
+    }
+
+    .garantia-item-text strong {
+        font-size: 0.9rem;
+    }
+
+    .garantia-item-text p {
+        font-size: 0.8rem;
     }
 }
 </style>
