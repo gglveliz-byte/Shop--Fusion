@@ -12,8 +12,9 @@
                 {% for item in productos %}
                     <div class="carrito-item">
                         <div class="item-imagen">
-                            {% if item.producto.imagen %}
-                                <img src="{{ url_for('static', filename='uploads/' + item.producto.imagen) }}" alt="{{ item.producto.nombre }}">
+                            {% set imagen_principal = item.producto.obtener_imagen_principal() %}
+                            {% if imagen_principal and imagen_principal != '/static/img/no-image.png' %}
+                                <img src="{{ imagen_principal }}" alt="{{ item.producto.nombre }}">
                             {% else %}
                                 <div class="sin-imagen">📦</div>
                             {% endif %}
@@ -62,7 +63,7 @@
                     </div>
                 {% endif %}
 
-                <a href="{{ url_for('tienda.checkout') }}" class="btn btn-success btn-block btn-lg">Proceder al Checkout</a>
+                <a href="{{ url_for('tienda.checkout') }}" class="btn btn-success btn-block btn-lg">Proceder a Comprar y hacer Pedido</a>
                 <a href="{{ url_for('tienda.index') }}" class="btn btn-secondary btn-block">← Seguir Comprando</a>
             </div>
         </div>

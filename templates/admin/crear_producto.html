@@ -8,12 +8,29 @@
 
     <form method="POST" action="{{ url_for('admin.crear_producto') }}" enctype="multipart/form-data" class="form-producto">
         <div class="form-row">
-            <div class="form-group col-md-8">
+            <div class="form-group col-md-6">
                 <label for="nombre">Nombre del Producto *</label>
                 <input type="text" id="nombre" name="nombre" class="form-control" required>
             </div>
 
             <div class="form-group col-md-4">
+                <label for="categoria">Categoria *</label>
+                <select id="categoria" name="categoria" class="form-control" required>
+                    <option value="">Seleccionar categoria</option>
+                    <option value="telefonos">Telefonos</option>
+                    <option value="computadoras">Computadoras</option>
+                    <option value="perfumes">Perfumes</option>
+                    <option value="ropa">Ropa</option>
+                    <option value="zapatos">Zapatos</option>
+                    <option value="herramientas">Herramientas</option>
+                    <option value="hogar">Hogar</option>
+                    <option value="electronica">Electronica</option>
+                    <option value="accesorios">Accesorios</option>
+                    <option value="otros">Otros</option>
+                </select>
+            </div>
+
+            <div class="form-group col-md-2">
                 <label for="activo">Estado</label>
                 <div class="checkbox-container">
                     <input type="checkbox" id="activo" name="activo" checked>
@@ -45,12 +62,48 @@
         </div>
 
         <div class="form-group">
-            <label for="imagenes">Imágenes del Producto (hasta 4)</label>
-            <input type="file" id="imagenes" name="imagenes" class="form-control" accept="image/*" multiple>
-            <small class="form-text text-muted">Formatos permitidos: JPG, PNG, WEBP, GIF (Máx. 16MB cada una). Puedes seleccionar hasta 4 imágenes.</small>
+            <label>Imágenes del Producto</label>
 
-            <!-- Preview de imágenes -->
-            <div id="imagenes-preview" class="imagenes-preview-grid"></div>
+            <!-- Tabs para elegir método -->
+            <div class="imagen-tabs">
+                <button type="button" class="tab-btn active" data-tab="url">URL de Imagen (Recomendado)</button>
+                <button type="button" class="tab-btn" data-tab="archivo">Subir Archivo</button>
+            </div>
+
+            <!-- Tab: URL de imagen -->
+            <div id="tab-url" class="tab-content active">
+                <div class="url-inputs">
+                    <div class="form-group">
+                        <label for="imagen_url">URL Imagen Principal *</label>
+                        <input type="url" id="imagen_url" name="imagen_url" class="form-control" placeholder="https://ejemplo.com/imagen.jpg">
+                    </div>
+                    <div class="form-group">
+                        <label for="imagen_url_2">URL Imagen 2 (opcional)</label>
+                        <input type="url" id="imagen_url_2" name="imagen_url_2" class="form-control" placeholder="https://ejemplo.com/imagen2.jpg">
+                    </div>
+                    <div class="form-group">
+                        <label for="imagen_url_3">URL Imagen 3 (opcional)</label>
+                        <input type="url" id="imagen_url_3" name="imagen_url_3" class="form-control" placeholder="https://ejemplo.com/imagen3.jpg">
+                    </div>
+                    <div class="form-group">
+                        <label for="imagen_url_4">URL Imagen 4 (opcional)</label>
+                        <input type="url" id="imagen_url_4" name="imagen_url_4" class="form-control" placeholder="https://ejemplo.com/imagen4.jpg">
+                    </div>
+                </div>
+                <small class="form-text text-muted">Pega las URLs de las imágenes del producto. Puedes obtener URLs de Google Images, Dropbox, Google Drive, etc.</small>
+
+                <!-- Preview de URLs -->
+                <div id="url-preview" class="imagenes-preview-grid"></div>
+            </div>
+
+            <!-- Tab: Subir archivo (para compatibilidad) -->
+            <div id="tab-archivo" class="tab-content" style="display: none;">
+                <input type="file" id="imagenes" name="imagenes" class="form-control" accept="image/*" multiple>
+                <small class="form-text text-muted">Formatos permitidos: JPG, PNG, WEBP, GIF (Máx. 16MB cada una). Puedes seleccionar hasta 4 imágenes.</small>
+
+                <!-- Preview de imágenes archivo -->
+                <div id="imagenes-preview" class="imagenes-preview-grid"></div>
+            </div>
         </div>
 
         <div class="alert alert-info">
@@ -58,6 +111,44 @@
         </div>
 
 <style>
+.imagen-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    border: 2px solid #e2e8f0;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.tab-btn:hover:not(.active) {
+    border-color: var(--primary-color);
+    background: #f8fafc;
+}
+
+.tab-content {
+    padding: 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.url-inputs .form-group {
+    margin-bottom: 0.75rem;
+}
+
 .imagenes-preview-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -92,6 +183,19 @@
     font-weight: 700;
 }
 
+.imagen-preview-item .badge-error {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    right: 0.5rem;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    text-align: center;
+}
+
 .imagen-preview-item .btn-remove {
     position: absolute;
     top: 0.5rem;
@@ -113,15 +217,74 @@
     .imagenes-preview-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+    .imagen-tabs {
+        flex-direction: column;
+    }
 }
 </style>
 
 <script>
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // Remove active from all tabs
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+
+        // Activate clicked tab
+        this.classList.add('active');
+        const tabId = 'tab-' + this.dataset.tab;
+        document.getElementById(tabId).style.display = 'block';
+    });
+});
+
+// Preview URLs
+function updateUrlPreview() {
+    const preview = document.getElementById('url-preview');
+    preview.innerHTML = '';
+
+    const urls = [
+        document.getElementById('imagen_url').value,
+        document.getElementById('imagen_url_2').value,
+        document.getElementById('imagen_url_3').value,
+        document.getElementById('imagen_url_4').value
+    ].filter(url => url.trim() !== '');
+
+    urls.forEach((url, index) => {
+        const div = document.createElement('div');
+        div.className = 'imagen-preview-item';
+
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = `Preview ${index + 1}`;
+        img.onerror = function() {
+            div.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #fee2e2;">
+                    <span style="color: #ef4444; font-size: 0.8rem; text-align: center; padding: 0.5rem;">URL inválida</span>
+                </div>
+            `;
+        };
+
+        div.appendChild(img);
+        if (index === 0) {
+            div.innerHTML += '<span class="badge-principal">Principal</span>';
+        }
+        preview.appendChild(div);
+    });
+}
+
+// Add event listeners to URL inputs
+['imagen_url', 'imagen_url_2', 'imagen_url_3', 'imagen_url_4'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateUrlPreview);
+    document.getElementById(id).addEventListener('blur', updateUrlPreview);
+});
+
+// Preview archivos locales
 document.getElementById('imagenes').addEventListener('change', function(e) {
     const preview = document.getElementById('imagenes-preview');
     preview.innerHTML = '';
 
-    const files = Array.from(e.target.files).slice(0, 4); // Máximo 4 imágenes
+    const files = Array.from(e.target.files).slice(0, 4);
 
     if (files.length > 4) {
         alert('Solo puedes subir hasta 4 imágenes');

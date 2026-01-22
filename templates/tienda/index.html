@@ -62,43 +62,53 @@
             </div>
 
             <div class="filtros-row">
-                <!-- Filtro Categoria -->
+                <!-- Filtro Categoria - Dinamico desde BD -->
                 <div class="filtro-grupo">
                     <label>Categoria</label>
                     <div class="filtro-chips" id="filtro-categoria">
                         <button class="chip active" data-categoria="todos" onclick="filtrarCategoria('todos')">
-                            <span class="chip-icon">📱</span> Todos
+                            <span class="chip-icon">🛍️</span> Todos ({{ productos_db|length }})
                         </button>
-                        <button class="chip" data-categoria="telefono" onclick="filtrarCategoria('telefono')">
-                            <span class="chip-icon">📲</span> Telefonos
+                        {% for cat_key, cat_data in categorias.items() %}
+                        <button class="chip" data-categoria="{{ cat_key }}" onclick="filtrarCategoria('{{ cat_key }}')">
+                            <span class="chip-icon">
+                                {% if cat_key == 'telefonos' %}📱
+                                {% elif cat_key == 'computadoras' %}💻
+                                {% elif cat_key == 'perfumes' %}🧴
+                                {% elif cat_key == 'ropa' %}👕
+                                {% elif cat_key == 'zapatos' %}👟
+                                {% elif cat_key == 'herramientas' %}🔧
+                                {% elif cat_key == 'hogar' %}🏠
+                                {% elif cat_key == 'electronica' %}🔌
+                                {% elif cat_key == 'accesorios' %}⌚
+                                {% else %}📦
+                                {% endif %}
+                            </span> {{ cat_data.nombre }} ({{ cat_data.count }})
                         </button>
-                        <button class="chip" data-categoria="laptop" onclick="filtrarCategoria('laptop')">
-                            <span class="chip-icon">💻</span> Laptops
-                        </button>
+                        {% endfor %}
                     </div>
                 </div>
 
-                <!-- Filtro Marca -->
-                <div class="filtro-grupo">
+                <!-- Filtro Marca - Se muestra cuando se selecciona telefonos o computadoras -->
+                <div class="filtro-grupo" id="filtro-marca-container" style="display: none;">
                     <label>Marca</label>
-                    <div class="filtro-chips filtro-marcas" id="filtro-marca">
-                        <button class="chip active" data-marca="todos" onclick="filtrarMarca('todos')">Todas</button>
+                    <div class="filtro-chips" id="filtro-marca">
+                        <button class="chip active" data-marca="todas" onclick="filtrarMarca('todas')">Todas</button>
                         <!-- Marcas de Telefonos -->
                         <button class="chip marca-telefono" data-marca="iphone" onclick="filtrarMarca('iphone')">
                             <span class="chip-icon">🍎</span> iPhone
                         </button>
                         <button class="chip marca-telefono" data-marca="samsung" onclick="filtrarMarca('samsung')">Samsung</button>
-                        <button class="chip marca-telefono" data-marca="xiaomi" onclick="filtrarMarca('xiaomi')">Xiaomi</button>
-                        <button class="chip marca-telefono" data-marca="redmi" onclick="filtrarMarca('redmi')">Redmi</button>
+                        <button class="chip marca-telefono" data-marca="xiaomi" onclick="filtrarMarca('xiaomi')">Xiaomi/Redmi</button>
                         <button class="chip marca-telefono" data-marca="tecno" onclick="filtrarMarca('tecno')">Tecno</button>
                         <button class="chip marca-telefono" data-marca="infinix" onclick="filtrarMarca('infinix')">Infinix</button>
                         <button class="chip marca-telefono" data-marca="honor" onclick="filtrarMarca('honor')">Honor</button>
                         <button class="chip marca-telefono" data-marca="zte" onclick="filtrarMarca('zte')">ZTE</button>
-                        <!-- Marcas de Laptops -->
-                        <button class="chip marca-laptop" data-marca="hp" onclick="filtrarMarca('hp')">HP</button>
-                        <button class="chip marca-laptop" data-marca="lenovo" onclick="filtrarMarca('lenovo')">Lenovo</button>
-                        <button class="chip marca-laptop" data-marca="dell" onclick="filtrarMarca('dell')">Dell</button>
-                        <button class="chip marca-laptop" data-marca="asus" onclick="filtrarMarca('asus')">ASUS</button>
+                        <!-- Marcas de Computadoras -->
+                        <button class="chip marca-computadora" data-marca="hp" onclick="filtrarMarca('hp')">HP</button>
+                        <button class="chip marca-computadora" data-marca="lenovo" onclick="filtrarMarca('lenovo')">Lenovo</button>
+                        <button class="chip marca-computadora" data-marca="dell" onclick="filtrarMarca('dell')">Dell</button>
+                        <button class="chip marca-computadora" data-marca="asus" onclick="filtrarMarca('asus')">ASUS</button>
                     </div>
                 </div>
             </div>
@@ -113,93 +123,8 @@
         </div>
 
         {% if productos_db %}
-            <!-- Seccion LAPTOPS -->
-            <div class="categoria-section" id="seccion-laptops">
-                <div class="categoria-header">
-                    <h3 class="categoria-titulo">
-                        <span class="categoria-icon">💻</span>
-                        Laptops
-                    </h3>
-                    <div class="categoria-linea"></div>
-                </div>
-
-                <!-- Submarcas Laptops -->
-                <div class="submarcas-grid" id="laptops-marcas">
-                    <!-- HP -->
-                    <div class="marca-section" data-marca="hp">
-                        <h4 class="marca-titulo"><span class="marca-badge">HP</span></h4>
-                        <div class="productos-grid productos-marca" id="productos-hp"></div>
-                    </div>
-                    <!-- Lenovo -->
-                    <div class="marca-section" data-marca="lenovo">
-                        <h4 class="marca-titulo"><span class="marca-badge">Lenovo</span></h4>
-                        <div class="productos-grid productos-marca" id="productos-lenovo"></div>
-                    </div>
-                    <!-- Dell -->
-                    <div class="marca-section" data-marca="dell">
-                        <h4 class="marca-titulo"><span class="marca-badge">Dell</span></h4>
-                        <div class="productos-grid productos-marca" id="productos-dell"></div>
-                    </div>
-                    <!-- ASUS -->
-                    <div class="marca-section" data-marca="asus">
-                        <h4 class="marca-titulo"><span class="marca-badge">ASUS</span></h4>
-                        <div class="productos-grid productos-marca" id="productos-asus"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Seccion TELEFONOS -->
-            <div class="categoria-section" id="seccion-telefonos">
-                <div class="categoria-header">
-                    <h3 class="categoria-titulo">
-                        <span class="categoria-icon">📱</span>
-                        Telefonos
-                    </h3>
-                    <div class="categoria-linea"></div>
-                </div>
-
-                <!-- Submarcas Telefonos -->
-                <div class="submarcas-grid" id="telefonos-marcas">
-                    <!-- iPhone -->
-                    <div class="marca-section" data-marca="iphone">
-                        <h4 class="marca-titulo"><span class="marca-badge marca-apple">🍎 iPhone</span></h4>
-                        <div class="productos-grid productos-marca" id="productos-iphone"></div>
-                    </div>
-                    <!-- Samsung -->
-                    <div class="marca-section" data-marca="samsung">
-                        <h4 class="marca-titulo"><span class="marca-badge marca-samsung">Samsung</span></h4>
-                        <div class="productos-grid productos-marca" id="productos-samsung"></div>
-                    </div>
-                    <!-- Xiaomi/Redmi -->
-                    <div class="marca-section" data-marca="xiaomi">
-                        <h4 class="marca-titulo"><span class="marca-badge marca-xiaomi">Xiaomi / Redmi</span></h4>
-                        <div class="productos-grid productos-marca" id="productos-xiaomi"></div>
-                    </div>
-                    <!-- Tecno -->
-                    <div class="marca-section" data-marca="tecno">
-                        <h4 class="marca-titulo"><span class="marca-badge marca-tecno">Tecno</span></h4>
-                        <div class="productos-grid productos-marca" id="productos-tecno"></div>
-                    </div>
-                    <!-- Infinix -->
-                    <div class="marca-section" data-marca="infinix">
-                        <h4 class="marca-titulo"><span class="marca-badge marca-infinix">Infinix</span></h4>
-                        <div class="productos-grid productos-marca" id="productos-infinix"></div>
-                    </div>
-                    <!-- Honor -->
-                    <div class="marca-section" data-marca="honor">
-                        <h4 class="marca-titulo"><span class="marca-badge marca-honor">Honor</span></h4>
-                        <div class="productos-grid productos-marca" id="productos-honor"></div>
-                    </div>
-                    <!-- ZTE -->
-                    <div class="marca-section" data-marca="zte">
-                        <h4 class="marca-titulo"><span class="marca-badge">ZTE</span></h4>
-                        <div class="productos-grid productos-marca" id="productos-zte"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Grid de resultados de busqueda (oculto por defecto) -->
-            <div id="resultados-busqueda" class="productos-grid" style="display: none;"></div>
+            <!-- Grid principal de productos -->
+            <div id="productos-grid-principal" class="productos-grid"></div>
 
             <!-- Mensaje sin resultados -->
             <div id="sin-resultados" class="empty-state" style="display: none;">
@@ -294,61 +219,263 @@
 let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
 let productos = {{ productos | tojson }};
 let categoriaActual = 'todos';
-let marcaActual = 'todos';
+let marcaActual = 'todas';
 let busquedaActual = '';
 
 // Inicializar
 document.addEventListener('DOMContentLoaded', function() {
     actualizarCarrito();
-    organizarProductosPorMarca();
-    actualizarVisibilidadMarcas();
+    renderizarProductos();
 });
 
-// Organizar productos por marca en sus contenedores
-function organizarProductosPorMarca() {
-    productos.forEach(producto => {
-        const nombre = producto.nombre.toLowerCase();
-        let contenedor = null;
-        let categoria = 'telefono';
+// Marcas conocidas para telefonos y computadoras
+const marcasTelefonos = {
+    'iphone': { nombre: 'iPhone', icon: '🍎', keywords: ['iphone'] },
+    'samsung': { nombre: 'Samsung', icon: '📱', keywords: ['samsung', 'galaxy'] },
+    'xiaomi': { nombre: 'Xiaomi / Redmi', icon: '📱', keywords: ['xiaomi', 'redmi', 'poco'] },
+    'tecno': { nombre: 'Tecno', icon: '📱', keywords: ['tecno'] },
+    'infinix': { nombre: 'Infinix', icon: '📱', keywords: ['infinix'] },
+    'honor': { nombre: 'Honor', icon: '📱', keywords: ['honor'] },
+    'zte': { nombre: 'ZTE', icon: '📱', keywords: ['zte'] }
+};
 
-        // Detectar laptops
-        if (nombre.includes('laptop') || nombre.includes('hp ') || nombre.includes('lenovo') ||
-            nombre.includes('dell') || nombre.includes('asus') || nombre.includes('ideapad') ||
-            nombre.includes('vivobook') || nombre.includes('thinkpad') || nombre.includes('inspiron') ||
-            nombre.includes('pavilion') || nombre.includes('tuf') || nombre.includes('loq')) {
-            categoria = 'laptop';
+const marcasComputadoras = {
+    'hp': { nombre: 'HP', icon: '💻', keywords: ['hp ', 'hp-', 'hp15', 'hp14'] },
+    'lenovo': { nombre: 'Lenovo', icon: '💻', keywords: ['lenovo', 'ideapad', 'thinkpad', 'loq'] },
+    'dell': { nombre: 'Dell', icon: '💻', keywords: ['dell', 'inspiron', 'latitude'] },
+    'asus': { nombre: 'ASUS', icon: '💻', keywords: ['asus', 'vivobook', 'tuf', 'rog'] }
+};
 
-            if (nombre.includes('hp ') || nombre.includes('hp-')) contenedor = 'productos-hp';
-            else if (nombre.includes('lenovo') || nombre.includes('ideapad') || nombre.includes('thinkpad') || nombre.includes('loq')) contenedor = 'productos-lenovo';
-            else if (nombre.includes('dell') || nombre.includes('inspiron') || nombre.includes('latitude')) contenedor = 'productos-dell';
-            else if (nombre.includes('asus') || nombre.includes('vivobook') || nombre.includes('tuf')) contenedor = 'productos-asus';
+// Detectar marca de un producto
+function detectarMarca(producto) {
+    const nombre = producto.nombre.toLowerCase();
+
+    if (producto.categoria === 'telefonos') {
+        for (const [key, marca] of Object.entries(marcasTelefonos)) {
+            if (marca.keywords.some(kw => nombre.includes(kw))) {
+                return { key, ...marca };
+            }
         }
-        // Detectar telefonos
-        else {
-            if (nombre.includes('iphone')) contenedor = 'productos-iphone';
-            else if (nombre.includes('samsung') || nombre.includes('galaxy a')) contenedor = 'productos-samsung';
-            else if (nombre.includes('xiaomi') || nombre.includes('redmi') || nombre.includes('poco')) contenedor = 'productos-xiaomi';
-            else if (nombre.includes('tecno')) contenedor = 'productos-tecno';
-            else if (nombre.includes('infinix')) contenedor = 'productos-infinix';
-            else if (nombre.includes('honor')) contenedor = 'productos-honor';
-            else if (nombre.includes('zte')) contenedor = 'productos-zte';
+    } else if (producto.categoria === 'computadoras') {
+        for (const [key, marca] of Object.entries(marcasComputadoras)) {
+            if (marca.keywords.some(kw => nombre.includes(kw))) {
+                return { key, ...marca };
+            }
+        }
+    }
+    return null;
+}
+
+// Renderizar todos los productos en el grid
+function renderizarProductos() {
+    const grid = document.getElementById('productos-grid-principal');
+    const sinResultados = document.getElementById('sin-resultados');
+    const btnLimpiar = document.getElementById('btn-limpiar-filtros');
+
+    // Filtrar productos
+    let productosFiltrados = productos.filter(p => {
+        const matchCategoria = categoriaActual === 'todos' || p.categoria === categoriaActual;
+        const matchBusqueda = busquedaActual === '' || p.nombre.toLowerCase().includes(busquedaActual);
+
+        // Filtrar por marca si está seleccionada
+        let matchMarca = true;
+        if (marcaActual !== 'todas') {
+            const marca = detectarMarca(p);
+            matchMarca = marca && marca.key === marcaActual;
         }
 
-        if (contenedor) {
-            const container = document.getElementById(contenedor);
-            if (container) {
-                container.innerHTML += crearCardProducto(producto);
+        return matchCategoria && matchBusqueda && matchMarca;
+    });
+
+    // Mostrar/ocultar boton limpiar
+    const hayFiltros = categoriaActual !== 'todos' || marcaActual !== 'todas' || busquedaActual !== '';
+    btnLimpiar.style.display = hayFiltros ? 'inline-block' : 'none';
+
+    // Renderizar
+    if (productosFiltrados.length > 0) {
+        // Si hay marca seleccionada, mostrar grid simple
+        if (marcaActual !== 'todas') {
+            grid.innerHTML = productosFiltrados.map(p => crearCardProducto(p)).join('');
+            grid.className = 'productos-grid';
+        }
+        // Verificar si debemos agrupar por marca (sin marca seleccionada)
+        else if ((categoriaActual === 'telefonos' || categoriaActual === 'computadoras') && busquedaActual === '') {
+            grid.innerHTML = renderizarPorMarcas(productosFiltrados, categoriaActual);
+            grid.className = 'productos-container';
+        } else if (categoriaActual === 'todos' && busquedaActual === '') {
+            // Vista "todos" - agrupar por categoria
+            grid.innerHTML = renderizarPorCategorias(productosFiltrados);
+            grid.className = 'productos-container';
+        } else {
+            // Vista normal (busqueda o otras categorias)
+            grid.innerHTML = productosFiltrados.map(p => crearCardProducto(p)).join('');
+            grid.className = 'productos-grid';
+        }
+        grid.style.display = 'block';
+        sinResultados.style.display = 'none';
+    } else {
+        grid.style.display = 'none';
+        sinResultados.style.display = 'flex';
+    }
+
+    // Actualizar contador
+    document.getElementById('contador-resultados').textContent = `${productosFiltrados.length} productos`;
+}
+
+// Renderizar productos agrupados por marca
+function renderizarPorMarcas(productos, categoria) {
+    const marcas = categoria === 'telefonos' ? marcasTelefonos : marcasComputadoras;
+    const productosPorMarca = {};
+    const sinMarca = [];
+
+    // Agrupar productos por marca
+    productos.forEach(p => {
+        const marca = detectarMarca(p);
+        if (marca) {
+            if (!productosPorMarca[marca.key]) {
+                productosPorMarca[marca.key] = { info: marca, productos: [] };
+            }
+            productosPorMarca[marca.key].productos.push(p);
+        } else {
+            sinMarca.push(p);
+        }
+    });
+
+    let html = '';
+
+    // Renderizar cada marca en orden
+    const ordenMarcas = categoria === 'telefonos'
+        ? ['iphone', 'samsung', 'xiaomi', 'tecno', 'infinix', 'honor', 'zte']
+        : ['hp', 'lenovo', 'dell', 'asus'];
+
+    ordenMarcas.forEach(key => {
+        if (productosPorMarca[key] && productosPorMarca[key].productos.length > 0) {
+            const { info, productos: prods } = productosPorMarca[key];
+            html += `
+                <div class="marca-section">
+                    <div class="marca-header">
+                        <span class="marca-badge marca-${key}">${info.icon} ${info.nombre}</span>
+                        <span class="marca-count">${prods.length} productos</span>
+                    </div>
+                    <div class="productos-grid">
+                        ${prods.map(p => crearCardProducto(p)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    // Productos sin marca conocida
+    if (sinMarca.length > 0) {
+        html += `
+            <div class="marca-section">
+                <div class="marca-header">
+                    <span class="marca-badge">📦 Otros</span>
+                    <span class="marca-count">${sinMarca.length} productos</span>
+                </div>
+                <div class="productos-grid">
+                    ${sinMarca.map(p => crearCardProducto(p)).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    return html;
+}
+
+// Renderizar productos agrupados por categoria (vista "todos")
+function renderizarPorCategorias(productos) {
+    const categorias = {};
+    const iconosCategorias = {
+        'telefonos': '📱',
+        'computadoras': '💻',
+        'perfumes': '🧴',
+        'ropa': '👕',
+        'zapatos': '👟',
+        'herramientas': '🔧',
+        'hogar': '🏠',
+        'electronica': '🔌',
+        'accesorios': '⌚',
+        'otros': '📦'
+    };
+    const nombresCategorias = {
+        'telefonos': 'Teléfonos',
+        'computadoras': 'Computadoras',
+        'perfumes': 'Perfumes',
+        'ropa': 'Ropa',
+        'zapatos': 'Zapatos',
+        'herramientas': 'Herramientas',
+        'hogar': 'Hogar',
+        'electronica': 'Electrónica',
+        'accesorios': 'Accesorios',
+        'otros': 'Otros'
+    };
+
+    // Agrupar por categoria
+    productos.forEach(p => {
+        const cat = p.categoria || 'otros';
+        if (!categorias[cat]) categorias[cat] = [];
+        categorias[cat].push(p);
+    });
+
+    let html = '';
+
+    // Orden preferido de categorias
+    const ordenCategorias = ['telefonos', 'computadoras', 'perfumes', 'ropa', 'zapatos', 'herramientas', 'hogar', 'electronica', 'accesorios', 'otros'];
+
+    ordenCategorias.forEach(cat => {
+        if (categorias[cat] && categorias[cat].length > 0) {
+            const prods = categorias[cat];
+            const icon = iconosCategorias[cat] || '📦';
+            const nombre = nombresCategorias[cat] || cat;
+
+            // Para telefonos y computadoras, subdividir por marcas
+            if (cat === 'telefonos' || cat === 'computadoras') {
+                html += `
+                    <div class="categoria-section">
+                        <div class="categoria-header">
+                            <h3 class="categoria-titulo">
+                                <span class="categoria-icon">${icon}</span>
+                                ${nombre}
+                            </h3>
+                            <div class="categoria-linea"></div>
+                            <span class="categoria-count">${prods.length} productos</span>
+                        </div>
+                        ${renderizarPorMarcas(prods, cat)}
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="categoria-section">
+                        <div class="categoria-header">
+                            <h3 class="categoria-titulo">
+                                <span class="categoria-icon">${icon}</span>
+                                ${nombre}
+                            </h3>
+                            <div class="categoria-linea"></div>
+                            <span class="categoria-count">${prods.length} productos</span>
+                        </div>
+                        <div class="productos-grid">
+                            ${prods.map(p => crearCardProducto(p)).join('')}
+                        </div>
+                    </div>
+                `;
             }
         }
     });
 
-    // Ocultar secciones de marcas vacias
-    document.querySelectorAll('.marca-section').forEach(section => {
-        const grid = section.querySelector('.productos-grid');
-        if (grid && grid.children.length === 0) {
-            section.style.display = 'none';
-        }
-    });
+    return html;
+}
+
+// Helper para obtener URL de imagen (soporta URLs externas y locales)
+function getImageUrl(imagen) {
+    if (!imagen) return '/static/img/no-image.png';
+    // Si ya es una URL completa (http/https) o ruta absoluta, usarla directamente
+    if (imagen.startsWith('http') || imagen.startsWith('/')) {
+        return imagen;
+    }
+    // Si es solo nombre de archivo, agregar path local
+    return `/static/uploads/${imagen}`;
 }
 
 // Crear HTML de tarjeta de producto
@@ -356,7 +483,7 @@ function crearCardProducto(producto) {
     const precioMostrar = producto.precio_oferta || producto.precio_final;
     const tieneOferta = producto.precio_oferta != null;
 
-    // Obtener todas las imágenes disponibles
+    // Obtener todas las imagenes disponibles
     let todasImagenes = [];
     if (producto.imagenes && producto.imagenes.length > 0) {
         todasImagenes = producto.imagenes;
@@ -371,7 +498,7 @@ function crearCardProducto(producto) {
         <div class="producto-card" data-id="${producto.id}" data-nombre="${producto.nombre.toLowerCase()}">
             ${primeraImagen ?
                 `<div class="producto-imagen-container" ${tieneMultiplesImagenes ? `data-imagenes='${JSON.stringify(todasImagenes)}' data-index="0"` : ''}>
-                    <img src="/static/uploads/${primeraImagen}" alt="${producto.nombre}" class="producto-imagen" onclick="verDetalle(${producto.id})">
+                    <img src="${getImageUrl(primeraImagen)}" alt="${producto.nombre}" class="producto-imagen" onclick="verDetalle(${producto.id})">
                     ${tieneOferta ? '<span class="oferta-tag">OFERTA</span>' : ''}
                     ${tieneMultiplesImagenes ? `
                         <button class="btn-nav-img btn-prev" onclick="event.stopPropagation(); cambiarImagenCard(this.parentElement, -1)">‹</button>
@@ -414,7 +541,7 @@ function cambiarImagenCard(container, direction) {
 
     container.dataset.index = index;
     const img = container.querySelector('.producto-imagen');
-    img.src = `/static/uploads/${imagenes[index]}`;
+    img.src = getImageUrl(imagenes[index]);
 
     // Actualizar indicadores
     const dots = container.querySelectorAll('.img-dot');
@@ -423,47 +550,53 @@ function cambiarImagenCard(container, direction) {
     });
 }
 
-// Actualizar visibilidad de chips de marcas segun categoria
-function actualizarVisibilidadMarcas() {
-    const marcasTelefono = document.querySelectorAll('.marca-telefono');
-    const marcasLaptop = document.querySelectorAll('.marca-laptop');
-
-    if (categoriaActual === 'todos') {
-        marcasTelefono.forEach(m => m.style.display = 'inline-flex');
-        marcasLaptop.forEach(m => m.style.display = 'inline-flex');
-    } else if (categoriaActual === 'telefono') {
-        marcasTelefono.forEach(m => m.style.display = 'inline-flex');
-        marcasLaptop.forEach(m => m.style.display = 'none');
-    } else if (categoriaActual === 'laptop') {
-        marcasTelefono.forEach(m => m.style.display = 'none');
-        marcasLaptop.forEach(m => m.style.display = 'inline-flex');
-    }
-}
-
 // Filtrar por categoria
 function filtrarCategoria(categoria) {
     categoriaActual = categoria;
-    marcaActual = 'todos';
+    marcaActual = 'todas'; // Reset marca al cambiar categoria
 
-    // Actualizar chips activos
+    // Actualizar chips activos de categoria
     document.querySelectorAll('#filtro-categoria .chip').forEach(c => c.classList.remove('active'));
     document.querySelector(`#filtro-categoria .chip[data-categoria="${categoria}"]`).classList.add('active');
-    document.querySelectorAll('#filtro-marca .chip').forEach(c => c.classList.remove('active'));
-    document.querySelector('#filtro-marca .chip[data-marca="todos"]').classList.add('active');
 
-    actualizarVisibilidadMarcas();
-    aplicarFiltros();
+    // Reset chips de marca
+    document.querySelectorAll('#filtro-marca .chip').forEach(c => c.classList.remove('active'));
+    document.querySelector('#filtro-marca .chip[data-marca="todas"]').classList.add('active');
+
+    // Mostrar/ocultar filtro de marcas segun categoria
+    actualizarFiltroMarcas();
+
+    renderizarProductos();
 }
 
 // Filtrar por marca
 function filtrarMarca(marca) {
     marcaActual = marca;
 
-    // Actualizar chips activos
+    // Actualizar chips activos de marca
     document.querySelectorAll('#filtro-marca .chip').forEach(c => c.classList.remove('active'));
     document.querySelector(`#filtro-marca .chip[data-marca="${marca}"]`).classList.add('active');
 
-    aplicarFiltros();
+    renderizarProductos();
+}
+
+// Actualizar visibilidad del filtro de marcas
+function actualizarFiltroMarcas() {
+    const container = document.getElementById('filtro-marca-container');
+    const marcasTelefono = document.querySelectorAll('.marca-telefono');
+    const marcasComputadora = document.querySelectorAll('.marca-computadora');
+
+    if (categoriaActual === 'telefonos') {
+        container.style.display = 'block';
+        marcasTelefono.forEach(m => m.style.display = 'inline-flex');
+        marcasComputadora.forEach(m => m.style.display = 'none');
+    } else if (categoriaActual === 'computadoras') {
+        container.style.display = 'block';
+        marcasTelefono.forEach(m => m.style.display = 'none');
+        marcasComputadora.forEach(m => m.style.display = 'inline-flex');
+    } else {
+        container.style.display = 'none';
+    }
 }
 
 // Filtrar productos por busqueda
@@ -472,112 +605,7 @@ function filtrarProductos() {
     const btnClear = document.getElementById('btn-clear');
     btnClear.style.display = busquedaActual ? 'block' : 'none';
 
-    aplicarFiltros();
-}
-
-// Aplicar todos los filtros
-function aplicarFiltros() {
-    const seccionLaptops = document.getElementById('seccion-laptops');
-    const seccionTelefonos = document.getElementById('seccion-telefonos');
-    const resultadosBusqueda = document.getElementById('resultados-busqueda');
-    const sinResultados = document.getElementById('sin-resultados');
-    const btnLimpiar = document.getElementById('btn-limpiar-filtros');
-
-    let hayFiltrosActivos = categoriaActual !== 'todos' || marcaActual !== 'todos' || busquedaActual !== '';
-    btnLimpiar.style.display = hayFiltrosActivos ? 'inline-block' : 'none';
-
-    // Si hay busqueda, mostrar resultados en grid separado
-    if (busquedaActual) {
-        seccionLaptops.style.display = 'none';
-        seccionTelefonos.style.display = 'none';
-
-        let productosFiltrados = productos.filter(p => {
-            const nombre = p.nombre.toLowerCase();
-            const matchBusqueda = nombre.includes(busquedaActual);
-            const matchCategoria = categoriaActual === 'todos' || detectarCategoria(nombre) === categoriaActual;
-            const matchMarca = marcaActual === 'todos' || detectarMarca(nombre) === marcaActual;
-            return matchBusqueda && matchCategoria && matchMarca;
-        });
-
-        if (productosFiltrados.length > 0) {
-            resultadosBusqueda.innerHTML = productosFiltrados.map(p => crearCardProducto(p)).join('');
-            resultadosBusqueda.style.display = 'grid';
-            sinResultados.style.display = 'none';
-        } else {
-            resultadosBusqueda.style.display = 'none';
-            sinResultados.style.display = 'flex';
-        }
-
-        document.getElementById('contador-resultados').textContent = `${productosFiltrados.length} productos encontrados`;
-        return;
-    }
-
-    // Sin busqueda, mostrar secciones organizadas
-    resultadosBusqueda.style.display = 'none';
-    sinResultados.style.display = 'none';
-
-    // Mostrar/ocultar secciones segun categoria
-    if (categoriaActual === 'todos') {
-        seccionLaptops.style.display = 'block';
-        seccionTelefonos.style.display = 'block';
-    } else if (categoriaActual === 'laptop') {
-        seccionLaptops.style.display = 'block';
-        seccionTelefonos.style.display = 'none';
-    } else {
-        seccionLaptops.style.display = 'none';
-        seccionTelefonos.style.display = 'block';
-    }
-
-    // Filtrar por marca dentro de las secciones
-    let totalVisibles = 0;
-    document.querySelectorAll('.marca-section').forEach(section => {
-        const marcaSection = section.dataset.marca;
-        const debeVerseCategoria = categoriaActual === 'todos' ||
-            (categoriaActual === 'laptop' && ['hp', 'lenovo', 'dell', 'asus'].includes(marcaSection)) ||
-            (categoriaActual === 'telefono' && !['hp', 'lenovo', 'dell', 'asus'].includes(marcaSection));
-        const debeVerseMarca = marcaActual === 'todos' || marcaActual === marcaSection ||
-            (marcaActual === 'xiaomi' && marcaSection === 'xiaomi') ||
-            (marcaActual === 'redmi' && marcaSection === 'xiaomi');
-
-        const grid = section.querySelector('.productos-grid');
-        const tieneProductos = grid && grid.children.length > 0;
-
-        if (debeVerseCategoria && debeVerseMarca && tieneProductos) {
-            section.style.display = 'block';
-            totalVisibles += grid.children.length;
-        } else {
-            section.style.display = 'none';
-        }
-    });
-
-    document.getElementById('contador-resultados').textContent = `${totalVisibles} productos`;
-}
-
-// Detectar categoria de un producto
-function detectarCategoria(nombre) {
-    if (nombre.includes('laptop') || nombre.includes('hp ') || nombre.includes('lenovo') ||
-        nombre.includes('dell') || nombre.includes('asus') || nombre.includes('ideapad') ||
-        nombre.includes('vivobook') || nombre.includes('thinkpad') || nombre.includes('inspiron') ||
-        nombre.includes('tuf') || nombre.includes('loq') || nombre.includes('pavilion')) {
-        return 'laptop';
-    }
-    return 'telefono';
-}
-
-// Detectar marca de un producto
-function detectarMarca(nombre) {
-    if (nombre.includes('iphone')) return 'iphone';
-    if (nombre.includes('samsung') || nombre.includes('galaxy a')) return 'samsung';
-    if (nombre.includes('xiaomi') || nombre.includes('redmi') || nombre.includes('poco')) return 'xiaomi';
-    if (nombre.includes('tecno')) return 'tecno';
-    if (nombre.includes('infinix')) return 'infinix';
-    if (nombre.includes('honor')) return 'honor';
-    if (nombre.includes('zte')) return 'zte';
-    if (nombre.includes('hp ') || nombre.includes('hp-')) return 'hp';
-    if (nombre.includes('lenovo') || nombre.includes('ideapad') || nombre.includes('thinkpad') || nombre.includes('loq')) return 'lenovo';
-    if (nombre.includes('dell') || nombre.includes('inspiron')) return 'dell';
-    if (nombre.includes('asus') || nombre.includes('vivobook') || nombre.includes('tuf')) return 'asus';
-    return 'otros';
+    renderizarProductos();
 }
 
 // Limpiar busqueda
@@ -585,13 +613,13 @@ function limpiarBusqueda() {
     document.getElementById('buscar-producto').value = '';
     document.getElementById('btn-clear').style.display = 'none';
     busquedaActual = '';
-    aplicarFiltros();
+    renderizarProductos();
 }
 
 // Limpiar todos los filtros
 function limpiarFiltros() {
     categoriaActual = 'todos';
-    marcaActual = 'todos';
+    marcaActual = 'todas';
     busquedaActual = '';
 
     document.getElementById('buscar-producto').value = '';
@@ -599,11 +627,14 @@ function limpiarFiltros() {
 
     document.querySelectorAll('#filtro-categoria .chip').forEach(c => c.classList.remove('active'));
     document.querySelector('#filtro-categoria .chip[data-categoria="todos"]').classList.add('active');
-    document.querySelectorAll('#filtro-marca .chip').forEach(c => c.classList.remove('active'));
-    document.querySelector('#filtro-marca .chip[data-marca="todos"]').classList.add('active');
 
-    actualizarVisibilidadMarcas();
-    aplicarFiltros();
+    document.querySelectorAll('#filtro-marca .chip').forEach(c => c.classList.remove('active'));
+    document.querySelector('#filtro-marca .chip[data-marca="todas"]').classList.add('active');
+
+    // Ocultar filtro de marcas
+    document.getElementById('filtro-marca-container').style.display = 'none';
+
+    renderizarProductos();
 }
 
 // Agregar al carrito
@@ -654,7 +685,7 @@ function actualizarCarrito() {
         carritoItems.innerHTML = carrito.map(item => `
             <div class="carrito-item-mini">
                 <div class="item-mini-imagen">
-                    ${item.imagen ? `<img src="/static/uploads/${item.imagen}" alt="${item.nombre}">` : '<span>📦</span>'}
+                    ${item.imagen ? `<img src="${getImageUrl(item.imagen)}" alt="${item.nombre}">` : '<span>📦</span>'}
                 </div>
                 <div class="item-mini-info">
                     <h4>${item.nombre}</h4>
@@ -713,7 +744,7 @@ function verDetalle(id) {
     const overlay = document.getElementById('overlay');
     const precioMostrar = producto.precio_oferta || producto.precio_final;
 
-    // Obtener todas las imágenes
+    // Obtener todas las imagenes
     let todasImagenes = [];
     if (producto.imagenes && producto.imagenes.length > 0) {
         todasImagenes = producto.imagenes;
@@ -729,7 +760,7 @@ function verDetalle(id) {
             <div class="detalle-imagen">
                 ${primeraImagen ?
                     `<div class="galeria-principal" ${tieneMultiplesImagenes ? `data-imagenes='${JSON.stringify(todasImagenes)}' data-index="0"` : ''}>
-                        <img src="/static/uploads/${primeraImagen}" alt="${producto.nombre}" id="img-principal-modal">
+                        <img src="${getImageUrl(primeraImagen)}" alt="${producto.nombre}" id="img-principal-modal">
                         ${tieneMultiplesImagenes ? `
                             <button class="btn-nav-modal btn-prev-modal" onclick="cambiarImagenModal(-1)">‹</button>
                             <button class="btn-nav-modal btn-next-modal" onclick="cambiarImagenModal(1)">›</button>
@@ -739,9 +770,9 @@ function verDetalle(id) {
                     ${tieneMultiplesImagenes ? `
                         <div class="galeria-miniaturas">
                             ${todasImagenes.map((img, i) => `
-                                <img src="/static/uploads/${img}" alt="Imagen ${i+1}"
+                                <img src="${getImageUrl(img)}" alt="Imagen ${i+1}"
                                      class="miniatura ${i === 0 ? 'active' : ''}"
-                                     onclick="seleccionarImagenModal(${i}, '${img}')">
+                                     onclick="seleccionarImagenModal(${i}, '${img.replace(/'/g, "\\'")}')">
                             `).join('')}
                         </div>
                     ` : ''}` :
@@ -786,7 +817,7 @@ function cambiarImagenModal(direction) {
     if (index >= imagenes.length) index = 0;
 
     container.dataset.index = index;
-    document.getElementById('img-principal-modal').src = `/static/uploads/${imagenes[index]}`;
+    document.getElementById('img-principal-modal').src = getImageUrl(imagenes[index]);
 
     // Actualizar contador
     const counter = container.querySelector('.modal-img-counter');
@@ -807,7 +838,7 @@ function seleccionarImagenModal(index, imagen) {
         const counter = container.querySelector('.modal-img-counter');
         if (counter) counter.textContent = `${index + 1} / ${imagenes.length}`;
     }
-    document.getElementById('img-principal-modal').src = `/static/uploads/${imagen}`;
+    document.getElementById('img-principal-modal').src = getImageUrl(imagen);
 
     // Actualizar miniaturas activas
     document.querySelectorAll('.miniatura').forEach((mini, i) => {
@@ -910,7 +941,7 @@ async function procesarPedido(event) {
             mensaje += `\n\n_Referido por: ${resultado.afiliado_codigo}_`;
         }
 
-        const numeroTienda = '593997811011';
+        const numeroTienda = '{{ whatsapp_numero }}';
         const mensajeEncoded = encodeURIComponent(mensaje);
         const urlWhatsApp = `https://wa.me/${numeroTienda}?text=${mensajeEncoded}`;
         window.open(urlWhatsApp, '_blank');
@@ -1359,39 +1390,70 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
     border-radius: 1px;
 }
 
+.categoria-count {
+    background: var(--tech-primary);
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
 /* ========================================
    SECCIONES POR MARCA
    ======================================== */
 .marca-section {
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
     padding: 1.5rem;
     background: white;
     border-radius: 20px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0,0,0,0.05);
 }
 
-.marca-titulo {
+.marca-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f1f5f9;
 }
 
 .marca-badge {
-    display: inline-block;
-    padding: 0.5rem 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.25rem;
     background: linear-gradient(135deg, #1e293b, #334155);
     color: white;
-    border-radius: 10px;
-    font-size: 1rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
     font-weight: 700;
     letter-spacing: 0.5px;
 }
 
-/* Colores especiales por marca */
-.marca-apple { background: linear-gradient(135deg, #1d1d1f, #333); }
+.marca-count {
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Colores especiales por marca - Telefonos */
+.marca-iphone { background: linear-gradient(135deg, #1d1d1f, #333); }
 .marca-samsung { background: linear-gradient(135deg, #1428a0, #2145d4); }
 .marca-xiaomi { background: linear-gradient(135deg, #ff6900, #ff8c00); }
 .marca-tecno { background: linear-gradient(135deg, #0066cc, #0099ff); }
 .marca-infinix { background: linear-gradient(135deg, #f47920, #ffae00); }
 .marca-honor { background: linear-gradient(135deg, #00a0e9, #00c4ff); }
+.marca-zte { background: linear-gradient(135deg, #005bac, #0082c8); }
+
+/* Colores especiales por marca - Computadoras */
+.marca-hp { background: linear-gradient(135deg, #0096d6, #00b3e3); }
+.marca-lenovo { background: linear-gradient(135deg, #e2231a, #ff3b30); }
+.marca-dell { background: linear-gradient(135deg, #007db8, #0095d5); }
+.marca-asus { background: linear-gradient(135deg, #00539b, #0071c5); }
 
 /* ========================================
    GRID DE PRODUCTOS
@@ -1400,6 +1462,10 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 1.25rem;
+}
+
+.productos-container {
+    display: block;
 }
 
 .producto-card {
@@ -1450,6 +1516,10 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
     cursor: pointer;
     transition: transform 0.5s ease;
     padding: 10px;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
 }
 
 .producto-card:hover .producto-imagen {
@@ -1945,6 +2015,8 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
     max-height: 400px;
     object-fit: contain;
     display: block;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
 }
 
 .btn-nav-modal {

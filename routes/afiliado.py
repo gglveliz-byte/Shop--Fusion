@@ -58,10 +58,29 @@ def dashboard():
 @afiliado_required
 def productos():
     """Ver productos con información de comisiones"""
-    from models import Producto
+    from models import Producto, CATEGORIAS_PRODUCTO
+    from sqlalchemy import func
+    from models import db
 
     afiliado = current_user
-    productos = Producto.query.filter_by(activo=True).all()
+    productos = Producto.query.filter_by(activo=True).order_by(Producto.creado_en.desc()).all()
+
+    # Obtener categorías que tienen productos activos
+    categorias_con_productos = db.session.query(
+        Producto.categoria,
+        func.count(Producto.id).label('count')
+    ).filter(Producto.activo == True).group_by(Producto.categoria).all()
+
+    # Crear diccionario de categorías con sus conteos
+    categorias_activas = {}
+    for cat, count in categorias_con_productos:
+        if cat:
+            nombre_cat = cat
+            for valor, nombre in CATEGORIAS_PRODUCTO:
+                if valor == cat:
+                    nombre_cat = nombre
+                    break
+            categorias_activas[cat] = {'nombre': nombre_cat, 'count': count}
 
     # Agregar información de comisión a cada producto
     productos_con_comision = []
@@ -71,6 +90,7 @@ def productos():
 
         productos_con_comision.append({
             'producto': producto,
+            'categoria': producto.categoria or 'otros',
             'margen': margen,
             'comision': comision,
             'link': url_for('tienda.producto_detalle', id=producto.id, ref=afiliado.codigo, _external=True)
@@ -78,6 +98,7 @@ def productos():
 
     return render_template('afiliado/productos.html',
                          productos=productos_con_comision,
+                         categorias=categorias_activas,
                          afiliado=afiliado)
 
 

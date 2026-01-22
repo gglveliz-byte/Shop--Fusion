@@ -6,8 +6,7 @@ Gestión de productos, pedidos, afiliados y comisiones
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from app import db
-from models import Admin, Producto, Pedido, Afiliado, Comision
+from models import db, Admin, Producto, Pedido, Afiliado, Comision
 from decimal import Decimal
 import os
 
@@ -81,14 +80,15 @@ def crear_producto():
     if request.method == 'POST':
         nombre = request.form.get('nombre')
         descripcion = request.form.get('descripcion')
+        categoria = request.form.get('categoria', 'otros')
         precio_final = request.form.get('precio_final')
         precio_proveedor = request.form.get('precio_proveedor')
         precio_oferta = request.form.get('precio_oferta')
         activo = request.form.get('activo') == 'on'
 
         # Validaciones
-        if not nombre or not precio_final or not precio_proveedor:
-            flash('Nombre, precio final y precio proveedor son obligatorios', 'error')
+        if not nombre or not precio_final or not precio_proveedor or not categoria:
+            flash('Nombre, categoria, precio final y precio proveedor son obligatorios', 'error')
             return render_template('admin/crear_producto.html')
 
         try:
@@ -110,34 +110,51 @@ def crear_producto():
             flash('Los precios deben ser números válidos', 'error')
             return render_template('admin/crear_producto.html')
 
-        # Manejar múltiples imágenes (hasta 4)
+        # Manejar imágenes - Priorizar URLs sobre archivos locales
         imagen_principal = None
         imagenes_adicionales = []
+        imagen_url = None
+        imagenes_url = []
 
-        import time
+        # Primero verificar si hay URLs de imágenes
+        imagen_url = request.form.get('imagen_url', '').strip()
+        imagen_url_2 = request.form.get('imagen_url_2', '').strip()
+        imagen_url_3 = request.form.get('imagen_url_3', '').strip()
+        imagen_url_4 = request.form.get('imagen_url_4', '').strip()
 
-        if 'imagenes' in request.files:
-            files = request.files.getlist('imagenes')
-            for i, file in enumerate(files[:4]):  # Máximo 4 imágenes
-                if file and file.filename and allowed_file(file.filename):
-                    filename = secure_filename(file.filename)
-                    filename = f"{int(time.time())}_{i}_{filename}"
-                    file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+        # Recolectar URLs adicionales
+        for url in [imagen_url_2, imagen_url_3, imagen_url_4]:
+            if url:
+                imagenes_url.append(url)
 
-                    if i == 0:
-                        imagen_principal = filename
-                    else:
-                        imagenes_adicionales.append(filename)
+        # Si no hay URL principal, verificar archivos locales
+        if not imagen_url:
+            import time
+            if 'imagenes' in request.files:
+                files = request.files.getlist('imagenes')
+                for i, file in enumerate(files[:4]):  # Máximo 4 imágenes
+                    if file and file.filename and allowed_file(file.filename):
+                        filename = secure_filename(file.filename)
+                        filename = f"{int(time.time())}_{i}_{filename}"
+                        file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+
+                        if i == 0:
+                            imagen_principal = filename
+                        else:
+                            imagenes_adicionales.append(filename)
 
         # Crear producto
         producto = Producto(
             nombre=nombre,
             descripcion=descripcion,
+            categoria=categoria,
             precio_final=precio_final,
             precio_proveedor=precio_proveedor,
             precio_oferta=precio_oferta,
-            imagen=imagen_principal,
-            imagenes=imagenes_adicionales if imagenes_adicionales else None,
+            imagen=imagen_principal if not imagen_url else None,
+            imagenes=imagenes_adicionales if imagenes_adicionales and not imagen_url else None,
+            imagen_url=imagen_url if imagen_url else None,
+            imagenes_url=imagenes_url if imagenes_url else None,
             activo=activo
         )
 
@@ -162,6 +179,7 @@ def editar_producto(id):
     if request.method == 'POST':
         producto.nombre = request.form.get('nombre')
         producto.descripcion = request.form.get('descripcion')
+        producto.categoria = request.form.get('categoria', 'otros')
 
         try:
             producto.precio_final = Decimal(request.form.get('precio_final'))
@@ -184,29 +202,49 @@ def editar_producto(id):
 
         producto.activo = request.form.get('activo') == 'on'
 
-        # Manejar nuevas imágenes (hasta 4)
-        if 'imagenes' in request.files:
-            files = request.files.getlist('imagenes')
-            # Solo procesar si hay archivos con nombre (no vacíos)
-            archivos_validos = [f for f in files if f and f.filename and allowed_file(f.filename)]
+        # Manejar imágenes - Priorizar URLs sobre archivos locales
+        imagen_url = request.form.get('imagen_url', '').strip()
+        imagen_url_2 = request.form.get('imagen_url_2', '').strip()
+        imagen_url_3 = request.form.get('imagen_url_3', '').strip()
+        imagen_url_4 = request.form.get('imagen_url_4', '').strip()
 
-            if archivos_validos:
-                import time
-                imagen_principal = None
-                imagenes_adicionales = []
+        # Si hay URL principal, usar URLs
+        if imagen_url:
+            producto.imagen_url = imagen_url
+            imagenes_url = []
+            for url in [imagen_url_2, imagen_url_3, imagen_url_4]:
+                if url:
+                    imagenes_url.append(url)
+            producto.imagenes_url = imagenes_url if imagenes_url else None
+            # Limpiar imágenes locales si se usan URLs
+            producto.imagen = None
+            producto.imagenes = None
+        else:
+            # Si no hay URLs, verificar archivos locales
+            if 'imagenes' in request.files:
+                files = request.files.getlist('imagenes')
+                archivos_validos = [f for f in files if f and f.filename and allowed_file(f.filename)]
 
-                for i, file in enumerate(archivos_validos[:4]):
-                    filename = secure_filename(file.filename)
-                    filename = f"{int(time.time())}_{i}_{filename}"
-                    file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                if archivos_validos:
+                    import time
+                    imagen_principal = None
+                    imagenes_adicionales = []
 
-                    if i == 0:
-                        imagen_principal = filename
-                    else:
-                        imagenes_adicionales.append(filename)
+                    for i, file in enumerate(archivos_validos[:4]):
+                        filename = secure_filename(file.filename)
+                        filename = f"{int(time.time())}_{i}_{filename}"
+                        file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
 
-                producto.imagen = imagen_principal
-                producto.imagenes = imagenes_adicionales if imagenes_adicionales else None
+                        if i == 0:
+                            imagen_principal = filename
+                        else:
+                            imagenes_adicionales.append(filename)
+
+                    producto.imagen = imagen_principal
+                    producto.imagenes = imagenes_adicionales if imagenes_adicionales else None
+                    # Limpiar URLs si se suben archivos
+                    producto.imagen_url = None
+                    producto.imagenes_url = None
 
         db.session.commit()
         flash(f'Producto "{producto.nombre}" actualizado exitosamente', 'success')

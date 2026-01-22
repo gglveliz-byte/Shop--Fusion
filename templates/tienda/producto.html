@@ -3,58 +3,343 @@
 {% block title %}{{ producto.nombre }} - Shop Fusion{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="breadcrumb">
-        <a href="{{ url_for('tienda.index') }}">Inicio</a> / {{ producto.nombre }}
+<style>
+    .producto-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .breadcrumb-nav {
+        padding: 15px 0;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .breadcrumb-nav a {
+        color: #667eea;
+        text-decoration: none;
+    }
+
+    .breadcrumb-nav a:hover {
+        text-decoration: underline;
+    }
+
+    .breadcrumb-nav span {
+        color: #666;
+    }
+
+    .producto-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+
+    .producto-galeria {
+        position: relative;
+    }
+
+    .imagen-principal {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .imagen-principal img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+
+    .imagen-principal:hover img {
+        transform: scale(1.05);
+    }
+
+    .sin-imagen-placeholder {
+        font-size: 120px;
+        color: #dee2e6;
+    }
+
+    .producto-detalles {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .producto-titulo {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .precio-container {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    .precio-oferta-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .precio-anterior-grande {
+        font-size: 18px;
+        color: #999;
+        text-decoration: line-through;
+        margin-right: 10px;
+    }
+
+    .precio-actual-grande {
+        font-size: 36px;
+        font-weight: 800;
+        color: #28a745;
+    }
+
+    .ahorro-badge {
+        display: inline-block;
+        background: #d4edda;
+        color: #155724;
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        margin-top: 10px;
+    }
+
+    .descripcion-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    .descripcion-section h3 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin: 0 0 10px 0;
+    }
+
+    .descripcion-section p {
+        color: #666;
+        line-height: 1.6;
+        margin: 0;
+        white-space: pre-line;
+    }
+
+    .compra-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 25px;
+        border-radius: 12px;
+        color: white;
+    }
+
+    .cantidad-grupo {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .cantidad-grupo label {
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+    .cantidad-input {
+        width: 80px;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        text-align: center;
+        font-weight: 600;
+    }
+
+    .btn-agregar-carrito {
+        width: 100%;
+        padding: 18px 30px;
+        font-size: 18px;
+        font-weight: 700;
+        background: white;
+        color: #667eea;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .btn-agregar-carrito:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+
+    .afiliado-badge-detalle {
+        background: linear-gradient(135deg, #ffd700 0%, #ffed4a 100%);
+        color: #1a1a2e;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-size: 14px;
+        text-align: center;
+        font-weight: 500;
+    }
+
+    .btn-volver {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: white;
+        color: #667eea;
+        border: 2px solid #667eea;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-volver:hover {
+        background: #667eea;
+        color: white;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 900px) {
+        .producto-container {
+            grid-template-columns: 1fr;
+            gap: 25px;
+            padding: 20px;
+        }
+
+        .producto-titulo {
+            font-size: 24px;
+        }
+
+        .precio-actual-grande {
+            font-size: 30px;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .producto-page {
+            padding: 15px;
+        }
+
+        .producto-container {
+            padding: 15px;
+            border-radius: 12px;
+        }
+
+        .producto-titulo {
+            font-size: 20px;
+        }
+
+        .precio-actual-grande {
+            font-size: 26px;
+        }
+
+        .btn-agregar-carrito {
+            padding: 15px 20px;
+            font-size: 16px;
+        }
+
+        .sin-imagen-placeholder {
+            font-size: 80px;
+        }
+    }
+</style>
+
+<div class="producto-page">
+    <div class="breadcrumb-nav">
+        <a href="{{ url_for('tienda.index') }}">Inicio</a> <span>/</span> <span>{{ producto.nombre }}</span>
     </div>
 
-    <div class="producto-detalle">
-        <div class="producto-imagen-grande">
-            {% if producto.imagen %}
-                <img src="{{ url_for('static', filename='uploads/' + producto.imagen) }}" alt="{{ producto.nombre }}">
-            {% else %}
-                <div class="sin-imagen-grande">📦</div>
-            {% endif %}
+    <div class="producto-container">
+        <div class="producto-galeria">
+            <div class="imagen-principal">
+                {% set imagen_principal = producto.obtener_imagen_principal() %}
+                {% if imagen_principal and imagen_principal != '/static/img/no-image.png' %}
+                    <img src="{{ imagen_principal }}" alt="{{ producto.nombre }}">
+                {% else %}
+                    <div class="sin-imagen-placeholder">📦</div>
+                {% endif %}
+            </div>
         </div>
 
-        <div class="producto-info-detalle">
-            <h1>{{ producto.nombre }}</h1>
+        <div class="producto-detalles">
+            <h1 class="producto-titulo">{{ producto.nombre }}</h1>
 
-            <div class="producto-precio-detalle">
+            <div class="precio-container">
                 {% if producto.precio_oferta %}
-                    <span class="precio-anterior">${{ "%.2f"|format(producto.precio_final) }}</span>
-                    <span class="precio-actual">${{ "%.2f"|format(producto.precio_oferta) }}</span>
-                    <span class="precio-badge">¡Oferta!</span>
-                    <p class="ahorro">¡Ahorras ${{ "%.2f"|format(producto.precio_final - producto.precio_oferta) }}!</p>
+                    <span class="precio-oferta-badge">🔥 ¡Oferta!</span>
+                    <div>
+                        <span class="precio-anterior-grande">${{ "%.2f"|format(producto.precio_final) }}</span>
+                        <span class="precio-actual-grande">${{ "%.2f"|format(producto.precio_oferta) }}</span>
+                    </div>
+                    <div class="ahorro-badge">
+                        💰 ¡Ahorras ${{ "%.2f"|format(producto.precio_final - producto.precio_oferta) }}!
+                    </div>
                 {% else %}
-                    <span class="precio-actual">${{ "%.2f"|format(producto.precio_final) }}</span>
+                    <span class="precio-actual-grande">${{ "%.2f"|format(producto.precio_final) }}</span>
                 {% endif %}
             </div>
 
-            <div class="producto-descripcion-completa">
-                <h3>Descripción</h3>
+            <div class="descripcion-section">
+                <h3>📝 Descripción</h3>
                 <p>{{ producto.descripcion if producto.descripcion else 'Sin descripción disponible.' }}</p>
             </div>
 
-            <form method="POST" action="{{ url_for('tienda.agregar_carrito', id=producto.id) }}" class="form-agregar-carrito">
-                <div class="form-group">
-                    <label for="cantidad">Cantidad:</label>
-                    <input type="number" id="cantidad" name="cantidad" value="1" min="1" max="99" class="form-control" style="width: 100px;">
+            <form method="POST" action="{{ url_for('tienda.agregar_carrito', id=producto.id) }}">
+                <div class="compra-section">
+                    <div class="cantidad-grupo">
+                        <label for="cantidad">Cantidad:</label>
+                        <input type="number" id="cantidad" name="cantidad" value="1" min="1" max="99" class="cantidad-input">
+                    </div>
+                    <button type="submit" class="btn-agregar-carrito">
+                        🛒 Agregar al Carrito
+                    </button>
                 </div>
-
-                <button type="submit" class="btn btn-success btn-lg">🛒 Agregar al Carrito</button>
             </form>
 
             {% if afiliado_codigo %}
-                <div class="afiliado-info">
+                <div class="afiliado-badge-detalle">
                     ✨ Comprando a través del afiliado: <strong>{{ afiliado_codigo }}</strong>
                 </div>
             {% endif %}
         </div>
     </div>
 
-    <div class="volver">
-        <a href="{{ url_for('tienda.index') }}" class="btn btn-secondary">← Volver a la tienda</a>
-    </div>
+    <a href="{{ url_for('tienda.index') }}" class="btn-volver">← Volver a la tienda</a>
 </div>
 {% endblock %}

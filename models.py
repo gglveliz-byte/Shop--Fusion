@@ -87,6 +87,21 @@ class Afiliado(UserMixin, db.Model):
         return f'<Afiliado {self.codigo} - {self.nombre}>'
 
 
+# Categorías disponibles para productos
+CATEGORIAS_PRODUCTO = [
+    ('telefonos', 'Teléfonos'),
+    ('computadoras', 'Computadoras'),
+    ('perfumes', 'Perfumes'),
+    ('ropa', 'Ropa'),
+    ('zapatos', 'Zapatos'),
+    ('herramientas', 'Herramientas'),
+    ('hogar', 'Hogar'),
+    ('electronica', 'Electrónica'),
+    ('accesorios', 'Accesorios'),
+    ('otros', 'Otros')
+]
+
+
 # Modelo de Producto
 class Producto(db.Model):
     __tablename__ = 'productos'
@@ -94,11 +109,14 @@ class Producto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(200), nullable=False)
     descripcion = db.Column(db.Text)
+    categoria = db.Column(db.String(50), default='otros', index=True)  # Categoría del producto
     precio_final = db.Column(db.Numeric(10, 2), nullable=False)
     precio_proveedor = db.Column(db.Numeric(10, 2), nullable=False)
     precio_oferta = db.Column(db.Numeric(10, 2), nullable=True)
-    imagen = db.Column(db.String(300))  # Mantener por compatibilidad (imagen principal)
-    imagenes = db.Column(db.JSON, default=list)  # Lista de URLs de imágenes
+    imagen = db.Column(db.String(300))  # Mantener por compatibilidad (imagen principal local)
+    imagenes = db.Column(db.JSON, default=list)  # Lista de imágenes adicionales locales
+    imagen_url = db.Column(db.String(500))  # URL externa de imagen principal
+    imagenes_url = db.Column(db.JSON, default=list)  # Lista de URLs externas de imágenes
     activo = db.Column(db.Boolean, default=True)
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -116,6 +134,35 @@ class Producto(db.Model):
         """Calcular comisión que ganaría un afiliado con cierto porcentaje"""
         margen = self.calcular_margen()
         return margen * (porcentaje_comision / Decimal('100'))
+
+    def obtener_imagen_principal(self):
+        """Obtener la imagen principal (prioriza URL externa sobre local)"""
+        if self.imagen_url:
+            return self.imagen_url
+        elif self.imagen:
+            return f'/static/uploads/{self.imagen}'
+        return '/static/img/no-image.png'
+
+    def obtener_todas_imagenes(self):
+        """Obtener todas las imágenes del producto (URLs externas + locales)"""
+        todas = []
+
+        # Agregar imagen principal
+        if self.imagen_url:
+            todas.append(self.imagen_url)
+        elif self.imagen:
+            todas.append(f'/static/uploads/{self.imagen}')
+
+        # Agregar imágenes adicionales de URLs externas
+        if self.imagenes_url:
+            todas.extend(self.imagenes_url)
+
+        # Agregar imágenes adicionales locales
+        if self.imagenes:
+            for img in self.imagenes:
+                todas.append(f'/static/uploads/{img}')
+
+        return todas if todas else ['/static/img/no-image.png']
 
     def __repr__(self):
         return f'<Producto {self.nombre}>'

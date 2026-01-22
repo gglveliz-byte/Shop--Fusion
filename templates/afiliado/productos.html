@@ -7,65 +7,190 @@
     <h1>📦 Productos para Compartir</h1>
     <p class="subtitle">Comparte estos links y gana comisiones por cada venta</p>
 
+    <!-- Link de Tienda General -->
+    <div class="tienda-general-card">
+        <div class="tienda-general-header">
+            <span class="tienda-icon">🏪</span>
+            <div>
+                <h3>Tu Link de Tienda General</h3>
+                <p>Comparte este link para que los clientes vean todo el catalogo. Cualquier compra que hagan quedara registrada a tu nombre.</p>
+            </div>
+        </div>
+        <div class="tienda-general-link">
+            <input type="text" class="form-control link-input-grande" id="link-tienda-general" value="{{ url_for('tienda.index', ref=afiliado.codigo, _external=True) }}" readonly>
+            <button class="btn btn-primary btn-copiar-grande" onclick="copiarLinkTienda()">
+                📋 Copiar Link de Tienda
+            </button>
+        </div>
+        <div class="tienda-general-info">
+            <span class="info-badge">💡 El codigo de afiliado se guarda automaticamente en el navegador del cliente</span>
+        </div>
+    </div>
+
     <div class="afiliado-info-banner">
-        <p><strong>Tu porcentaje de comisión:</strong> {{ afiliado.porcentaje_comision }}% del margen de cada producto</p>
+        <p><strong>Tu porcentaje de comision:</strong> {{ afiliado.porcentaje_comision }}% del margen de cada producto</p>
+    </div>
+
+    <!-- Filtros y Busqueda -->
+    <div class="filtros-afiliado">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="buscar-producto" placeholder="Buscar productos..." onkeyup="filtrarProductos()">
+            <button class="btn-clear-search" id="btn-clear" onclick="limpiarBusqueda()" style="display: none;">✕</button>
+        </div>
+
+        <div class="filtros-row">
+            <!-- Filtro Categoria -->
+            <div class="filtro-grupo">
+                <label>Categoria</label>
+                <div class="filtro-chips" id="filtro-categoria">
+                    <button class="chip active" data-categoria="todos" onclick="filtrarCategoria('todos')">
+                        <span class="chip-icon">🛍️</span> Todos ({{ productos|length }})
+                    </button>
+                    {% for cat_key, cat_data in categorias.items() %}
+                    <button class="chip" data-categoria="{{ cat_key }}" onclick="filtrarCategoria('{{ cat_key }}')">
+                        <span class="chip-icon">
+                            {% if cat_key == 'telefonos' %}📱
+                            {% elif cat_key == 'computadoras' %}💻
+                            {% elif cat_key == 'perfumes' %}🧴
+                            {% elif cat_key == 'ropa' %}👕
+                            {% elif cat_key == 'zapatos' %}👟
+                            {% elif cat_key == 'herramientas' %}🔧
+                            {% elif cat_key == 'hogar' %}🏠
+                            {% elif cat_key == 'electronica' %}🔌
+                            {% elif cat_key == 'accesorios' %}⌚
+                            {% else %}📦
+                            {% endif %}
+                        </span> {{ cat_data.nombre }} ({{ cat_data.count }})
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Filtro Marca -->
+            <div class="filtro-grupo" id="filtro-marca-container" style="display: none;">
+                <label>Marca</label>
+                <div class="filtro-chips" id="filtro-marca">
+                    <button class="chip active" data-marca="todas" onclick="filtrarMarca('todas')">Todas</button>
+                    <!-- Marcas de Telefonos -->
+                    <button class="chip marca-telefono" data-marca="iphone" onclick="filtrarMarca('iphone')">
+                        <span class="chip-icon">🍎</span> iPhone
+                    </button>
+                    <button class="chip marca-telefono" data-marca="samsung" onclick="filtrarMarca('samsung')">Samsung</button>
+                    <button class="chip marca-telefono" data-marca="xiaomi" onclick="filtrarMarca('xiaomi')">Xiaomi/Redmi</button>
+                    <button class="chip marca-telefono" data-marca="tecno" onclick="filtrarMarca('tecno')">Tecno</button>
+                    <button class="chip marca-telefono" data-marca="infinix" onclick="filtrarMarca('infinix')">Infinix</button>
+                    <button class="chip marca-telefono" data-marca="honor" onclick="filtrarMarca('honor')">Honor</button>
+                    <button class="chip marca-telefono" data-marca="zte" onclick="filtrarMarca('zte')">ZTE</button>
+                    <!-- Marcas de Computadoras -->
+                    <button class="chip marca-computadora" data-marca="hp" onclick="filtrarMarca('hp')">HP</button>
+                    <button class="chip marca-computadora" data-marca="lenovo" onclick="filtrarMarca('lenovo')">Lenovo</button>
+                    <button class="chip marca-computadora" data-marca="dell" onclick="filtrarMarca('dell')">Dell</button>
+                    <button class="chip marca-computadora" data-marca="asus" onclick="filtrarMarca('asus')">ASUS</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contador de resultados -->
+        <div class="resultados-info">
+            <span id="contador-resultados">{{ productos|length }} productos</span>
+            <button class="btn-limpiar-filtros" onclick="limpiarFiltros()" style="display: none;" id="btn-limpiar-filtros">
+                Limpiar filtros
+            </button>
+        </div>
     </div>
 
     {% if productos %}
-        <div class="productos-afiliado-grid">
+        <div id="productos-grid" class="productos-afiliado-grid">
             {% for item in productos %}
-                <div class="producto-afiliado-card">
-                    <div class="producto-imagen-section">
-                        {% if item.producto.imagen %}
-                            <img src="{{ url_for('static', filename='uploads/' + item.producto.imagen) }}" alt="{{ item.producto.nombre }}">
+                <div class="producto-afiliado-card" data-categoria="{{ item.categoria }}" data-nombre="{{ item.producto.nombre|lower }}">
+                    <div class="producto-imagen-container">
+                        {% set imagen_principal = item.producto.obtener_imagen_principal() %}
+                        {% if imagen_principal and imagen_principal != '/static/img/no-image.png' %}
+                            <img src="{{ imagen_principal }}" alt="{{ item.producto.nombre }}" class="producto-imagen">
                         {% else %}
                             <div class="sin-imagen">📦</div>
                         {% endif %}
+                        {% if item.producto.precio_oferta %}
+                            <span class="oferta-badge">OFERTA</span>
+                        {% endif %}
                     </div>
 
-                    <div class="producto-info-section">
-                        <h3>{{ item.producto.nombre }}</h3>
-                        <p class="producto-descripcion-corta">{{ item.producto.descripcion[:80] if item.producto.descripcion else 'Sin descripción' }}...</p>
+                    <div class="producto-contenido">
+                        <div class="producto-header">
+                            <h3 class="producto-nombre">{{ item.producto.nombre }}</h3>
+                            <span class="categoria-badge">
+                                {% if item.categoria == 'telefonos' %}📱
+                                {% elif item.categoria == 'computadoras' %}💻
+                                {% elif item.categoria == 'perfumes' %}🧴
+                                {% elif item.categoria == 'ropa' %}👕
+                                {% elif item.categoria == 'zapatos' %}👟
+                                {% elif item.categoria == 'herramientas' %}🔧
+                                {% elif item.categoria == 'hogar' %}🏠
+                                {% elif item.categoria == 'electronica' %}🔌
+                                {% elif item.categoria == 'accesorios' %}⌚
+                                {% else %}📦
+                                {% endif %}
+                                {{ item.categoria|capitalize }}
+                            </span>
+                        </div>
 
-                        <div class="producto-precios">
-                            <div class="precio-item">
-                                <span class="precio-label">Precio Final:</span>
-                                <span class="precio-valor">${{ "%.2f"|format(item.producto.precio_final) }}</span>
+                        {% if item.producto.descripcion %}
+                        <p class="producto-descripcion">{{ item.producto.descripcion[:150] }}{% if item.producto.descripcion|length > 150 %}...{% endif %}</p>
+                        {% else %}
+                        <p class="producto-descripcion sin-desc">Sin descripcion disponible</p>
+                        {% endif %}
+
+                        <div class="precios-grid">
+                            <div class="precio-box">
+                                <span class="precio-etiqueta">Precio Venta</span>
+                                <span class="precio-valor {% if item.producto.precio_oferta %}tachado{% endif %}">${{ "%.2f"|format(item.producto.precio_final) }}</span>
                             </div>
-
                             {% if item.producto.precio_oferta %}
-                                <div class="precio-item precio-oferta">
-                                    <span class="precio-label">Precio Oferta:</span>
-                                    <span class="precio-valor">${{ "%.2f"|format(item.producto.precio_oferta) }}</span>
-                                </div>
+                            <div class="precio-box oferta">
+                                <span class="precio-etiqueta">Precio Oferta</span>
+                                <span class="precio-valor">${{ "%.2f"|format(item.producto.precio_oferta) }}</span>
+                            </div>
                             {% endif %}
-
-                            <div class="precio-item">
-                                <span class="precio-label">Precio Proveedor:</span>
+                            <div class="precio-box costo">
+                                <span class="precio-etiqueta">Costo</span>
                                 <span class="precio-valor">${{ "%.2f"|format(item.producto.precio_proveedor) }}</span>
                             </div>
-
-                            <div class="precio-item margen">
-                                <span class="precio-label">Margen:</span>
+                            <div class="precio-box margen">
+                                <span class="precio-etiqueta">Margen</span>
                                 <span class="precio-valor">${{ "%.2f"|format(item.margen) }}</span>
-                            </div>
-
-                            <div class="precio-item comision-highlight">
-                                <span class="precio-label">Tu Comisión:</span>
-                                <span class="precio-valor-grande">${{ "%.2f"|format(item.comision) }}</span>
-                                <span class="comision-porcentaje">({{ afiliado.porcentaje_comision }}%)</span>
                             </div>
                         </div>
 
-                        <div class="link-compartir">
-                            <input type="text" class="form-control link-input" value="{{ item.link }}" readonly>
-                            <button class="btn btn-success btn-copiar" onclick="copiarLink(this, '{{ item.link }}')">
-                                📋 Copiar Link
-                            </button>
+                        <div class="comision-box">
+                            <div class="comision-info">
+                                <span class="comision-etiqueta">Tu Comision ({{ afiliado.porcentaje_comision }}%)</span>
+                                <span class="comision-valor">${{ "%.2f"|format(item.comision) }}</span>
+                            </div>
+                            <div class="comision-barra">
+                                <div class="comision-progreso" style="width: {{ afiliado.porcentaje_comision }}%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="link-section">
+                            <label>Link del producto:</label>
+                            <div class="link-compartir">
+                                <input type="text" class="link-input" value="{{ item.link }}" readonly>
+                                <button class="btn-copiar" onclick="copiarLink(this, '{{ item.link }}')">
+                                    📋 Copiar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             {% endfor %}
+        </div>
+
+        <!-- Mensaje sin resultados -->
+        <div id="sin-resultados" class="empty-state" style="display: none;">
+            <span class="empty-icon">🔍</span>
+            <p>No se encontraron productos con esos filtros</p>
+            <button class="btn btn-primary" onclick="limpiarFiltros()">Ver todos los productos</button>
         </div>
     {% else %}
         <div class="empty-state">
@@ -75,6 +200,58 @@
 </div>
 
 <script>
+// Estado de filtros
+let categoriaActual = 'todos';
+let marcaActual = 'todas';
+let busquedaActual = '';
+
+// Marcas conocidas
+const marcasTelefonos = {
+    'iphone': ['iphone'],
+    'samsung': ['samsung', 'galaxy'],
+    'xiaomi': ['xiaomi', 'redmi', 'poco'],
+    'tecno': ['tecno'],
+    'infinix': ['infinix'],
+    'honor': ['honor'],
+    'zte': ['zte']
+};
+
+const marcasComputadoras = {
+    'hp': ['hp ', 'hp-', 'hp15', 'hp14'],
+    'lenovo': ['lenovo', 'ideapad', 'thinkpad', 'loq'],
+    'dell': ['dell', 'inspiron', 'latitude'],
+    'asus': ['asus', 'vivobook', 'tuf', 'rog']
+};
+
+function detectarMarca(nombre, categoria) {
+    nombre = nombre.toLowerCase();
+    const marcas = categoria === 'telefonos' ? marcasTelefonos :
+                   categoria === 'computadoras' ? marcasComputadoras : null;
+
+    if (!marcas) return null;
+
+    for (const [marca, keywords] of Object.entries(marcas)) {
+        if (keywords.some(kw => nombre.includes(kw))) {
+            return marca;
+        }
+    }
+    return null;
+}
+
+function copiarLinkTienda() {
+    const input = document.getElementById('link-tienda-general');
+    navigator.clipboard.writeText(input.value).then(function() {
+        const btn = document.querySelector('.btn-copiar-grande');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '✓ Link Copiado!';
+        btn.classList.add('copiado');
+        setTimeout(function() {
+            btn.innerHTML = originalText;
+            btn.classList.remove('copiado');
+        }, 2000);
+    });
+}
+
 function copiarLink(btn, link) {
     navigator.clipboard.writeText(link).then(function() {
         const originalText = btn.innerHTML;
@@ -88,5 +265,693 @@ function copiarLink(btn, link) {
         alert('Error al copiar: ' + err);
     });
 }
+
+function filtrarCategoria(categoria) {
+    categoriaActual = categoria;
+    marcaActual = 'todas';
+
+    document.querySelectorAll('#filtro-categoria .chip').forEach(c => c.classList.remove('active'));
+    document.querySelector(`#filtro-categoria .chip[data-categoria="${categoria}"]`).classList.add('active');
+
+    document.querySelectorAll('#filtro-marca .chip').forEach(c => c.classList.remove('active'));
+    document.querySelector('#filtro-marca .chip[data-marca="todas"]').classList.add('active');
+
+    actualizarFiltroMarcas();
+    aplicarFiltros();
+}
+
+function filtrarMarca(marca) {
+    marcaActual = marca;
+
+    document.querySelectorAll('#filtro-marca .chip').forEach(c => c.classList.remove('active'));
+    document.querySelector(`#filtro-marca .chip[data-marca="${marca}"]`).classList.add('active');
+
+    aplicarFiltros();
+}
+
+function actualizarFiltroMarcas() {
+    const container = document.getElementById('filtro-marca-container');
+    const marcasTelefono = document.querySelectorAll('.marca-telefono');
+    const marcasComputadora = document.querySelectorAll('.marca-computadora');
+
+    if (categoriaActual === 'telefonos') {
+        container.style.display = 'block';
+        marcasTelefono.forEach(m => m.style.display = 'inline-flex');
+        marcasComputadora.forEach(m => m.style.display = 'none');
+    } else if (categoriaActual === 'computadoras') {
+        container.style.display = 'block';
+        marcasTelefono.forEach(m => m.style.display = 'none');
+        marcasComputadora.forEach(m => m.style.display = 'inline-flex');
+    } else {
+        container.style.display = 'none';
+    }
+}
+
+function filtrarProductos() {
+    busquedaActual = document.getElementById('buscar-producto').value.toLowerCase().trim();
+    const btnClear = document.getElementById('btn-clear');
+    btnClear.style.display = busquedaActual ? 'block' : 'none';
+
+    aplicarFiltros();
+}
+
+function limpiarBusqueda() {
+    document.getElementById('buscar-producto').value = '';
+    document.getElementById('btn-clear').style.display = 'none';
+    busquedaActual = '';
+    aplicarFiltros();
+}
+
+function limpiarFiltros() {
+    categoriaActual = 'todos';
+    marcaActual = 'todas';
+    busquedaActual = '';
+
+    document.getElementById('buscar-producto').value = '';
+    document.getElementById('btn-clear').style.display = 'none';
+
+    document.querySelectorAll('#filtro-categoria .chip').forEach(c => c.classList.remove('active'));
+    document.querySelector('#filtro-categoria .chip[data-categoria="todos"]').classList.add('active');
+
+    document.querySelectorAll('#filtro-marca .chip').forEach(c => c.classList.remove('active'));
+    document.querySelector('#filtro-marca .chip[data-marca="todas"]').classList.add('active');
+
+    document.getElementById('filtro-marca-container').style.display = 'none';
+
+    aplicarFiltros();
+}
+
+function aplicarFiltros() {
+    const cards = document.querySelectorAll('.producto-afiliado-card');
+    const sinResultados = document.getElementById('sin-resultados');
+    const btnLimpiar = document.getElementById('btn-limpiar-filtros');
+    let visibles = 0;
+
+    cards.forEach(card => {
+        const categoria = card.dataset.categoria;
+        const nombre = card.dataset.nombre;
+
+        let matchCategoria = categoriaActual === 'todos' || categoria === categoriaActual;
+        let matchBusqueda = busquedaActual === '' || nombre.includes(busquedaActual);
+        let matchMarca = true;
+
+        if (marcaActual !== 'todas') {
+            const marcaDetectada = detectarMarca(nombre, categoria);
+            matchMarca = marcaDetectada === marcaActual;
+        }
+
+        if (matchCategoria && matchBusqueda && matchMarca) {
+            card.style.display = 'flex';
+            visibles++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    const grid = document.getElementById('productos-grid');
+    if (visibles === 0) {
+        grid.style.display = 'none';
+        sinResultados.style.display = 'flex';
+    } else {
+        grid.style.display = 'grid';
+        sinResultados.style.display = 'none';
+    }
+
+    document.getElementById('contador-resultados').textContent = `${visibles} productos`;
+
+    const hayFiltros = categoriaActual !== 'todos' || marcaActual !== 'todas' || busquedaActual !== '';
+    btnLimpiar.style.display = hayFiltros ? 'inline-block' : 'none';
+}
 </script>
+
+<style>
+/* ========================================
+   CARD DE TIENDA GENERAL
+   ======================================== */
+.tienda-general-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: white;
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+}
+
+.tienda-general-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.tienda-icon {
+    font-size: 2.5rem;
+    background: rgba(255,255,255,0.2);
+    padding: 0.75rem;
+    border-radius: 16px;
+}
+
+.tienda-general-header h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.tienda-general-header p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    line-height: 1.4;
+}
+
+.tienda-general-link {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.link-input-grande {
+    flex: 1;
+    padding: 0.875rem 1rem;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    font-size: 0.95rem;
+    backdrop-filter: blur(10px);
+}
+
+.link-input-grande::placeholder {
+    color: rgba(255,255,255,0.6);
+}
+
+.btn-copiar-grande {
+    padding: 0.875rem 1.5rem;
+    background: white;
+    color: #667eea;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-copiar-grande:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.btn-copiar-grande.copiado {
+    background: #10b981;
+    color: white;
+}
+
+.tienda-general-info {
+    text-align: center;
+}
+
+.info-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+/* ========================================
+   BANNER INFO AFILIADO
+   ======================================== */
+.afiliado-info-banner {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.afiliado-info-banner p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* ========================================
+   FILTROS
+   ======================================== */
+.filtros-afiliado {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.search-box {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.search-box .search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 0.875rem 1rem 0.875rem 3rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-clear-search {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.filtros-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.filtro-grupo label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #374151;
+}
+
+.filtro-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 1rem;
+    border: 2px solid #e2e8f0;
+    background: white;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.chip:hover {
+    border-color: #667eea;
+    background: #f8fafc;
+}
+
+.chip.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-color: transparent;
+}
+
+.resultados-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+#contador-resultados {
+    font-weight: 600;
+    color: #374151;
+}
+
+.btn-limpiar-filtros {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* ========================================
+   GRID DE PRODUCTOS
+   ======================================== */
+.productos-afiliado-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 1.5rem;
+}
+
+/* ========================================
+   TARJETA DE PRODUCTO - REDISEÑADA
+   ======================================== */
+.producto-afiliado-card {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.producto-afiliado-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Contenedor de imagen */
+.producto-imagen-container {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    overflow: hidden;
+}
+
+.producto-imagen {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 1rem;
+    transition: transform 0.3s ease;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+.producto-afiliado-card:hover .producto-imagen {
+    transform: scale(1.05);
+}
+
+.sin-imagen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    font-size: 4rem;
+    color: #cbd5e1;
+}
+
+.oferta-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* Contenido del producto */
+.producto-contenido {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+}
+
+.producto-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.producto-nombre {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.3;
+    margin: 0;
+    flex: 1;
+}
+
+.categoria-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: #f1f5f9;
+    color: #64748b;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.producto-descripcion {
+    font-size: 0.85rem;
+    color: #64748b;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.producto-descripcion.sin-desc {
+    font-style: italic;
+    color: #94a3b8;
+}
+
+/* Grid de precios */
+.precios-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+}
+
+.precio-box {
+    background: #f8fafc;
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.precio-box.oferta {
+    background: #fef2f2;
+}
+
+.precio-box.costo {
+    background: #fefce8;
+}
+
+.precio-box.margen {
+    background: #ecfdf5;
+}
+
+.precio-etiqueta {
+    display: block;
+    font-size: 0.7rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.precio-valor {
+    display: block;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.precio-valor.tachado {
+    text-decoration: line-through;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.precio-box.oferta .precio-valor {
+    color: #dc2626;
+}
+
+.precio-box.margen .precio-valor {
+    color: #059669;
+}
+
+/* Box de comision */
+.comision-box {
+    background: linear-gradient(135deg, #10b981, #059669);
+    padding: 1rem;
+    border-radius: 12px;
+    color: white;
+}
+
+.comision-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.comision-etiqueta {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.comision-valor {
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.comision-barra {
+    height: 6px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.comision-progreso {
+    height: 100%;
+    background: white;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* Seccion de link */
+.link-section {
+    margin-top: auto;
+}
+
+.link-section label {
+    display: block;
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.link-compartir {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.link-input {
+    flex: 1;
+    padding: 0.65rem 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    color: #475569;
+    background: #f8fafc;
+    min-width: 0;
+}
+
+.btn-copiar {
+    padding: 0.65rem 1rem;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-copiar:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-copiar.copiado {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+/* ========================================
+   ESTADOS VACIOS
+   ======================================== */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+    background: white;
+    border-radius: 16px;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 768px) {
+    .productos-afiliado-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tienda-general-link {
+        flex-direction: column;
+    }
+
+    .btn-copiar-grande {
+        width: 100%;
+    }
+
+    .filtro-chips {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 0.5rem;
+    }
+
+    .chip {
+        white-space: nowrap;
+    }
+
+    .precios-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .producto-imagen-container {
+        height: 180px;
+    }
+}
+
+@media (max-width: 480px) {
+    .tienda-general-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .tienda-icon {
+        align-self: center;
+    }
+}
+</style>
 {% endblock %}

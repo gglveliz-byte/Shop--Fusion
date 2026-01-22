@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta  # <--- esto faltaba
 from dotenv import load_dotenv
 
 # Cargar variables de entorno
@@ -31,3 +32,6 @@ class Config:
     PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')
     PAYPAL_SECRET = os.environ.get('PAYPAL_SECRET')
     PAYPAL_MODE = os.environ.get('PAYPAL_MODE', 'sandbox')  # 'sandbox' o 'live'
+
+    # Duración de la cookie permanente
+    PERMANENT_SESSION_LIFETIME = timedelta(days=180)  # 3 meses

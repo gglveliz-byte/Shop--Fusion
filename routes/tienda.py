@@ -5,6 +5,7 @@ Home, productos, carrito, checkout
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, jsonify
 from decimal import Decimal
+from models import db
 import json
 import requests
 import base64
@@ -15,7 +16,8 @@ bp = Blueprint('tienda', __name__)
 @bp.route('/')
 def index():
     """Página principal de la tienda"""
-    from models import Producto, Afiliado
+    from models import Producto, Afiliado, CATEGORIAS_PRODUCTO
+    from sqlalchemy import func
 
     # Capturar código de afiliado si existe en la URL
     ref = request.args.get('ref')
@@ -29,26 +31,58 @@ def index():
     # Obtener productos activos
     productos_db = Producto.query.filter_by(activo=True).order_by(Producto.creado_en.desc()).all()
 
+    # Obtener categorías que tienen productos activos
+    categorias_con_productos = db.session.query(
+        Producto.categoria,
+        func.count(Producto.id).label('count')
+    ).filter(Producto.activo == True).group_by(Producto.categoria).all()
+
+    # Crear diccionario de categorías con sus conteos
+    categorias_activas = {}
+    for cat, count in categorias_con_productos:
+        if cat:
+            # Buscar el nombre legible de la categoría
+            nombre_cat = cat
+            for valor, nombre in CATEGORIAS_PRODUCTO:
+                if valor == cat:
+                    nombre_cat = nombre
+                    break
+            categorias_activas[cat] = {'nombre': nombre_cat, 'count': count}
+
     # Convertir productos a diccionarios para JSON
     productos = []
     for p in productos_db:
+        # Obtener todas las imágenes usando el método helper
+        todas_imagenes = p.obtener_todas_imagenes()
+
         productos.append({
             'id': p.id,
             'nombre': p.nombre,
             'descripcion': p.descripcion,
+            'categoria': p.categoria or 'otros',
             'precio_final': float(p.precio_final),
             'precio_oferta': float(p.precio_oferta) if p.precio_oferta else None,
-            'imagen': p.imagen,
-            'imagenes': p.imagenes if p.imagenes else []
+            'imagen': todas_imagenes[0] if todas_imagenes else None,
+            'imagenes': todas_imagenes
         })
 
     # Verificar si hay código de afiliado en sesión
     afiliado_codigo = session.get('afiliado_codigo')
 
+    # Número de WhatsApp de la configuración
+    whatsapp_numero = current_app.config.get('WHATSAPP_NUMBER', '')
+    # Asegurar formato internacional (sin el 0 inicial, con código de país)
+    if whatsapp_numero.startswith('0'):
+        whatsapp_numero = '593' + whatsapp_numero[1:]  # Ecuador
+    elif not whatsapp_numero.startswith('+') and not whatsapp_numero.startswith('593'):
+        whatsapp_numero = '593' + whatsapp_numero
+
     return render_template('tienda/index.html',
                          productos=productos,
                          productos_db=productos_db,
-                         afiliado_codigo=afiliado_codigo)
+                         categorias=categorias_activas,
+                         afiliado_codigo=afiliado_codigo,
+                         whatsapp_numero=whatsapp_numero)
 
 
 @bp.route('/producto/<int:id>')

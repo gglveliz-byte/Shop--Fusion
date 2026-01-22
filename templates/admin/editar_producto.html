@@ -4,16 +4,33 @@
 
 {% block content %}
 <div class="container">
-    <h1>✏️ Editar Producto</h1>
+    <h1>Editar Producto</h1>
 
     <form method="POST" action="{{ url_for('admin.editar_producto', id=producto.id) }}" enctype="multipart/form-data" class="form-producto">
         <div class="form-row">
-            <div class="form-group col-md-8">
+            <div class="form-group col-md-6">
                 <label for="nombre">Nombre del Producto *</label>
                 <input type="text" id="nombre" name="nombre" class="form-control" value="{{ producto.nombre }}" required>
             </div>
 
             <div class="form-group col-md-4">
+                <label for="categoria">Categoria *</label>
+                <select id="categoria" name="categoria" class="form-control" required>
+                    <option value="">Seleccionar categoria</option>
+                    <option value="telefonos" {% if producto.categoria == 'telefonos' %}selected{% endif %}>Telefonos</option>
+                    <option value="computadoras" {% if producto.categoria == 'computadoras' %}selected{% endif %}>Computadoras</option>
+                    <option value="perfumes" {% if producto.categoria == 'perfumes' %}selected{% endif %}>Perfumes</option>
+                    <option value="ropa" {% if producto.categoria == 'ropa' %}selected{% endif %}>Ropa</option>
+                    <option value="zapatos" {% if producto.categoria == 'zapatos' %}selected{% endif %}>Zapatos</option>
+                    <option value="herramientas" {% if producto.categoria == 'herramientas' %}selected{% endif %}>Herramientas</option>
+                    <option value="hogar" {% if producto.categoria == 'hogar' %}selected{% endif %}>Hogar</option>
+                    <option value="electronica" {% if producto.categoria == 'electronica' %}selected{% endif %}>Electronica</option>
+                    <option value="accesorios" {% if producto.categoria == 'accesorios' %}selected{% endif %}>Accesorios</option>
+                    <option value="otros" {% if producto.categoria == 'otros' %}selected{% endif %}>Otros</option>
+                </select>
+            </div>
+
+            <div class="form-group col-md-2">
                 <label for="activo">Estado</label>
                 <div class="checkbox-container">
                     <input type="checkbox" id="activo" name="activo" {% if producto.activo %}checked{% endif %}>
@@ -23,7 +40,7 @@
         </div>
 
         <div class="form-group">
-            <label for="descripcion">Descripción</label>
+            <label for="descripcion">Descripcion</label>
             <textarea id="descripcion" name="descripcion" class="form-control" rows="4">{{ producto.descripcion }}</textarea>
         </div>
 
@@ -45,39 +62,115 @@
         </div>
 
         <div class="form-group">
-            <label>Imágenes del Producto (hasta 4)</label>
+            <label>Imagenes del Producto</label>
 
-            <!-- Imágenes actuales -->
-            {% if producto.imagen or producto.imagenes %}
+            <!-- Imagenes actuales -->
+            {% set todas_imagenes = producto.obtener_todas_imagenes() %}
+            {% if todas_imagenes and todas_imagenes[0] != '/static/img/no-image.png' %}
                 <div class="imagenes-actuales">
-                    <p class="text-muted mb-2">Imágenes actuales:</p>
+                    <p class="text-muted mb-2">Imagenes actuales:</p>
                     <div class="imagenes-preview-grid">
-                        {% if producto.imagen %}
+                        {% for img in todas_imagenes %}
                             <div class="imagen-preview-item imagen-existente">
-                                <img src="{{ url_for('static', filename='uploads/' + producto.imagen) }}" alt="{{ producto.nombre }}">
-                                <span class="badge-principal">Principal</span>
+                                <img src="{{ img }}" alt="{{ producto.nombre }}">
+                                {% if loop.index == 1 %}
+                                    <span class="badge-principal">Principal</span>
+                                {% endif %}
                             </div>
-                        {% endif %}
-                        {% if producto.imagenes %}
-                            {% for img in producto.imagenes %}
-                                <div class="imagen-preview-item imagen-existente">
-                                    <img src="{{ url_for('static', filename='uploads/' + img) }}" alt="{{ producto.nombre }}">
-                                </div>
-                            {% endfor %}
-                        {% endif %}
+                        {% endfor %}
                     </div>
+                    <p class="text-muted mt-2" style="font-size: 0.85rem;">
+                        {% if producto.imagen_url or producto.imagenes_url %}
+                            <span class="badge badge-info">Imagenes por URL</span>
+                        {% else %}
+                            <span class="badge badge-secondary">Imagenes locales</span>
+                        {% endif %}
+                    </p>
                 </div>
             {% endif %}
 
-            <label for="imagenes" class="mt-3">Subir nuevas imágenes (reemplazará las actuales)</label>
-            <input type="file" id="imagenes" name="imagenes" class="form-control" accept="image/*" multiple>
-            <small class="form-text text-muted">Deja vacío para mantener las imágenes actuales. Máximo 4 imágenes.</small>
+            <!-- Tabs para elegir metodo -->
+            <div class="imagen-tabs">
+                <button type="button" class="tab-btn {% if producto.imagen_url %}active{% endif %}" data-tab="url">URL de Imagen (Recomendado)</button>
+                <button type="button" class="tab-btn {% if not producto.imagen_url %}active{% endif %}" data-tab="archivo">Subir Archivo</button>
+            </div>
 
-            <!-- Preview de nuevas imágenes -->
-            <div id="imagenes-preview" class="imagenes-preview-grid"></div>
+            <!-- Tab: URL de imagen -->
+            <div id="tab-url" class="tab-content {% if producto.imagen_url %}active{% endif %}" {% if not producto.imagen_url %}style="display: none;"{% endif %}>
+                <div class="url-inputs">
+                    <div class="form-group">
+                        <label for="imagen_url">URL Imagen Principal</label>
+                        <input type="url" id="imagen_url" name="imagen_url" class="form-control" placeholder="https://ejemplo.com/imagen.jpg" value="{{ producto.imagen_url or '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="imagen_url_2">URL Imagen 2 (opcional)</label>
+                        <input type="url" id="imagen_url_2" name="imagen_url_2" class="form-control" placeholder="https://ejemplo.com/imagen2.jpg" value="{{ producto.imagenes_url[0] if producto.imagenes_url and producto.imagenes_url|length > 0 else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="imagen_url_3">URL Imagen 3 (opcional)</label>
+                        <input type="url" id="imagen_url_3" name="imagen_url_3" class="form-control" placeholder="https://ejemplo.com/imagen3.jpg" value="{{ producto.imagenes_url[1] if producto.imagenes_url and producto.imagenes_url|length > 1 else '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="imagen_url_4">URL Imagen 4 (opcional)</label>
+                        <input type="url" id="imagen_url_4" name="imagen_url_4" class="form-control" placeholder="https://ejemplo.com/imagen4.jpg" value="{{ producto.imagenes_url[2] if producto.imagenes_url and producto.imagenes_url|length > 2 else '' }}">
+                    </div>
+                </div>
+                <small class="form-text text-muted">Pega las URLs de las imagenes del producto. Si agregas URLs, estas reemplazaran las imagenes actuales.</small>
+
+                <!-- Preview de URLs -->
+                <div id="url-preview" class="imagenes-preview-grid"></div>
+            </div>
+
+            <!-- Tab: Subir archivo (para compatibilidad) -->
+            <div id="tab-archivo" class="tab-content" {% if producto.imagen_url %}style="display: none;"{% endif %}>
+                <input type="file" id="imagenes" name="imagenes" class="form-control" accept="image/*" multiple>
+                <small class="form-text text-muted">Deja vacio para mantener las imagenes actuales. Maximo 4 imagenes.</small>
+
+                <!-- Preview de imagenes archivo -->
+                <div id="imagenes-preview" class="imagenes-preview-grid"></div>
+            </div>
         </div>
 
 <style>
+.imagen-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    margin-top: 1rem;
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    border: 2px solid #e2e8f0;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.tab-btn:hover:not(.active) {
+    border-color: var(--primary-color);
+    background: #f8fafc;
+}
+
+.tab-content {
+    padding: 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.url-inputs .form-group {
+    margin-bottom: 0.75rem;
+}
+
 .imagenes-preview-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -124,14 +217,89 @@
     border: 1px solid #e2e8f0;
 }
 
+.badge-info {
+    background: #3b82f6;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+.badge-secondary {
+    background: #64748b;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
 @media (max-width: 768px) {
     .imagenes-preview-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+    .imagen-tabs {
+        flex-direction: column;
     }
 }
 </style>
 
 <script>
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // Remove active from all tabs
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+
+        // Activate clicked tab
+        this.classList.add('active');
+        const tabId = 'tab-' + this.dataset.tab;
+        document.getElementById(tabId).style.display = 'block';
+    });
+});
+
+// Preview URLs
+function updateUrlPreview() {
+    const preview = document.getElementById('url-preview');
+    preview.innerHTML = '';
+
+    const urls = [
+        document.getElementById('imagen_url').value,
+        document.getElementById('imagen_url_2').value,
+        document.getElementById('imagen_url_3').value,
+        document.getElementById('imagen_url_4').value
+    ].filter(url => url.trim() !== '');
+
+    urls.forEach((url, index) => {
+        const div = document.createElement('div');
+        div.className = 'imagen-preview-item';
+
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = `Preview ${index + 1}`;
+        img.onerror = function() {
+            div.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #fee2e2;">
+                    <span style="color: #ef4444; font-size: 0.8rem; text-align: center; padding: 0.5rem;">URL invalida</span>
+                </div>
+            `;
+        };
+
+        div.appendChild(img);
+        if (index === 0) {
+            div.innerHTML += '<span class="badge-principal">Principal</span>';
+        }
+        preview.appendChild(div);
+    });
+}
+
+// Add event listeners to URL inputs
+['imagen_url', 'imagen_url_2', 'imagen_url_3', 'imagen_url_4'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateUrlPreview);
+    document.getElementById(id).addEventListener('blur', updateUrlPreview);
+});
+
+// Preview archivos locales
 document.getElementById('imagenes').addEventListener('change', function(e) {
     const preview = document.getElementById('imagenes-preview');
     preview.innerHTML = '';
@@ -139,7 +307,7 @@ document.getElementById('imagenes').addEventListener('change', function(e) {
     const files = Array.from(e.target.files).slice(0, 4);
 
     if (e.target.files.length > 4) {
-        alert('Solo puedes subir hasta 4 imágenes');
+        alert('Solo puedes subir hasta 4 imagenes');
     }
 
     files.forEach((file, index) => {
@@ -156,6 +324,9 @@ document.getElementById('imagenes').addEventListener('change', function(e) {
         reader.readAsDataURL(file);
     });
 });
+
+// Initialize URL preview if there are existing URLs
+updateUrlPreview();
 </script>
 
         <div class="form-actions">
