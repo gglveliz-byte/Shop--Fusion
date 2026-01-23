@@ -21,7 +21,7 @@ class Config:
     SESSION_COOKIE_SAMESITE = 'Lax'
 
     # Configuración de WhatsApp
-    WHATSAPP_NUMBER = '0997811011'  # CAMBIAR POR TU NÚMERO (sin espacios, con código de país)
+    WHATSAPP_NUMBER = '+593997811011'  # CAMBIAR POR TU NÚMERO (sin espacios, con código de país)
 
     # Configuración de archivos
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
