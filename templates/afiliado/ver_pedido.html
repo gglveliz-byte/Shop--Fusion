@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedido #{{ pedido.id }} - Vendedor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="pedido-header">
+        <h1>📦 Pedido #{{ pedido.id }}</h1>
+        <div class="pedido-estado">
+            {% if pedido.estado == 'pendiente' %}
+                <span class="badge badge-warning badge-lg">Pendiente de Pago</span>
+            {% elif pedido.estado == 'pagado' %}
+                <span class="badge badge-success badge-lg">Pagado</span>
+            {% elif pedido.estado == 'cancelado' %}
+                <span class="badge badge-danger badge-lg">Cancelado ✕</span>
+            {% endif %}
+            
+            {% if pedido.validado_por_vendedor %}
+                <span class="badge badge-info badge-lg">✓ Validado</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="pedido-detalle">
+        <div class="pedido-seccion">
+            <h3>👤 Datos del Cliente</h3>
+            <div class="info-cliente">
+                <p><strong>Nombre:</strong> {{ pedido.cliente_nombre }}</p>
+                <p><strong>Teléfono:</strong> {{ pedido.cliente_telefono }}</p>
+                <p><strong>Dirección:</strong> {{ pedido.cliente_direccion }}</p>
+            </div>
+        </div>
+
+        <div class="pedido-seccion">
+            <h3>📦 Productos</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unit.</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in pedido.productos_json %}
+                        <tr>
+                            <td>{{ item.nombre }}</td>
+                            <td>{{ item.cantidad }}</td>
+                            <td>${{ "%.2f"|format(item.precio) }}</td>
+                            <td>${{ "%.2f"|format(item.subtotal) }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-right"><strong>Total:</strong></td>
+                        <td><strong>${{ "%.2f"|format(pedido.total) }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="pedido-seccion">
+            <h3>📊 Información del Pedido</h3>
+            <p><strong>Fecha de creación:</strong> {{ pedido.creado_en.strftime('%d/%m/%Y %H:%M') }}</p>
+            {% if pedido.pagado_en %}
+                <p><strong>Fecha de pago:</strong> {{ pedido.pagado_en.strftime('%d/%m/%Y %H:%M') }}</p>
+            {% endif %}
+            {% if pedido.validado_en %}
+                <p><strong>Fecha de validación:</strong> {{ pedido.validado_en.strftime('%d/%m/%Y %H:%M') }}</p>
+            {% endif %}
+        </div>
+
+        <div class="pedido-acciones">
+            {% if pedido.estado == 'pendiente' %}
+                <form method="POST" action="{{ url_for('afiliado.marcar_pedido_pagado', id=pedido.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        ✓ Marcar como Pagado
+                    </button>
+                </form>
+                <form method="POST" action="{{ url_for('afiliado.cancelar_pedido', id=pedido.id) }}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de cancelar este pedido?');">
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        ✕ Cancelar Pedido
+                    </button>
+                </form>
+            {% elif pedido.estado == 'cancelado' %}
+                <div class="alert alert-danger">
+                    <strong>✕ Pedido Cancelado</strong>
+                </div>
+            {% elif pedido.estado == 'pagado' and not pedido.validado_por_vendedor %}
+                <form method="POST" action="{{ url_for('afiliado.validar_pedido', id=pedido.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        ✓ Validar Pedido (Para que Admin lo vea)
+                    </button>
+                    <p class="text-muted mt-2">
+                        <small>Al validar, el admin podrá ver este pedido y se generará tu comisión automáticamente.</small>
+                    </p>
+                </form>
+                <form method="POST" action="{{ url_for('afiliado.cancelar_pedido', id=pedido.id) }}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de cancelar este pedido pagado?');">
+                    <button type="submit" class="btn btn-danger">✕ Cancelar Pedido</button>
+                </form>
+            {% elif pedido.validado_por_vendedor %}
+                <div class="alert alert-success">
+                    <strong>✓ Pedido Validado</strong><br>
+                    Este pedido ya está visible para el admin y tu comisión ha sido generada.
+                </div>
+            {% endif %}
+
+            <a href="{{ url_for('afiliado.pedidos') }}" class="btn btn-secondary">Volver a Pedidos</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.pedido-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.pedido-estado {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.badge-lg {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+}
+
+.pedido-detalle {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.pedido-seccion {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.pedido-seccion:last-child {
+    border-bottom: none;
+}
+
+.pedido-seccion h3 {
+    color: #1e293b;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.info-cliente p {
+    margin: 0.5rem 0;
+    color: #475569;
+}
+
+.pedido-acciones {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #e2e8f0;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .pedido-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .pedido-acciones {
+        flex-direction: column;
+    }
+
+    .pedido-acciones button,
+    .pedido-acciones a {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}

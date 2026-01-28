@@ -51,7 +51,7 @@
             </div>
         </div>
         <div class="tienda-general-link">
-            <input type="text" class="form-control link-input-grande" id="link-tienda-general" value="{{ url_for('tienda.index', ref=afiliado.codigo, _external=True) }}" readonly>
+            <input type="text" class="form-control link-input-grande" id="link-tienda-general" value="{{ url_for('tienda.tienda_vendedor', codigo=afiliado.codigo, _external=True) }}" readonly>
             <button class="btn btn-primary btn-copiar-grande" onclick="copiarLinkTienda()">
                 📋 Copiar Link de Tienda
             </button>

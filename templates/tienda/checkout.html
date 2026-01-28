@@ -87,9 +87,24 @@
                 </div>
             {% endfor %}
 
+            <div class="resumen-subtotal">
+                <span>Subtotal:</span>
+                <span>${{ "%.2f"|format(total) }}</span>
+            </div>
+
+            <!-- Recargo PayPal (oculto inicialmente) -->
+            <div id="recargo-paypal" class="resumen-recargo" style="display: none;">
+                <span>Comisión PayPal/Tarjeta ({{ comision_paypal }}%):</span>
+                <span class="recargo-monto">+${{ "%.2f"|format(recargo_paypal) }}</span>
+            </div>
+
             <div class="resumen-total">
-                <span><strong>Total:</strong></span>
-                <span><strong>${{ "%.2f"|format(total) }}</strong></span>
+                <span><strong>Total a pagar:</strong></span>
+                <span id="total-mostrado"><strong>${{ "%.2f"|format(total) }}</strong></span>
+            </div>
+
+            <div id="info-paypal" class="info-paypal" style="display: none;">
+                <p>ℹ️ Al pagar con PayPal o tarjeta se agrega una comisión del {{ comision_paypal }}% ({{ "%.2f"|format(recargo_paypal) }}) que cobra PayPal por procesar el pago.</p>
             </div>
         </div>
     </div>
@@ -178,6 +193,52 @@
     min-height: 55px;
 }
 
+.resumen-subtotal {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-top: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.resumen-recargo {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    color: #dc2626;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.recargo-monto {
+    color: #dc2626;
+}
+
+.resumen-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0;
+    border-top: 2px solid #1e293b;
+    margin-top: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.info-paypal {
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-top: 0.75rem;
+}
+
+.info-paypal p {
+    margin: 0;
+    color: #92400e;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
 @media (max-width: 768px) {
     .metodo-pago-opciones {
         flex-direction: column;
@@ -189,8 +250,8 @@
 }
 </style>
 
-<!-- PayPal SDK -->
-<script src="https://www.paypal.com/sdk/js?client-id={{ config.PAYPAL_CLIENT_ID }}&currency=USD"></script>
+<!-- PayPal SDK - Modo integrado sin popups -->
+<script src="https://www.paypal.com/sdk/js?client-id={{ config.PAYPAL_CLIENT_ID }}&currency=USD&intent=capture&enable-funding=card"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -202,6 +263,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Carrito de productos
     const carrito = {{ productos | tojson | safe }};
     const total = {{ total }};
+    const totalConPaypal = {{ total_con_paypal }};
+    const recargoPaypal = {{ recargo_paypal }};
+    const comisionPaypal = {{ comision_paypal }};
+
+    // Elementos del resumen
+    const recargoPaypalDiv = document.getElementById('recargo-paypal');
+    const infoPaypalDiv = document.getElementById('info-paypal');
+    const totalMostrado = document.getElementById('total-mostrado');
 
     // Cambiar método de pago
     metodoPagoInputs.forEach(input => {
@@ -209,9 +278,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (this.value === 'whatsapp') {
                 whatsappContainer.style.display = 'block';
                 paypalContainer.style.display = 'none';
+                // Ocultar recargo PayPal
+                recargoPaypalDiv.style.display = 'none';
+                infoPaypalDiv.style.display = 'none';
+                totalMostrado.innerHTML = '<strong>$' + total.toFixed(2) + '</strong>';
             } else {
                 whatsappContainer.style.display = 'none';
                 paypalContainer.style.display = 'block';
+                // Mostrar recargo PayPal
+                recargoPaypalDiv.style.display = 'flex';
+                infoPaypalDiv.style.display = 'block';
+                totalMostrado.innerHTML = '<strong>$' + totalConPaypal.toFixed(2) + '</strong>';
             }
         });
     });
@@ -250,10 +327,43 @@ document.addEventListener('DOMContentLoaded', function() {
         mensaje += `📱 ${telefono}\n`;
         mensaje += `📍 ${direccion}`;
 
-        // Abrir WhatsApp
-        const whatsappNumero = '{{ config.WHATSAPP_NUMBER }}';
+        // Abrir WhatsApp - usar del vendedor si existe
+        let whatsappNumero = '{{ config.WHATSAPP_NUMBER }}';
+        {% if afiliado_codigo %}
+        // Si hay código de vendedor, obtener su WhatsApp del servidor
+        fetch('/api/get-vendedor-whatsapp?codigo={{ afiliado_codigo }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.whatsapp) {
+                    whatsappNumero = data.whatsapp;
+                }
+                // Formatear número
+                if (whatsappNumero.startsWith('0')) {
+                    whatsappNumero = '593' + whatsappNumero.substring(1);
+                } else if (!whatsappNumero.startsWith('+') && !whatsappNumero.startsWith('593')) {
+                    whatsappNumero = '593' + whatsappNumero;
+                }
+                const whatsappUrl = `https://wa.me/${whatsappNumero}?text=${encodeURIComponent(mensaje)}`;
+                window.open(whatsappUrl, '_blank');
+            })
+            .catch(() => {
+                // Si falla, usar el del admin
+                if (whatsappNumero.startsWith('0')) {
+                    whatsappNumero = '593' + whatsappNumero.substring(1);
+                }
+                const whatsappUrl = `https://wa.me/${whatsappNumero}?text=${encodeURIComponent(mensaje)}`;
+                window.open(whatsappUrl, '_blank');
+            });
+        {% else %}
+        // Formatear número del admin
+        if (whatsappNumero.startsWith('0')) {
+            whatsappNumero = '593' + whatsappNumero.substring(1);
+        } else if (!whatsappNumero.startsWith('+') && !whatsappNumero.startsWith('593')) {
+            whatsappNumero = '593' + whatsappNumero;
+        }
         const whatsappUrl = `https://wa.me/${whatsappNumero}?text=${encodeURIComponent(mensaje)}`;
         window.open(whatsappUrl, '_blank');
+        {% endif %}
 
         // Crear pedido en el servidor
         fetch('/api/crear-pedido', {
@@ -270,16 +380,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // PayPal Buttons
+    // PayPal Buttons - Modo integrado
     if (typeof paypal !== 'undefined') {
         paypal.Buttons({
             style: {
                 layout: 'vertical',
                 color: 'blue',
                 shape: 'rect',
-                label: 'paypal'
+                label: 'pay'
             },
-
             // Crear orden
             createOrder: function(data, actions) {
                 if (!validarFormulario()) {

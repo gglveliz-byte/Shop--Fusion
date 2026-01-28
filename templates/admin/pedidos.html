@@ -39,6 +39,7 @@
         <a href="{{ url_for('admin.pedidos', estado='todos') }}" class="btn {% if estado_filter == 'todos' %}btn-primary{% else %}btn-secondary{% endif %}">Todos</a>
         <a href="{{ url_for('admin.pedidos', estado='pendiente') }}" class="btn {% if estado_filter == 'pendiente' %}btn-warning{% else %}btn-secondary{% endif %}">Pendientes</a>
         <a href="{{ url_for('admin.pedidos', estado='pagado') }}" class="btn {% if estado_filter == 'pagado' %}btn-success{% else %}btn-secondary{% endif %}">Pagados</a>
+        <a href="{{ url_for('admin.pedidos', estado='cancelado') }}" class="btn {% if estado_filter == 'cancelado' %}btn-danger{% else %}btn-secondary{% endif %}">Cancelados</a>
     </div>
 
     {% if pedidos %}
@@ -72,8 +73,10 @@
                         <td>
                             {% if pedido.estado == 'pendiente' %}
                                 <span class="badge badge-warning">Pendiente</span>
-                            {% else %}
+                            {% elif pedido.estado == 'pagado' %}
                                 <span class="badge badge-success">Pagado</span>
+                            {% elif pedido.estado == 'cancelado' %}
+                                <span class="badge badge-danger">Cancelado</span>
                             {% endif %}
                         </td>
                         <td>{{ pedido.creado_en.strftime('%d/%m/%Y %H:%M') }}</td>

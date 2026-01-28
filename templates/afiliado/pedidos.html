@@ -6,22 +6,32 @@
 <div class="container">
     <h1>🛒 Pedidos que Generé</h1>
 
+    <div class="filtros" style="margin-bottom: 1.5rem;">
+        <a href="{{ url_for('afiliado.pedidos', estado='todos') }}" class="btn {% if estado_filter == 'todos' %}btn-primary{% else %}btn-secondary{% endif %}">Todos</a>
+        <a href="{{ url_for('afiliado.pedidos', estado='pendiente') }}" class="btn {% if estado_filter == 'pendiente' %}btn-warning{% else %}btn-secondary{% endif %}">Pendientes</a>
+        <a href="{{ url_for('afiliado.pedidos', estado='pagado') }}" class="btn {% if estado_filter == 'pagado' %}btn-success{% else %}btn-secondary{% endif %}">Pagados</a>
+        <a href="{{ url_for('afiliado.pedidos', estado='cancelado') }}" class="btn {% if estado_filter == 'cancelado' %}btn-danger{% else %}btn-secondary{% endif %}">Cancelados</a>
+    </div>
+
     {% if pedidos %}
         <table class="table">
             <thead>
-                <tr>
-                    <th>Pedido #</th>
-                    <th>Fecha</th>
-                    <th>Productos</th>
-                    <th>Total</th>
-                    <th>Estado</th>
-                </tr>
+                    <tr>
+                        <th>Pedido #</th>
+                        <th>Fecha</th>
+                        <th>Cliente</th>
+                        <th>Productos</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
             </thead>
             <tbody>
                 {% for pedido in pedidos %}
                     <tr>
-                        <td>#{{ pedido.id }}</td>
+                        <td><a href="{{ url_for('afiliado.ver_pedido', id=pedido.id) }}">#{{ pedido.id }}</a></td>
                         <td>{{ pedido.creado_en.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ pedido.cliente_nombre }}</td>
                         <td>
                             <ul class="lista-productos-simple">
                                 {% for item in pedido.productos_json %}
@@ -33,9 +43,17 @@
                         <td>
                             {% if pedido.estado == 'pendiente' %}
                                 <span class="badge badge-warning">Pendiente</span>
-                            {% else %}
+                            {% elif pedido.estado == 'pagado' %}
                                 <span class="badge badge-success">Pagado</span>
+                            {% elif pedido.estado == 'cancelado' %}
+                                <span class="badge badge-danger">Cancelado</span>
                             {% endif %}
+                            {% if pedido.validado_por_vendedor %}
+                                <br><span class="badge badge-info">✓ Validado</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('afiliado.ver_pedido', id=pedido.id) }}" class="btn btn-sm btn-primary">Ver</a>
                         </td>
                     </tr>
                 {% endfor %}

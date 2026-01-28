@@ -37,17 +37,42 @@ def dashboard():
     """Dashboard principal del admin"""
     # Estadísticas generales
     total_productos = Producto.query.filter_by(activo=True).count()
-    total_pedidos = Pedido.query.count()
-    pedidos_pendientes = Pedido.query.filter_by(estado='pendiente').count()
-    pedidos_pagados = Pedido.query.filter_by(estado='pagado').count()
+    
+    # Solo pedidos sin vendedor o validados por vendedores
+    total_pedidos = Pedido.query.filter(
+        db.or_(
+            Pedido.afiliado_id.is_(None),
+            Pedido.validado_por_vendedor == True
+        )
+    ).count()
+    
+    pedidos_pendientes = Pedido.query.filter(
+        db.or_(
+            db.and_(Pedido.afiliado_id.is_(None), Pedido.estado == 'pendiente'),
+            db.and_(Pedido.validado_por_vendedor == True, Pedido.estado == 'pendiente')
+        )
+    ).count()
+    
+    pedidos_pagados = Pedido.query.filter(
+        db.or_(
+            db.and_(Pedido.afiliado_id.is_(None), Pedido.estado == 'pagado'),
+            db.and_(Pedido.validado_por_vendedor == True, Pedido.estado == 'pagado')
+        )
+    ).count()
+    
     total_afiliados = Afiliado.query.filter_by(activo=True).count()
 
     # Comisiones pendientes de pago
     comisiones_pendientes = db.session.query(db.func.sum(Comision.monto))\
         .filter(Comision.estado.in_(['pendiente', 'generada'])).scalar() or Decimal('0.00')
 
-    # Últimos pedidos
-    ultimos_pedidos = Pedido.query.order_by(Pedido.creado_en.desc()).limit(5).all()
+    # Últimos pedidos (solo validados o sin vendedor)
+    ultimos_pedidos = Pedido.query.filter(
+        db.or_(
+            Pedido.afiliado_id.is_(None),
+            Pedido.validado_por_vendedor == True
+        )
+    ).order_by(Pedido.creado_en.desc()).limit(5).all()
 
     return render_template('admin/dashboard.html',
                          total_productos=total_productos,
@@ -272,17 +297,40 @@ def eliminar_producto(id):
 @bp.route('/pedidos')
 @admin_required
 def pedidos():
-    """Lista de pedidos"""
+    """Lista de pedidos - Solo pedidos validados por vendedores o sin vendedor (tienda principal)"""
     from models import Pedido
 
     estado_filter = request.args.get('estado', 'todos')
+    tipo_filter = request.args.get('tipo', 'todos')  # todos, validados, sin_vendedor
 
-    query = Pedido.query
+    # Pedidos sin vendedor (tienda principal) O pedidos validados por vendedores
+    query = Pedido.query.filter(
+        db.or_(
+            Pedido.afiliado_id.is_(None),  # Sin vendedor (tienda principal)
+            Pedido.validado_por_vendedor == True  # Validados por vendedores
+        )
+    )
+
     if estado_filter != 'todos':
         query = query.filter_by(estado=estado_filter)
 
+    if tipo_filter == 'validados':
+        query = query.filter(Pedido.validado_por_vendedor == True)
+    elif tipo_filter == 'sin_vendedor':
+        query = query.filter(Pedido.afiliado_id.is_(None))
+
     pedidos = query.order_by(Pedido.creado_en.desc()).all()
-    return render_template('admin/pedidos.html', pedidos=pedidos, estado_filter=estado_filter)
+    
+    # Estadísticas
+    total_validados = Pedido.query.filter_by(validado_por_vendedor=True).count()
+    total_sin_vendedor = Pedido.query.filter_by(afiliado_id=None).count()
+    
+    return render_template('admin/pedidos.html', 
+                         pedidos=pedidos, 
+                         estado_filter=estado_filter,
+                         tipo_filter=tipo_filter,
+                         total_validados=total_validados,
+                         total_sin_vendedor=total_sin_vendedor)
 
 
 @bp.route('/pedidos/<int:id>')
@@ -298,16 +346,43 @@ def ver_pedido(id):
 @bp.route('/pedidos/<int:id>/marcar-pagado', methods=['POST'])
 @admin_required
 def marcar_pedido_pagado(id):
-    """Marcar pedido como pagado y generar comisión"""
+    """Marcar pedido como pagado (solo para pedidos sin vendedor - tienda principal)"""
     from models import Pedido
 
     pedido = Pedido.query.get_or_404(id)
+
+    # Solo puede marcar como pagado si no tiene vendedor (tienda principal)
+    if pedido.afiliado_id:
+        flash('Este pedido pertenece a un vendedor. El vendedor debe marcarlo como pagado y validarlo.', 'error')
+        return redirect(url_for('admin.ver_pedido', id=id))
 
     if pedido.estado == 'pagado':
         flash('Este pedido ya está marcado como pagado', 'warning')
     else:
         pedido.marcar_como_pagado()
-        flash(f'Pedido #{pedido.id} marcado como pagado. Comisión generada automáticamente.', 'success')
+        # Para pedidos sin vendedor, no hay comisión que generar
+        flash(f'Pedido #{pedido.id} marcado como pagado.', 'success')
+
+    return redirect(url_for('admin.ver_pedido', id=id))
+
+
+@bp.route('/pedidos/<int:id>/cancelar', methods=['POST'])
+@admin_required
+def cancelar_pedido(id):
+    """Cancelar pedido"""
+    from models import Pedido
+
+    pedido = Pedido.query.get_or_404(id)
+
+    if pedido.estado == 'cancelado':
+        flash('Este pedido ya está cancelado', 'warning')
+    elif pedido.estado == 'pagado' and pedido.validado_por_vendedor:
+        flash('No se puede cancelar un pedido pagado y validado. Contacta al vendedor.', 'error')
+    else:
+        if pedido.marcar_como_cancelado():
+            flash(f'Pedido #{pedido.id} cancelado exitosamente', 'success')
+        else:
+            flash('No se pudo cancelar el pedido', 'error')
 
     return redirect(url_for('admin.ver_pedido', id=id))
 
@@ -364,11 +439,12 @@ def crear_afiliado():
         codigo = request.form.get('codigo').upper()
         porcentaje = request.form.get('porcentaje_comision')
         password = request.form.get('password')
+        whatsapp = request.form.get('whatsapp', '').strip()
         activo = request.form.get('activo') == 'on'
 
         # Validaciones
         if not all([nombre, email, codigo, porcentaje, password]):
-            flash('Todos los campos son obligatorios', 'error')
+            flash('Nombre, email, código, porcentaje y contraseña son obligatorios', 'error')
             return render_template('admin/crear_afiliado.html')
 
         # Verificar email único
@@ -389,12 +465,13 @@ def crear_afiliado():
             flash('El porcentaje debe ser un número entre 0 y 100', 'error')
             return render_template('admin/crear_afiliado.html')
 
-        # Crear afiliado
+        # Crear afiliado (vendedor)
         afiliado = Afiliado(
             nombre=nombre,
             email=email,
             codigo=codigo,
             porcentaje_comision=porcentaje,
+            whatsapp=whatsapp if whatsapp else None,
             activo=activo
         )
         afiliado.set_password(password)
@@ -420,6 +497,7 @@ def editar_afiliado(id):
     if request.method == 'POST':
         afiliado.nombre = request.form.get('nombre')
         email = request.form.get('email')
+        whatsapp = request.form.get('whatsapp', '').strip()
 
         # Verificar email único
         email_existente = Afiliado.query.filter_by(email=email).first()
@@ -428,6 +506,7 @@ def editar_afiliado(id):
             return render_template('admin/editar_afiliado.html', afiliado=afiliado)
 
         afiliado.email = email
+        afiliado.whatsapp = whatsapp if whatsapp else None
 
         try:
             porcentaje = Decimal(request.form.get('porcentaje_comision'))

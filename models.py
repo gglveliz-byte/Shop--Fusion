@@ -32,7 +32,7 @@ class Admin(UserMixin, db.Model):
         return f'<Admin {self.username}>'
 
 
-# Modelo de Afiliado
+# Modelo de Afiliado (Vendedor)
 class Afiliado(UserMixin, db.Model):
     __tablename__ = 'afiliados'
 
@@ -42,6 +42,7 @@ class Afiliado(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     codigo = db.Column(db.String(20), unique=True, nullable=False, index=True)
     porcentaje_comision = db.Column(db.Numeric(5, 2), nullable=False, default=80.00)  # Default 80%
+    whatsapp = db.Column(db.String(20), nullable=True)  # WhatsApp del vendedor
     activo = db.Column(db.Boolean, default=True)
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -178,8 +179,10 @@ class Pedido(db.Model):
     cliente_direccion = db.Column(db.Text, nullable=False)
     productos_json = db.Column(db.JSON, nullable=False)  # [{id, nombre, cantidad, precio}]
     total = db.Column(db.Numeric(10, 2), nullable=False)
-    estado = db.Column(db.String(20), default='pendiente')  # pendiente, pagado
+    estado = db.Column(db.String(20), default='pendiente')  # pendiente, pagado, cancelado
     afiliado_id = db.Column(db.Integer, db.ForeignKey('afiliados.id'), nullable=True)
+    validado_por_vendedor = db.Column(db.Boolean, default=False)  # Si el vendedor validó el pago
+    validado_en = db.Column(db.DateTime, nullable=True)  # Fecha de validación
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
     pagado_en = db.Column(db.DateTime, nullable=True)
 
@@ -187,18 +190,44 @@ class Pedido(db.Model):
     comisiones = db.relationship('Comision', backref='pedido', lazy='dynamic', cascade='all, delete-orphan')
 
     def marcar_como_pagado(self):
-        """Marcar pedido como pagado y generar comisiones"""
+        """Marcar pedido como pagado (solo cambia estado, no genera comisión aún)"""
         if self.estado == 'pagado':
             return  # Ya está pagado
 
         self.estado = 'pagado'
         self.pagado_en = datetime.utcnow()
+        db.session.commit()
+
+    def marcar_como_cancelado(self):
+        """Marcar pedido como cancelado"""
+        if self.estado == 'cancelado':
+            return  # Ya está cancelado
+        
+        if self.estado == 'pagado' and self.validado_por_vendedor:
+            # Si ya está pagado y validado, no se puede cancelar fácilmente
+            return False
+
+        self.estado = 'cancelado'
+        db.session.commit()
+        return True
+
+    def validar_para_admin(self):
+        """Validar pedido para que el admin lo vea y se genere la comisión"""
+        if not self.estado == 'pagado':
+            return False  # Debe estar pagado primero
+
+        if self.validado_por_vendedor:
+            return True  # Ya está validado
+
+        self.validado_por_vendedor = True
+        self.validado_en = datetime.utcnow()
 
         # Si tiene afiliado asociado, calcular y crear comisión
         if self.afiliado_id:
             self._generar_comision()
 
         db.session.commit()
+        return True
 
     def _generar_comision(self):
         """Generar comisión para el afiliado"""

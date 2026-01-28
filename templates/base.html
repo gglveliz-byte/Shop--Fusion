@@ -25,7 +25,9 @@
                     {% elif current_user.__class__.__name__ == 'Afiliado' %}
                         <a href="{{ url_for('afiliado.dashboard') }}">Dashboard</a>
                         <a href="{{ url_for('afiliado.productos') }}">Productos</a>
+                        <a href="{{ url_for('afiliado.pedidos') }}">Pedidos</a>
                         <a href="{{ url_for('afiliado.comisiones') }}">Mis Comisiones</a>
+                        <a href="{{ url_for('afiliado.mi_cuenta') }}">Mi Cuenta</a>
                         <a href="{{ url_for('auth.logout') }}" class="btn-logout">Cerrar Sesión</a>
                     {% endif %}
                 {% else %}

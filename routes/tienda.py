@@ -15,18 +15,17 @@ bp = Blueprint('tienda', __name__)
 
 @bp.route('/')
 def index():
-    """Página principal de la tienda"""
+    """Página principal de la tienda (Shop Fusion - Admin)"""
     from models import Producto, Afiliado, CATEGORIAS_PRODUCTO
     from sqlalchemy import func
 
-    # Capturar código de afiliado si existe en la URL
+    # Si viene código de vendedor, redirigir a su tienda
     ref = request.args.get('ref')
     if ref:
-        # Verificar que el código existe y el afiliado está activo
         afiliado = Afiliado.query.filter_by(codigo=ref, activo=True).first()
         if afiliado:
-            session['afiliado_codigo'] = ref
-            session.permanent = True  # Hacer la sesión permanente
+            # Redirigir a la tienda del vendedor
+            return redirect(url_for('tienda.tienda_vendedor', codigo=ref))
 
     # Obtener productos activos
     productos_db = Producto.query.filter_by(activo=True).order_by(Producto.creado_en.desc()).all()
@@ -66,10 +65,7 @@ def index():
             'imagenes': todas_imagenes
         })
 
-    # Verificar si hay código de afiliado en sesión
-    afiliado_codigo = session.get('afiliado_codigo')
-
-    # Número de WhatsApp de la configuración
+    # Número de WhatsApp del admin (Shop Fusion)
     whatsapp_numero = current_app.config.get('WHATSAPP_NUMBER', '')
     # Asegurar formato internacional (sin el 0 inicial, con código de país)
     if whatsapp_numero.startswith('0'):
@@ -81,8 +77,9 @@ def index():
                          productos=productos,
                          productos_db=productos_db,
                          categorias=categorias_activas,
-                         afiliado_codigo=afiliado_codigo,
-                         whatsapp_numero=whatsapp_numero)
+                         afiliado_codigo=None,  # Tienda principal sin afiliado
+                         whatsapp_numero=whatsapp_numero,
+                         es_tienda_vendedor=False)
 
 
 @bp.route('/producto/<int:id>')
@@ -90,13 +87,12 @@ def producto_detalle(id):
     """Detalle de un producto"""
     from models import Producto, Afiliado
 
-    # Capturar código de afiliado si existe en la URL
+    # Si viene código de vendedor, redirigir a su tienda
     ref = request.args.get('ref')
     if ref:
         afiliado = Afiliado.query.filter_by(codigo=ref, activo=True).first()
         if afiliado:
-            session['afiliado_codigo'] = ref
-            session.permanent = True
+            return redirect(url_for('tienda.producto_vendedor', id=id, codigo=ref))
 
     producto = Producto.query.get_or_404(id)
 
@@ -104,11 +100,18 @@ def producto_detalle(id):
         flash('Este producto no está disponible', 'error')
         return redirect(url_for('tienda.index'))
 
-    afiliado_codigo = session.get('afiliado_codigo')
+    # WhatsApp del admin
+    whatsapp_numero = current_app.config.get('WHATSAPP_NUMBER', '')
+    if whatsapp_numero.startswith('0'):
+        whatsapp_numero = '593' + whatsapp_numero[1:]
+    elif not whatsapp_numero.startswith('+') and not whatsapp_numero.startswith('593'):
+        whatsapp_numero = '593' + whatsapp_numero
 
     return render_template('tienda/producto.html',
                          producto=producto,
-                         afiliado_codigo=afiliado_codigo)
+                         afiliado_codigo=None,
+                         whatsapp_numero=whatsapp_numero,
+                         es_tienda_vendedor=False)
 
 
 @bp.route('/carrito')
@@ -302,8 +305,19 @@ def checkout():
         mensaje += f"📍 {direccion}\n\n"
         mensaje += f"Pedido #{pedido.id}"
 
-        # URL de WhatsApp
+        # URL de WhatsApp - usar del vendedor si existe, sino del admin
         whatsapp_numero = current_app.config['WHATSAPP_NUMBER']
+        if afiliado_codigo:
+            afiliado = Afiliado.query.filter_by(codigo=afiliado_codigo, activo=True).first()
+            if afiliado and afiliado.whatsapp:
+                whatsapp_numero = afiliado.whatsapp
+        
+        # Formatear número
+        if whatsapp_numero.startswith('0'):
+            whatsapp_numero = '593' + whatsapp_numero[1:]
+        elif not whatsapp_numero.startswith('+') and not whatsapp_numero.startswith('593'):
+            whatsapp_numero = '593' + whatsapp_numero
+
         import urllib.parse
         mensaje_encoded = urllib.parse.quote(mensaje)
         whatsapp_url = f"https://wa.me/{whatsapp_numero}?text={mensaje_encoded}"
@@ -313,9 +327,25 @@ def checkout():
                              whatsapp_url=whatsapp_url,
                              mensaje=mensaje)
 
+    # Calcular total con comisión PayPal (5.4%)
+    comision_paypal = Decimal('5.4')
+    total_con_paypal = total * (Decimal('1') + (comision_paypal / Decimal('100')))
+    recargo_paypal = total_con_paypal - total
+
+    # Obtener código de vendedor si existe
+    afiliado_codigo = session.get('afiliado_codigo')
+    vendedor = None
+    if afiliado_codigo:
+        vendedor = Afiliado.query.filter_by(codigo=afiliado_codigo, activo=True).first()
+
     return render_template('tienda/checkout.html',
                          productos=productos_pedido,
-                         total=total)
+                         total=total,
+                         total_con_paypal=total_con_paypal,
+                         recargo_paypal=recargo_paypal,
+                         comision_paypal=comision_paypal,
+                         afiliado_codigo=afiliado_codigo,
+                         vendedor=vendedor)
 
 
 @bp.route('/api/crear-pedido', methods=['POST'])
@@ -468,6 +498,21 @@ def paypal_create_order():
                     }
                 })
 
+        # Agregar comisión PayPal (5.4%)
+        comision_paypal = Decimal('5.4')
+        total_con_comision = total * (Decimal('1') + (comision_paypal / Decimal('100')))
+        recargo_paypal = total_con_comision - total
+
+        # Agregar el recargo como item separado en PayPal
+        items.append({
+            "name": f"Comisión PayPal/Tarjeta ({comision_paypal}%)",
+            "quantity": "1",
+            "unit_amount": {
+                "currency_code": "USD",
+                "value": f"{float(recargo_paypal):.2f}"
+            }
+        })
+
         # Obtener token de PayPal
         access_token = get_paypal_access_token()
         if not access_token:
@@ -489,11 +534,11 @@ def paypal_create_order():
             "purchase_units": [{
                 "amount": {
                     "currency_code": "USD",
-                    "value": f"{float(total):.2f}",
+                    "value": f"{float(total_con_comision):.2f}",
                     "breakdown": {
                         "item_total": {
                             "currency_code": "USD",
-                            "value": f"{float(total):.2f}"
+                            "value": f"{float(total_con_comision):.2f}"
                         }
                     }
                 },
@@ -576,6 +621,10 @@ def paypal_capture_order():
 
                 total += subtotal
 
+        # Calcular total con comisión PayPal (5.4%)
+        comision_paypal = Decimal('5.4')
+        total_con_comision = total * (Decimal('1') + (comision_paypal / Decimal('100')))
+
         # Obtener afiliado si existe
         afiliado_id = None
         afiliado_codigo = session.get('afiliado_codigo')
@@ -584,22 +633,29 @@ def paypal_capture_order():
             if afiliado:
                 afiliado_id = afiliado.id
 
-        # Crear pedido marcado como pagado
+        # Crear pedido marcado como pagado (PayPal ya procesó el pago)
+        # Guardamos el total CON comisión PayPal ya que ese es el monto que se cobró
         pedido = Pedido(
             cliente_nombre=nombre,
             cliente_telefono=telefono,
             cliente_direccion=direccion,
             productos_json=productos_pedido,
-            total=total,
+            total=total_con_comision,  # Total con comisión PayPal
             afiliado_id=afiliado_id,
-            estado='pendiente'
+            estado='pagado'  # Ya está pagado con PayPal
         )
 
         db.session.add(pedido)
         db.session.commit()
 
-        # Marcar como pagado (esto genera la comisión automáticamente)
-        pedido.marcar_como_pagado()
+        # Si tiene vendedor, marcar como pagado y validar automáticamente
+        if afiliado_id:
+            pedido.marcar_como_pagado()
+            # Validar automáticamente para que admin lo vea (PayPal es pago confirmado)
+            pedido.validar_para_admin()
+        else:
+            # Pedido sin vendedor (tienda principal), solo marcar como pagado
+            pedido.marcar_como_pagado()
 
         # Limpiar carrito de sesión
         session['carrito'] = []
@@ -607,7 +663,7 @@ def paypal_capture_order():
         return jsonify({
             'success': True,
             'pedido_id': pedido.id,
-            'total': float(total),
+            'total': float(total_con_comision),
             'paypal_transaction_id': paypal_response.get('id')
         })
 
@@ -624,3 +680,127 @@ def pedido_exitoso(pedido_id):
     pedido = Pedido.query.get_or_404(pedido_id)
 
     return render_template('tienda/pedido_exitoso.html', pedido=pedido)
+
+
+@bp.route('/api/get-vendedor-whatsapp')
+def get_vendedor_whatsapp():
+    """Obtener WhatsApp del vendedor por código"""
+    from models import Afiliado
+    
+    codigo = request.args.get('codigo')
+    if not codigo:
+        return jsonify({'error': 'Código no proporcionado'}), 400
+    
+    vendedor = Afiliado.query.filter_by(codigo=codigo, activo=True).first()
+    if not vendedor:
+        return jsonify({'error': 'Vendedor no encontrado'}), 404
+    
+    whatsapp = vendedor.whatsapp or current_app.config.get('WHATSAPP_NUMBER', '')
+    
+    # Formatear número
+    if whatsapp.startswith('0'):
+        whatsapp = '593' + whatsapp[1:]
+    elif not whatsapp.startswith('+') and not whatsapp.startswith('593'):
+        whatsapp = '593' + whatsapp
+    
+    return jsonify({'whatsapp': whatsapp})
+
+
+# ==================== TIENDA DE VENDEDOR ====================
+
+@bp.route('/vendedor/<codigo>')
+def tienda_vendedor(codigo):
+    """Tienda del vendedor (afiliado)"""
+    from models import Producto, Afiliado, CATEGORIAS_PRODUCTO
+    from sqlalchemy import func
+
+    # Verificar que el vendedor existe y está activo
+    vendedor = Afiliado.query.filter_by(codigo=codigo, activo=True).first_or_404()
+    
+    # Guardar código en sesión para el checkout
+    session['afiliado_codigo'] = codigo
+    session.permanent = True
+
+    # Obtener productos activos
+    productos_db = Producto.query.filter_by(activo=True).order_by(Producto.creado_en.desc()).all()
+
+    # Obtener categorías que tienen productos activos
+    categorias_con_productos = db.session.query(
+        Producto.categoria,
+        func.count(Producto.id).label('count')
+    ).filter(Producto.activo == True).group_by(Producto.categoria).all()
+
+    # Crear diccionario de categorías con sus conteos
+    categorias_activas = {}
+    for cat, count in categorias_con_productos:
+        if cat:
+            nombre_cat = cat
+            for valor, nombre in CATEGORIAS_PRODUCTO:
+                if valor == cat:
+                    nombre_cat = nombre
+                    break
+            categorias_activas[cat] = {'nombre': nombre_cat, 'count': count}
+
+    # Convertir productos a diccionarios para JSON
+    productos = []
+    for p in productos_db:
+        todas_imagenes = p.obtener_todas_imagenes()
+        productos.append({
+            'id': p.id,
+            'nombre': p.nombre,
+            'descripcion': p.descripcion,
+            'categoria': p.categoria or 'otros',
+            'precio_final': float(p.precio_final),
+            'precio_oferta': float(p.precio_oferta) if p.precio_oferta else None,
+            'imagen': todas_imagenes[0] if todas_imagenes else None,
+            'imagenes': todas_imagenes
+        })
+
+    # WhatsApp del vendedor
+    whatsapp_numero = vendedor.whatsapp or current_app.config.get('WHATSAPP_NUMBER', '')
+    if whatsapp_numero.startswith('0'):
+        whatsapp_numero = '593' + whatsapp_numero[1:]
+    elif not whatsapp_numero.startswith('+') and not whatsapp_numero.startswith('593'):
+        whatsapp_numero = '593' + whatsapp_numero
+
+    return render_template('tienda/index.html',
+                         productos=productos,
+                         productos_db=productos_db,
+                         categorias=categorias_activas,
+                         afiliado_codigo=codigo,
+                         whatsapp_numero=whatsapp_numero,
+                         vendedor=vendedor,
+                         es_tienda_vendedor=True)
+
+
+@bp.route('/vendedor/<codigo>/producto/<int:id>')
+def producto_vendedor(id, codigo):
+    """Detalle de producto en tienda del vendedor"""
+    from models import Producto, Afiliado
+
+    # Verificar que el vendedor existe y está activo
+    vendedor = Afiliado.query.filter_by(codigo=codigo, activo=True).first_or_404()
+    
+    # Guardar código en sesión
+    session['afiliado_codigo'] = codigo
+    session.permanent = True
+
+    producto = Producto.query.get_or_404(id)
+
+    if not producto.activo:
+        flash('Este producto no está disponible', 'error')
+        return redirect(url_for('tienda.tienda_vendedor', codigo=codigo))
+
+    # WhatsApp del vendedor
+    whatsapp_numero = vendedor.whatsapp or current_app.config.get('WHATSAPP_NUMBER', '')
+    if whatsapp_numero.startswith('0'):
+        whatsapp_numero = '593' + whatsapp_numero[1:]
+    elif not whatsapp_numero.startswith('+') and not whatsapp_numero.startswith('593'):
+        whatsapp_numero = '593' + whatsapp_numero
+
+    return render_template('tienda/producto.html',
+                         producto=producto,
+                         afiliado_codigo=codigo,
+                         whatsapp_numero=whatsapp_numero,
+                         vendedor=vendedor,
+                         es_tienda_vendedor=True)

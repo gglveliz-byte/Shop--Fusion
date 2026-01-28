@@ -52,8 +52,10 @@
         <h1>🛒 Pedido #{{ pedido.id }}</h1>
         {% if pedido.estado == 'pendiente' %}
             <span class="badge badge-warning badge-lg">Pendiente</span>
-        {% else %}
+        {% elif pedido.estado == 'pagado' %}
             <span class="badge badge-success badge-lg">Pagado ✓</span>
+        {% elif pedido.estado == 'cancelado' %}
+            <span class="badge badge-danger badge-lg">Cancelado ✕</span>
         {% endif %}
     </div>
 
@@ -152,11 +154,27 @@
 
         <div class="pedido-acciones">
             {% if pedido.estado == 'pendiente' %}
-                <form method="POST" action="{{ url_for('admin.marcar_pedido_pagado', id=pedido.id) }}" id="form-pagar" onsubmit="return aprobarYContactar()">
+                <form method="POST" action="{{ url_for('admin.marcar_pedido_pagado', id=pedido.id) }}" id="form-pagar" onsubmit="return aprobarYContactar()" style="display: inline;">
                     <button type="submit" class="btn btn-success btn-lg">
                         ✓ Aprobar Pedido y Contactar por WhatsApp
                     </button>
                 </form>
+                <form method="POST" action="{{ url_for('admin.cancelar_pedido', id=pedido.id) }}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de cancelar este pedido?');">
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        ✕ Cancelar Pedido
+                    </button>
+                </form>
+            {% elif pedido.estado == 'cancelado' %}
+                <div class="alert alert-danger">
+                    <strong>✕ Pedido Cancelado</strong>
+                </div>
+            {% elif pedido.estado == 'pagado' and not pedido.validado_por_vendedor %}
+                <p class="text-success">✅ Este pedido ya fue marcado como pagado</p>
+                {% if not pedido.afiliado_id %}
+                <form method="POST" action="{{ url_for('admin.cancelar_pedido', id=pedido.id) }}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de cancelar este pedido pagado?');">
+                    <button type="submit" class="btn btn-danger">✕ Cancelar Pedido</button>
+                </form>
+                {% endif %}
             {% else %}
                 <p class="text-success">✅ Este pedido ya fue marcado como pagado</p>
             {% endif %}

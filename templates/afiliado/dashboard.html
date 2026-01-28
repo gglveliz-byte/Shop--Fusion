@@ -41,10 +41,23 @@
         </div>
     </div>
 
+    {% if not afiliado.whatsapp %}
+    <div class="alert alert-warning afiliado-whatsapp-alert">
+        <strong>📱 Configura tu WhatsApp</strong><br>
+        Para que los clientes te contacten al comprar desde tu tienda, agrega tu número en <a href="{{ url_for('afiliado.mi_cuenta') }}">Mi Cuenta</a>.
+        <a href="{{ url_for('afiliado.mi_cuenta') }}" class="btn btn-sm btn-primary">Configurar ahora</a>
+    </div>
+    {% endif %}
+
     <div class="afiliado-info-card">
         <h3>📊 Tu Información</h3>
         <p><strong>Porcentaje de comisión:</strong> {{ afiliado.porcentaje_comision }}% del margen</p>
         <p><strong>Total de pedidos generados:</strong> {{ total_pedidos }}</p>
+        {% if afiliado.whatsapp %}
+        <p><strong>WhatsApp:</strong> {{ afiliado.whatsapp }} <a href="{{ url_for('afiliado.mi_cuenta') }}">Editar</a></p>
+        {% else %}
+        <p><strong>WhatsApp:</strong> <span class="text-muted">No configurado</span> <a href="{{ url_for('afiliado.mi_cuenta') }}">Configurar</a></p>
+        {% endif %}
         <p><strong>Miembro desde:</strong> {{ afiliado.creado_en.strftime('%d/%m/%Y') }}</p>
     </div>
 
