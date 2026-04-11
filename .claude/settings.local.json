@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(python migrate_imagen_url.py:*)",
-      "Bash(python:*)"
-    ]
-  }
-}
