@@ -1,7 +1,6 @@
 from flask import Flask, render_template
 from flask_login import LoginManager
 from config import Config
-import os
 
 # Importar db desde models
 from models import db, setup_login_manager
