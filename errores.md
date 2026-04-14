@@ -154,34 +154,81 @@ Flask-SQLAlchemy==3.0.5
 
 ### ⚠️ Falta de Protección CSRF
 - **Problema**: Formularios sin tokens CSRF
-- **Solución**: `pip install flask-wtf` + agregar `{{ csrf_token() }}` en formularios
+- **Solución**: `pip install flask-wtf` + agregar token en formularios
+```html
+<form method="POST">
+    {{ csrf_token() }}
+    <!-- campos -->
+</form>
+```
 
 ### ⚠️ Rate Limiting Faltante
 - **Problema**: Login sin protección contra fuerza bruta
-- **Solución**: `pip install flask-limiter` + `@limiter.limit("5 per minute")`
+- **Solución**: `pip install flask-limiter`
+```python
+from flask_limiter import Limiter
+limiter = Limiter(app)
+@app.route('/login', methods=['POST'])
+@limiter.limit("5 per minute")
+def login():
+    pass
+```
 
 ### ⚠️ Inyecciones SQL Indirectas
 - **Problema**: Uso de `text()` en `migrate_db.py`
 - **Solución**: Evitar `text()` cuando sea posible
 
 ### ⚠️ Sesiones Inseguras
-- **Ubicación**: `config.py`
-- **Solución**: `SESSION_COOKIE_SECURE=True`, `HTTPONLY=True`, `SAMESITE='Strict'`
+- **Problema**: Cookies almacenan sesiones sin cifrado server-side
+- **Ubicación**: `routes/auth.py`, `routes/tienda.py`, `config.py`
+- **Solución**: 
+```python
+SESSION_COOKIE_SECURE = True  # Solo HTTPS
+SESSION_COOKIE_HTTPONLY = True  # Sin acceso JS
+SESSION_COOKIE_SAMESITE = 'Strict'  # Previene CSRF
+SESSION_PERMANENT = False  # Expira con navegador
+```
 
 ### ⚠️ Credenciales en Documentación
-- **Problema**: `README.md` muestra credenciales por defecto
-- **Solución**: Reemplazar con ejemplos genéricos
+- **Problema**: `README.md` muestra `admin/admin123` y `afiliado123`
+- **Ubicación**: `README.md`, `bd.md`
+- **Solución**: Reemplazar con ejemplos genéricos, never mostrar credenciales reales
 
-### ⚠️ Falta de Sanitización
+### ⚠️ Falta de Sanitización de Entrada
+- **Problema**: Campos de texto no se escapan adecuadamente
+- **Ubicación**: `routes/admin.py`, `routes/tienda.py`
 - **Riesgo**: XSS en comentarios, descripciones, nombres
-- **Solución**: Usar `markupsafe.escape()` en formularios
+- **Solución**:
+```python
+from markupsafe import escape
+nombre_seguro = escape(nombre_entrada)
+```
 
 ### ⚠️ Exposición de Errores en Producción
-- **Solución**: Agregar handler personalizado para error 500
+- **Problema**: `app.py` no define manejador de errores 500
+- **Solución**:
+```python
+@app.errorhandler(500)
+def error_500(error):
+    logging.error(f"Error 500: {error}")
+    return render_template('error.html', error_code=500), 500
+```
 
 ### ⚠️ Falta de Validación de Archivos
+- **Problema**: No hay validación de tipo/tamaño en uploads
+- **Ubicación**: `routes/admin.py`, `routes/tienda.py`
 - **Riesgo**: Upload de malware o archivos grandes
-- **Solución**: Validar tipo y tamaño (máximo 5MB, solo jpg/png/gif)
+- **Solución**:
+```python
+ALLOWED_EXTENSIONS = {'jpg', 'png', 'gif'}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+if file.size > MAX_FILE_SIZE:
+    flash('Archivo muy grande', 'error')
+```
 
 ---
 
