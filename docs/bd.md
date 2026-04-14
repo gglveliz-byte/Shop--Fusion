@@ -1,7 +1,7 @@
 ## 1. Tecnología de Base de Datos
 
 - Motor de base de datos: PostgreSQL
-
+- Esquema de base de datos `public` (Esquema por defecto). *Tras una revisión, se confirma que no se ha definido un esquema específico para este proyecto.*
 - ORM: SQLAlchemy mediante Flask-SQLAlchemy para la gestión de la base de datos usando Python.
 
 ## 2. Dependencias (Librerías y versiones necesarias mínimas)
@@ -93,3 +93,8 @@ NOTA: El archivo *init_db.py* se encarga tanto de crear la base de datos como ge
 
 *PRIMER AVANCE: 13/04/2026*
 *CORRECCIÓN: 14/04/2026*
+
+
+### Apéndice: Verificación de Esquema
+Se realizó una auditoría manual y automática del código fuente el 14/04/2026 para confirmar el esquema de trabajo. No se encontraron definiciones de `schema` o `__table_args__` en el proyecto. Se tienen llamadas a la base de datos y tablas, pero sin indicar el esquema
+necesario. Por lo tanto, se asume que se está utilizando el esquema por defecto `public`.
