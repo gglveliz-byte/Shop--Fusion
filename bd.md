@@ -8,11 +8,17 @@
 
 - Flask-SQLAlchemy==3.1.1
 - Flask==3.0.0
-- PostgreSQL==16
+- PostgreSQL==17
 
 ## 3. Estructura de las tablas:
 
-A. Productos:
+A. Admins:
+    - id: Integer, PRIMARY KEY
+    - username: String(80), UNIQUE, NOT NULL, INDEX
+    - password_hash: String(255), NOT NULL
+    - creado_en: DateTime, default=datetime.utcnow
+
+B. Productos:
     - id: Integer, PRIMARY KEY
     - nombre: String(200), NOT NULL
     - descripcion: Text
@@ -27,7 +33,7 @@ A. Productos:
     - activo: Boolean, default=True
     - creado_en: DateTime, default=datetime.utcnow
 
-B. Afiliados:
+C. Afiliados:
     - id: Integer, PRIMARY KEY
     - nombre: String(100), NOT NULL
     - email: String(120), UNIQUE, NOT NULL, INDEX
@@ -38,7 +44,7 @@ B. Afiliados:
     - activo: Boolean, default=True
     - creado_en: DateTime, default=datetime.utcnow
 
-C. Pedidos:
+D. Pedidos:
     - id: Integer, PRIMARY KEY
     - afiliado_id: Integer, ForeignKey('afiliados.id'), NOT NULL
     - cliente_nombre: String(100), NOT NULL
@@ -52,7 +58,7 @@ C. Pedidos:
     - creado_en: DateTime, default=datetime.utcnow
     - pagado_en: DateTime, NULL
 
-D. Comisiones:
+E. Comisiones:
     - id: Integer, PRIMARY KEY
     - afiliado_id: Integer, ForeignKey('afiliados.id'), NOT NULL
     - pedido_id: Integer, ForeignKey('pedidos.id'), NOT NULL
@@ -86,4 +92,4 @@ NOTA: El archivo *init_db.py* se encarga tanto de crear la base de datos como ge
 - Usar índices para consultas frecuentes.
 
 *PRIMER AVANCE: 13/04/2026*
-*CORRECCIÓN 1: 14/04/2026*
+*CORRECCIÓN: 14/04/2026*
