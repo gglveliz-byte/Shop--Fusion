@@ -1,493 +1,599 @@
-# Registro de Errores y Mejoras - Shop Fusion
+# Registro de Errores - Shop Fusion (Resumido)
 
-## Cómo leer este documento
+## Referencia Rápida
 
-Este documento está diseñado para ser claro y accesible, incluso para personas sin experiencia técnica avanzada. Aquí te explicamos cómo usarlo:
-
-### Estructura del documento:
-- **Registro de Errores**: Problemas que impiden el funcionamiento correcto de la aplicación
-- **Problemas Técnicos**: Dificultades que afectan el mantenimiento y escalabilidad
-- **Mejoras Propuestas**: Sugerencias para hacer el código mejor
-
-### Cómo interpretar cada error:
-- **Descripción**: Qué está mal y dónde
-- **Módulo afectado**: Archivo(s) donde ocurre el problema
-- **Impacto**: Por qué es importante arreglarlo
-- **Solución**: Cómo corregirlo (con ejemplos cuando es posible)
-
-### Glosario de términos técnicos:
-- **API**: Interfaz de Programación de Aplicaciones (conjunto de reglas para que programas se comuniquen)
-- **BD**: Base de Datos (lugar donde se almacenan los datos)
-- **Debugging**: Proceso de encontrar y corregir errores en el código
-- **Logging**: Sistema para registrar eventos y mensajes del programa
-- **Rollback**: Revertir cambios en la base de datos si algo sale mal
-- **SQLAlchemy**: Librería para trabajar con bases de datos en Python
-- **Flask**: Framework web para crear aplicaciones en Python
-- **DRY**: Don't Repeat Yourself (principio de no repetir código)
-- **CSRF**: Cross-Site Request Forgery (ataque de seguridad web)
+| Prioridad | Error | Ubicación | Acción |
+|-----------|-------|-----------|--------|
+| 🔴 | Import `os` faltante | `app.py:27` | Agregar `import os` |
+| 🔴 | `codigo` puede ser nulo | `routes/admin.py:439` | Validar existencia |
+| 🔴 | Config insegura | `config.py` | Requerir vars entorno |
+| 🟡 | print() en producción | `migrate_db.py`, `init_db.py` | Usar logging |
+| 🟡 | Excepciones genéricas | `routes/admin.py`, `tienda.py` | Capturar específicas |
+| 🟡 | Contraseñas débiles | `init_db.py` | Generar aleatorias |
+| 🟢 | Código duplicado WhatsApp | `routes/tienda.py` | Crear función |
+| 🟢 | Sin validación entrada | Todos forms | Usar WTForms |
 
 ---
 
-## Objetivo
-Centralizar el registro de:
-- Errores detectados (problemas que rompen la aplicación)
-- Problemas técnicos (dificultades de mantenimiento)
-- Mejoras propuestas (sugerencias para optimizar)
+## Errores Críticos (🔴 Arreglar Ahora)
 
-Este documento sirve como guía para debugging, mantenimiento y evolución del sistema Shop Fusion.
+### E1: Import `os` Faltante
+**Archivo**: `app.py:27` - Agregar `import os` para crear carpetas
 
----
+### E2: Campo `codigo` Puede Ser Nulo
+**Archivo**: `routes/admin.py:439` - Validar existencia y no aplicar `.upper()` sin verificación
 
-## Prioridad de corrección
-
-### 🔴 Alta (arreglar inmediatamente):
-- Error 5: Import faltante en `app.py` (impide que la app inicie)
-- Error 6: `codigo` puede ser nulo (causa crashes en formularios)
-- Error 8: Configuración insegura (riesgos de seguridad)
-
-### 🟡 Media (arreglar pronto):
-- Error 1: Uso de print() (afecta debugging)
-- Error 2: Excepciones genéricas (dificulta encontrar errores)
-- Error 4: Contraseñas inseguras (riesgo de seguridad)
-
-### 🟢 Baja (mejoras futuras):
-- Error 3: Código duplicado (eficiencia)
-- Error 7: Validación insuficiente (seguridad)
-- Error 9: Dependencias (estabilidad)
+### E3: Configuración Insegura
+**Archivo**: `config.py` - Requerir SECRET_KEY y DATABASE_URL como variables de entorno, activar SESSION_COOKIE_SECURE en producción
 
 ---
 
-## Registro de Errores
+## Errores Importantes (🟡 Arreglar Pronto)
 
-### Fecha: 13 de abril de 2026
-
-#### Error 1: Uso excesivo de print() en producción
-**Descripción**: En lugar de usar un sistema profesional de logging, el código usa `print()` para mostrar mensajes. Esto se encuentra en:
-- `migrate_db.py` (líneas 21-29, 39-72, 77-79): Muestra progreso de migraciones
-- `init_db.py` (líneas 20-33, 46-49, 85-117): Muestra creación de datos iniciales
-- `test_app.py` (líneas 11-13, 16-99): Muestra resultados de pruebas
-
-**Ejemplo del problema**:
+### E4: Contraseñas Por Defecto Débiles
+**Archivo**: `init_db.py`
 ```python
-print("Creando tablas en la base de datos...")  # Esto va a la consola
+# ❌ Actual
+admin.set_password('admin123')
+
+# ✅ Solución
+import secrets
+password = secrets.token_urlsafe(12)
+admin.set_password(password)
+print(f"Contraseña: {password}")
 ```
 
-**Módulo afectado**: `migrate_db.py`, `init_db.py`, `test_app.py`
-**Impacto**: En producción, estos mensajes no se guardan en archivos de log, dificultando el debugging cuando algo sale mal. Además, generan ruido innecesario.
-**Solución**: 
-1. Importar el módulo `logging` al inicio de cada archivo
-2. Reemplazar `print()` con `logging.info()`, `logging.error()`, etc.
-3. Configurar un archivo de configuración de logging
-
-**Ejemplo de solución**:
+### E5: Usa print() en Lugar de Logging
+**Archivos**: `migrate_db.py`, `init_db.py`, `test_app.py`
 ```python
+# ❌ Actual
+print("Migrando base de datos...")
+
+# ✅ Solución
 import logging
 logging.basicConfig(level=logging.INFO)
-
-# En lugar de:
-print("Creando tablas...")
-
-# Usar:
-logging.info("Creando tablas en la base de datos...")
+logging.info("Migrando base de datos...")
+logging.error("Error: %s", error)
 ```
 
-#### Error 2: Manejo de excepciones genérico
-**Descripción**: El código usa `except:` o `except Exception:` que capturan TODOS los errores, incluyendo los que no deberían manejarse ahí. Ubicaciones:
-- `routes/admin.py` líneas 134, 224, 464, 516: En creación/edición de productos y afiliados
-- `routes/tienda.py` líneas 422, 556, 670: En procesamiento de pagos y pedidos
-- `migrate_db.py` línea 75: En migraciones de base de datos
-
-**Ejemplo del problema**:
+### E6: Excepciones Genéricas
+**Archivos**: `routes/admin.py`, `routes/tienda.py`
 ```python
+# ❌ Actual (captura TODO)
 try:
-    # código que puede fallar
-    precio = Decimal(request.form.get('precio'))
-except:  # ¡Malo! Captura todo
+    precio = Decimal(form.precio)
+except:
     flash('Error desconocido', 'error')
-```
 
-**Módulo afectado**: `routes/admin.py`, `routes/tienda.py`, `migrate_db.py`
-**Impacto**: Si ocurre un error inesperado (como `KeyboardInterrupt`), se maneja como un error normal, ocultando problemas reales y dificultando el debugging.
-**Solución**: 
-1. Capturar excepciones específicas según el contexto
-2. Usar logging para registrar el error completo
-3. Dejar que errores críticos (como `SystemExit`) se propaguen
-
-**Ejemplo de solución**:
-```python
+# ✅ Solución (específicas)
 try:
-    precio = Decimal(request.form.get('precio'))
+    precio = Decimal(form.precio)
 except ValueError:
-    logging.error(f"Precio inválido: {request.form.get('precio')}")
-    flash('El precio debe ser un número válido', 'error')
+    flash('Precio debe ser número', 'error')
 except Exception as e:
-    logging.exception("Error inesperado en procesamiento de precio")
-    flash('Error interno del servidor', 'error')
+    logging.exception("Error inesperado")
+    flash('Error interno', 'error')
 ```
 
-#### Error 3: Código duplicado para formateo de WhatsApp
-**Descripción**: La lógica para dar formato a números de teléfono de WhatsApp se repite múltiples veces en `routes/tienda.py`. Cada vez hace lo mismo: agregar código de país y formatear el número.
-
-**Ejemplo del problema** (se repite en varias líneas):
+### E7: Código Duplicado (WhatsApp)
+**Archivo**: `routes/tienda.py` (se repite 6 veces)
 ```python
-if whatsapp_numero.startswith('0'):
-    whatsapp_numero = '593' + whatsapp_numero[1:]
-elif not whatsapp_numero.startswith('+') and not whatsapp_numero.startswith('593'):
-    whatsapp_numero = '593' + whatsapp_numero
+# ❌ Actual (repetido varias veces)
+if whatsapp.startswith('0'):
+    whatsapp = '593' + whatsapp[1:]
+elif not whatsapp.startswith('+') and not whatsapp.startswith('593'):
+    whatsapp = '593' + whatsapp
+
+# ✅ Solución - crear utils.py
+def format_whatsapp(num):
+    if not num:
+        return num
+    if num.startswith('0'):
+        return '593' + num[1:]
+    elif not num.startswith('+') and not num.startswith('593'):
+        return '593' + num
+    return num
+
+# En routes:
+from utils import format_whatsapp
+whatsapp = format_whatsapp(whatsapp)
 ```
 
-**Módulo afectado**: `routes/tienda.py` (líneas 71-73, 105-107, 316-318, 701-703, 761-763, 796-798)
-**Impacto**: Si se cambia la lógica de formateo, hay que modificar múltiples lugares, aumentando el riesgo de errores y olvidos.
-**Solución**: 
-1. Crear una función helper en un archivo `utils.py`
-2. Usar esa función en todos los lugares donde se formatea WhatsApp
+---
 
-**Ejemplo de solución**:
+## Errores Menores (🟢 Mejoras)
+
+### E8: Sin Validación de Entrada
+**Archivos**: Todos los formularios
 ```python
-# En utils.py
-def format_whatsapp_number(numero):
-    if not numero:
-        return numero
-    if numero.startswith('0'):
-        return '593' + numero[1:]
-    elif not numero.startswith('+') and not numero.startswith('593'):
-        return '593' + numero
-    return numero
+# ❌ Actual
+precio = request.form.get('precio')
 
-# En routes/tienda.py
-from utils import format_whatsapp_number
-whatsapp_numero = format_whatsapp_number(whatsapp_numero)
-```
-
-#### Error 4: Contraseñas por defecto inseguras
-**Descripción**: El sistema crea automáticamente un usuario administrador con contraseña 'admin123', que es fácil de adivinar. Esto está en `init_db.py` y se menciona en `test_app.py`.
-
-**Ejemplo del problema**:
-```python
-admin = Admin(username='admin')
-admin.set_password('admin123')  # ¡Contraseña hardcodeada!
-```
-
-**Módulo afectado**: `init_db.py`, `test_app.py`
-**Impacto**: Cualquier persona que instale el sistema puede acceder como administrador sin esfuerzo, creando un grave riesgo de seguridad.
-**Solución**: 
-1. No crear usuarios con contraseñas por defecto
-2. Generar contraseñas aleatorias seguras durante la instalación
-3. Forzar cambio de contraseña en el primer login
-4. Usar variables de entorno para configurar credenciales iniciales
-
-**Ejemplo de solución**:
-```python
-import secrets
-
-# Generar contraseña segura aleatoria
-admin_password = secrets.token_urlsafe(12)
-admin.set_password(admin_password)
-
-print(f"Usuario admin creado. Contraseña temporal: {admin_password}")
-print("¡IMPORTANTE! Cambia esta contraseña inmediatamente después del primer login.")
-```
-
-#### Error 5: Import faltante en `app.py`
-**Descripción**: El archivo `app.py` usa la función `os.makedirs()` en la línea 27, pero no importa el módulo `os` al inicio del archivo.
-
-**Ejemplo del problema**:
-```python
-# Línea 27 en app.py
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)  # Error: os no definido
-```
-
-**Módulo afectado**: `app.py` (línea 27)
-**Impacto**: La aplicación no puede iniciarse, mostrando un error `NameError: name 'os' is not defined`.
-**Solución**: Agregar `import os` al inicio del archivo `app.py`.
-
-**Ejemplo de solución**:
-```python
-# Al inicio de app.py, agregar:
-import os
-
-# Luego el resto del código funciona
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-```
-
-#### Error 6: `codigo` puede ser nulo en el formulario de afiliado
-**Descripción**: En la creación de afiliados, el código se obtiene del formulario y se llama `.upper()` directamente, pero si el campo está vacío, `request.form.get('codigo')` devuelve `None`, causando un error.
-
-**Ejemplo del problema**:
-```python
-codigo = request.form.get('codigo').upper()  # Error si 'codigo' es None
-```
-
-**Módulo afectado**: `routes/admin.py` (línea 439)
-**Impacto**: Cuando un usuario envía el formulario sin el campo 'codigo', la aplicación se rompe con `AttributeError: 'NoneType' object has no attribute 'upper'`.
-**Solución**: Verificar que el campo existe y no está vacío antes de procesarlo.
-
-**Ejemplo de solución**:
-```python
-codigo_raw = request.form.get('codigo')
-if not codigo_raw:
-    flash('El código es obligatorio', 'error')
-    return render_template('admin/crear_afiliado.html')
-
-codigo = codigo_raw.strip().upper()
-```
-
-#### Error 7: Falta validación de entrada en formularios
-**Descripción**: Los formularios web no verifican que los datos enviados sean del tipo correcto o tengan el formato esperado. Por ejemplo, campos numéricos podrían recibir texto.
-
-**Ejemplo del problema**:
-```python
-precio = request.form.get('precio_final')  # Podría ser "abc" en lugar de un número
-producto.precio_final = Decimal(precio)  # Error si no es numérico
-```
-
-**Módulo afectado**: Todas las rutas con formularios (`routes/admin.py`, `routes/tienda.py`, etc.)
-**Impacto**: Los usuarios pueden enviar datos malformados que causan errores, o peor aún, datos maliciosos que podrían comprometer la seguridad.
-**Solución**: 
-1. Usar librerías como WTForms para validación de formularios
-2. Verificar tipos de datos antes de procesar
-3. Sanitizar entrada para prevenir ataques XSS
-
-**Ejemplo de solución con WTForms**:
-```python
+# ✅ Solución - usar WTForms
 from flask_wtf import FlaskForm
-from wtforms import StringField, DecimalField, validators
+from wtforms import DecimalField, validators
 
-class ProductoForm(FlaskForm):
-    nombre = StringField('Nombre', [validators.DataRequired(), validators.Length(max=200)])
-    precio_final = DecimalField('Precio Final', [validators.DataRequired(), validators.NumberRange(min=0)])
+class ProductForm(FlaskForm):
+    precio = DecimalField('Precio', [
+        validators.DataRequired(),
+        validators.NumberRange(min=0)
+    ])
 
-# En la ruta:
-form = ProductoForm()
+# En ruta:
+form = ProductForm()
 if form.validate_on_submit():
-    # Los datos ya están validados
-    producto = Producto(nombre=form.nombre.data, precio_final=form.precio_final.data)
+    precio = form.precio.data  # Ya validado
 ```
 
-#### Error 8: Configuración insegura por defecto
-**Descripción**: La configuración tiene valores por defecto que no son seguros para producción:
-- `SECRET_KEY` tiene un valor de desarrollo si no hay variable de entorno
-- `SESSION_COOKIE_SECURE = False` permite cookies inseguras
-- No se valida que `DATABASE_URL` exista
-
-**Ejemplo del problema**:
-```python
-SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'  # ¡No usar en producción!
-SESSION_COOKIE_SECURE = False  # ¡Inseguro!
-```
-
-**Módulo afectado**: `config.py`
-**Impacto**: Sesiones pueden ser interceptadas, datos sensibles expuestos, y la aplicación puede fallar si faltan configuraciones críticas.
-**Solución**: 
-1. Requerir variables de entorno críticas
-2. Cambiar configuraciones de seguridad para producción
-3. Usar diferentes configuraciones para desarrollo y producción
-
-**Ejemplo de solución**:
-```python
-class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY')
-    if not SECRET_KEY:
-        raise ValueError("SECRET_KEY es requerida. Configura la variable de entorno.")
-    
-    SESSION_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production'
-    DATABASE_URL = os.environ.get('DATABASE_URL')
-    if not DATABASE_URL:
-        raise ValueError("DATABASE_URL es requerida.")
-```
-
-#### Error 9: Dependencias potencialmente inestables
-**Descripción**: Flask 3.0.0 es una versión muy nueva que puede tener bugs o incompatibilidades con otras librerías del proyecto.
-
-**Módulo afectado**: `requirements.txt`
-**Impacto**: La aplicación podría fallar de manera inesperada o tener comportamientos extraños en producción.
-**Solución**: 
-1. Usar versiones estables probadas de las dependencias
-2. Hacer pruebas exhaustivas con la versión nueva
-3. Considerar usar Flask 2.x si hay problemas de compatibilidad
-
-**Ejemplo de solución**:
+### E9: Dependencias Inestables
+**Archivo**: `requirements.txt`
 ```txt
-# requirements.txt
-Flask==2.3.3  # Versión estable en lugar de 3.0.0
+# ✅ Cambiar de:
+Flask==3.0.0
+
+# A:
+Flask==2.3.3
 Flask-SQLAlchemy==3.0.5
-# ... otras dependencias
 ```
 
 ---
 
-## Problemas Técnicos
+## Problemas Técnicos Principales
 
-### Arquitectura monolítica
-**Descripción**: Las rutas están en archivos muy grandes (tienda.py > 800 líneas), dificultando el mantenimiento.
-**Impacto**: Código difícil de mantener, refactorizar y testear.
-
-### Falta de tests unitarios
-**Descripción**: Solo existe un script de prueba básico (`test_app.py`) sin tests unitarios reales.
-**Impacto**: Riesgo alto de regresiones en cambios futuros.
-
-### Configuración de base de datos mixta
-**Descripción**: Soporte para SQLite y PostgreSQL sin configuración clara de migraciones.
-**Módulo afectado**: `config.py`, `init_db.py`, `migrate_db.py`
-**Impacto**: Confusión en entornos de desarrollo vs producción.
-
-### Manejo de sesiones básico
-**Descripción**: Uso de sesiones Flask sin configuración avanzada de seguridad.
-**Módulo afectado**: `config.py`, `app.py`
-**Impacto**: Posibles vulnerabilidades de sesión.
-
-### Falta de logging estructurado
-**Descripción**: No hay sistema de logging configurado para producción.
-**Impacto**: Dificultad para monitorear y debuggear en producción.
+| Problema | Impacto | Solución |
+|----------|--------|----------|
+| **Arquitectura monolítica** | `routes/tienda.py` 700+ líneas | Dividir en módulos |
+| **Sin tests unitarios** | Riesgo regresiones | Agregar pytest |
+| **Sin capa servicios** | Código no reutilizable | Crear `services/` |
+| **Sesiones inseguras** | Vulnerabilidades | Redis + SECRET_KEY |
+| **Sin logging** | Sin historial | Implementar logging |
 
 ---
 
-## Mejoras Propuestas
+## Riesgos de Seguridad Adicionales
 
-### Optimización de Código
+### ⚠️ Falta de Protección CSRF
+- **Problema**: Formularios sin tokens CSRF
+- **Solución**: `pip install flask-wtf` + agregar `{{ csrf_token() }}` en formularios
 
-#### 1. Implementar logging adecuado
-- Reemplazar todos los `print()` con `logging` module
-- Configurar diferentes niveles de log (DEBUG, INFO, WARNING, ERROR)
-- Crear archivo de configuración de logging
+### ⚠️ Rate Limiting Faltante
+- **Problema**: Login sin protección contra fuerza bruta
+- **Solución**: `pip install flask-limiter` + `@limiter.limit("5 per minute")`
 
-#### 2. Mejorar manejo de excepciones
-- Especificar tipos de excepciones en bloques `except`
-- Crear excepciones custom para la aplicación
-- Implementar logging de errores con contexto
+### ⚠️ Inyecciones SQL Indirectas
+- **Problema**: Uso de `text()` en `migrate_db.py`
+- **Solución**: Evitar `text()` cuando sea posible
 
-#### 3. Eliminar código duplicado
-- Crear función helper para formateo de números de WhatsApp
-- Extraer lógica común de validación de formularios
-- Crear utilities para operaciones repetidas
+### ⚠️ Sesiones Inseguras
+- **Ubicación**: `config.py`
+- **Solución**: `SESSION_COOKIE_SECURE=True`, `HTTPONLY=True`, `SAMESITE='Strict'`
 
-#### 4. Agregar validación de entrada
-- Implementar WTForms o similar para validación de formularios
-- Validar tipos de datos y rangos
-- Sanitizar entrada para prevenir XSS
+### ⚠️ Credenciales en Documentación
+- **Problema**: `README.md` muestra credenciales por defecto
+- **Solución**: Reemplazar con ejemplos genéricos
 
-### Mejora de Arquitectura
+### ⚠️ Falta de Sanitización
+- **Riesgo**: XSS en comentarios, descripciones, nombres
+- **Solución**: Usar `markupsafe.escape()` en formularios
 
-#### 1. Refactorización en módulos más pequeños
-- Dividir `routes/tienda.py` en módulos separados (productos, carrito, checkout, paypal)
-- Crear capa de servicios (services/) para lógica de negocio
-- Implementar patrón Repository para acceso a datos
+### ⚠️ Exposición de Errores en Producción
+- **Solución**: Agregar handler personalizado para error 500
 
-#### 2. Arquitectura en capas
+### ⚠️ Falta de Validación de Archivos
+- **Riesgo**: Upload de malware o archivos grandes
+- **Solución**: Validar tipo y tamaño (máximo 5MB, solo jpg/png/gif)
+
+---
+
+## Vulnerabilidades de Bases de Datos
+
+### 🔴 E10: Contraseñas Almacenadas Directamente
+- **Problema**: `admin123` se almacena en texto en logs y documentación
+- **Ubicación**: `init_db.py`, `test_app.py`, `README.md`
+- **Solución**: Usar hashing seguro (ya usa `werkzeug.security`, pero no en init)
+
+### 🟡 E11: Consultas N+1
+- **Problema**: Para cada pedido, carga afiliado y productos por separado
+- **Ubicación**: `models.py` líneas 234, 242
+- **Impacto**: Lentitud con muchos datos
+- **Solución**:
+```python
+from sqlalchemy.orm import joinedload
+pedidos = Pedido.query.options(
+    joinedload(Pedido.afiliado),
+    joinedload(Pedido.productos)
+).all()
 ```
-├── controllers/ (routes actuales)
-├── services/ (lógica de negocio)
-├── repositories/ (acceso a datos)
-├── models/ (modelos de datos)
-└── utils/ (funciones helper)
+
+### 🟡 E12: Sin Índices en Campos de Búsqueda
+- **Problema**: Campos como `codigo`, `email`, `username` sin índices
+- **Ubicación**: `models.py`
+- **Solución**:
+```python
+codigo = db.Column(db.String(20), nullable=False, unique=True, index=True)
+email = db.Column(db.String(255), nullable=False, unique=True, index=True)
 ```
 
-#### 3. Configuración por entorno
-- Variables de entorno para diferentes ambientes
-- Configuración separada para desarrollo, staging, producción
-- Secrets management seguro
+---
 
-### Refactorización
+## Riesgos de Accesibilidad y UX
 
-#### 1. Separar responsabilidades
-- Mover lógica de negocio fuera de las rutas
-- Crear clases para operaciones complejas
-- Implementar patrón Factory para creación de objetos
+### 🟢 E13: Falta de Alt Text en Imágenes
+- **Problema**: Imágenes en templates sin `alt`
+- **Ubicación**: `templates/**/*.html`
+- **Solución**:
+```html
+<img src="producto.png" alt="Foto de producto: Laptop HP">
+```
 
-#### 2. Mejora de modelos
-- Agregar validaciones en modelos SQLAlchemy
-- Implementar métodos de clase para consultas comunes
-- Crear índices apropiados en base de datos
+### 🟢 E14: Contraste Insuficiente
+- **Problema**: Texto gris sobre fondo claro (WCAG falla)
+- **Ubicación**: `static/css/style.css`
+- **Solución**: Revisar contraste con [WebAIM](https://webaim.org/resources/contrastchecker/)
 
-#### 3. Optimización de consultas
-- Evitar N+1 queries con joins apropiados
-- Implementar paginación en listados largos
-- Cache para datos frecuentemente accedidos
+### 🟢 E15: Sin Soporte para Navegación por Teclado
+- **Problema**: Usuarios no pueden navegar con Tab/Enter
+- **Ubicación**: `templates/base.html`
+- **Solución**: Agregar `tabindex` y `focus` states
 
-### Decisiones Técnicas
+---
 
-#### 1. Framework de testing
-- Adoptar pytest como framework de testing
-- Crear tests unitarios para modelos y servicios
-- Implementar tests de integración para rutas
+## Riesgos de Performance
 
-#### 2. Sistema de autenticación
-- Evaluar migración a Flask-JWT-Extended para APIs
-- Implementar refresh tokens
-- Agregar rate limiting para login
+### 🟡 E16: Sin Caché de Templates
+- **Problema**: Templates se compilan en cada request
+- **Ubicación**: `app.py`
+- **Solución**:
+```python
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000  # 1 año para static
+app.jinja_env.cache = {}
+```
 
-#### 3. Base de datos
-- Migrar completamente a PostgreSQL para producción
-- Implementar Alembic para migraciones versionadas
-- Agregar conexión pool
+### 🟡 E17: Paginación Faltante
+- **Problema**: Carga todos los resultados sin limite (si hay 10k productos)
+- **Ubicación**: `routes/admin.py`, `routes/tienda.py`
+- **Solución**:
+```python
+from flask_sqlalchemy import Pagination
+page = request.args.get('page', 1, type=int)
+productos = Producto.query.paginate(page=page, per_page=20)
+```
 
-### Cambios en Estructura
+### 🟡 E18: Sin Compresión Gzip
+- **Problema**: Respuestas HTTP sin comprimir
+- **Ubicación**: `app.py`
+- **Solución**: `pip install flask-compress` y activar
 
-#### 1. Reorganización de archivos
+---
+
+## Problemas de Testing y QA
+
+### 🟡 E19: Sin Tests de Integración
+- **Problema**: Rutas no se prueban automáticamente
+- **Archivo**: `test_app.py` básico
+- **Solución**:
+```python
+import pytest
+
+@pytest.fixture
+def client():
+    app.config['TESTING'] = True
+    with app.test_client() as client:
+        yield client
+
+def test_login_admin(client):
+    resp = client.post('/admin_login', data={'username': 'admin', 'password': 'admin123'})
+    assert resp.status_code == 302  # Redirect to dashboard
+```
+
+### 🟡 E20: Sin Tests de Modelos
+- **Problema**: Lógica de cálculo de comisiones no probada
+- **Ubicación**: `models.py`
+- **Solución**: Tests para `get_total_comisiones()`, `get_ganancias()`, etc.
+
+---
+
+## Problemas de Escalabilidad
+
+### 🟡 E21: Sin Async Tasks
+- **Problema**: Emails de confirmación/notificación bloquean requests
+- **Ubicación**: `routes/tienda.py`, `routes/afiliado.py`
+- **Solución**: Usar Celery + Redis para tasks asíncronas
+
+### 🟡 E22: Sin Caché de Base de Datos
+- **Problema**: Cada request va directamente a BD
+- **Ubicación**: Todas las rutas
+- **Solución**: Redis para cachear sesiones y datos frecuentes
+
+### 🟡 E23: Sin API Versioning
+- **Problema**: Si se cambian rutas, se rompen integraciones externas
+- **Ubicación**: `routes/*.py`
+- **Solución**: URLs como `/api/v1/productos`, `/api/v2/productos`
+
+---
+
+## Nuevos Errores Identificados en Revisión Completa
+
+### 🔴 E24: Falta de Protección CSRF en Formularios
+- **Problema**: Formularios sin tokens CSRF permiten ataques cross-site request forgery
+- **Ubicación**: `templates/tienda/index.html` (formulario checkout)
+- **Riesgo**: Ataques CSRF pueden crear pedidos falsos
+- **Solución**:
+```html
+<!-- ANTES (vulnerable) -->
+<form id="form-checkout" onsubmit="procesarPedido(event)">
+
+<!-- DESPUÉS (seguro) -->
+<form id="form-checkout" onsubmit="procesarPedido(event)">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+```
+
+### 🔴 E25: Vulnerabilidades XSS en Templates
+- **Problema**: Datos no sanitizados en JavaScript inline permiten inyección de scripts
+- **Ubicación**: `templates/tienda/index.html` (productos JSON)
+- **Riesgo**: Ataques XSS pueden robar sesiones o datos
+- **Solución**:
+```javascript
+// ANTES (vulnerable)
+let productos = {{ productos | tojson }};
+
+// DESPUÉS (seguro)
+let productos = {{ productos | tojson | safe }};
+// Además, sanitizar en backend antes de pasar datos
+```
+
+### 🟡 E26: Exposición de Credenciales en Documentación
+- **Problema**: Credenciales por defecto visibles en README y tests
+- **Ubicación**: `README.md`, `test_app.py`
+- **Riesgo**: Ataques de diccionario facilitados
+- **Solución**:
+```markdown
+<!-- ANTES en README.md -->
+Admin:
+- Usuario: `admin`
+- Contraseña: `admin123`
+
+<!-- DESPUÉS -->
+Admin:
+- Usuario: `admin`
+- Contraseña: `[CAMBIAR_EN_PRODUCCION]`
+```
+```python
+# ANTES en test_app.py
+print("3. Login admin: admin / admin123")
+
+# DESPUÉS
+print("3. Login admin: admin / [VER_CONFIG]")
+```
+
+### 🟢 E27: Problemas de Contraste en CSS
+- **Problema**: Colores no cumplen estándares WCAG de accesibilidad
+- **Ubicación**: `static/css/style.css` (gradientes y textos)
+- **Riesgo**: Usuarios con baja visión no pueden leer
+- **Solución**:
+```css
+/* ANTES (contraste bajo) */
+--primary-color: #6366f1;
+
+/* DESPUÉS (mejor contraste) */
+--primary-color: #4f46e5; /* Más oscuro */
+--text-on-primary: #ffffff;
+
+/* Agregar media query para alto contraste */
+@media (prefers-contrast: high) {
+  .navbar { background: #000000; color: #ffffff; }
+}
+```
+
+### 🟢 E28: Falta de Soporte para Lectores de Pantalla
+- **Problema**: Elementos sin atributos ARIA ni labels descriptivos
+- **Ubicación**: `templates/tienda/index.html` (botones, modales)
+- **Riesgo**: Usuarios con discapacidades no pueden navegar
+- **Solución**:
+```html
+<!-- ANTES -->
+<button onclick="agregarAlCarrito()">Agregar</button>
+
+<!-- DESPUÉS -->
+<button onclick="agregarAlCarrito()" 
+        aria-label="Agregar producto al carrito"
+        aria-describedby="producto-nombre">
+    <span class="sr-only">Agregar al carrito</span>
+    Agregar
+</button>
+```
+
+### 🟡 E29: Validación Insuficiente en Formularios Frontend
+- **Problema**: Solo validación HTML5 básica, falta validación de formato ecuatoriano
+- **Ubicación**: `templates/tienda/index.html` (formulario checkout)
+- **Riesgo**: Datos inválidos enviados al servidor
+- **Solución**:
+```javascript
+// ANTES (solo HTML5)
+<input type="tel" id="cliente-telefono" required>
+
+// DESPUÉS (validación personalizada)
+function validarTelefono(telefono) {
+  const regex = /^\+593\d{9}$/;
+  if (!regex.test(telefono)) {
+    mostrarError('Formato: +593987654321');
+    return false;
+  }
+  return true;
+}
+```
+
+### 🟡 E30: Manejo Inseguro de SQL en Migraciones
+- **Problema**: Uso de `text()` sin parámetros puede ser vulnerable si se expande
+- **Ubicación**: `migrate_db.py`
+- **Riesgo**: Inyección SQL potencial en futuras modificaciones
+- **Solución**:
+```python
+# ANTES
+db.session.execute(text("ALTER TABLE afiliados ADD COLUMN whatsapp VARCHAR(20)"))
+
+# DESPUÉS
+db.session.execute(
+    text("ALTER TABLE afiliados ADD COLUMN whatsapp VARCHAR(:length)"),
+    {"length": 20}
+)
+```
+
+### 🟡 E31: Carrito Vulnerable en localStorage
+- **Problema**: Datos sensibles en localStorage sin validación ni encriptación
+- **Ubicación**: `templates/tienda/index.html` (carrito persistence)
+- **Riesgo**: Manipulación de precios/cantidades por usuario malicioso
+- **Solución**:
+```javascript
+// ANTES
+localStorage.setItem('carrito', JSON.stringify(carrito));
+
+// DESPUÉS
+function guardarCarrito() {
+  const carritoValidado = carrito.map(item => ({
+    id: parseInt(item.id),
+    nombre: String(item.nombre).substring(0, 100),
+    precio: Math.max(0, parseFloat(item.precio)),
+    cantidad: Math.max(1, parseInt(item.cantidad))
+  }));
+  localStorage.setItem('carrito', JSON.stringify(carritoValidado));
+}
+```
+
+### 🟡 E32: Falta de Manejo de Errores en JavaScript
+- **Problema**: Funciones críticas sin try-catch pueden fallar silenciosamente
+- **Ubicación**: `templates/tienda/index.html` (procesarPedido, etc.)
+- **Riesgo**: Errores no manejados confunden al usuario
+- **Solución**:
+```javascript
+// ANTES
+async function procesarPedido(event) {
+  const response = await fetch('/api/crear-pedido', { ... });
+  const resultado = await response.json();
+  // ...
+}
+
+// DESPUÉS
+async function procesarPedido(event) {
+  try {
+    const response = await fetch('/api/crear-pedido', { ... });
+    if (!response.ok) throw new Error('Error HTTP: ' + response.status);
+    const resultado = await response.json();
+    // ...
+  } catch (error) {
+    console.error('Error procesando pedido:', error);
+    mostrarNotificacion('Error al procesar pedido: ' + error.message, 'error');
+  }
+}
+```
+
+### 🟢 E33: Problemas de Rendimiento en CSS
+- **Problema**: Uso excesivo de sombras y gradientes afecta performance móvil
+- **Ubicación**: `static/css/style.css`
+- **Riesgo**: Lentitud en dispositivos móviles
+- **Solución**:
+```css
+/* ANTES (pesado) */
+.btn {
+  box-shadow: var(--shadow);
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+}
+
+/* DESPUÉS (optimizado) */
+.btn {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: var(--primary-color);
+  transition: box-shadow 0.2s ease;
+}
+
+.btn:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+```
+
+---
+
+## Plan de Implementación
+
+### Fase 1 (Semana 1): Errores Críticos
+1. Agregar `import os` en `app.py` (E1)
+2. Validar campo `codigo` (E2)
+3. Configurar variables de entorno en `config.py` (E3)
+
+### Fase 2 (Semana 2): Seguridad Inmediata
+1. Cambiar contraseñas por defecto en `init_db.py` (E4)
+2. Implementar logging en `migrate_db.py`, `init_db.py` (E5)
+3. Capturar excepciones específicas (E6)
+4. Limpiar credenciales de `README.md` y `bd.md` (Cred)
+
+### Fase 3 (Semana 3): Seguridad Web
+1. Agregar CSRF con `Flask-WTF` (CSRF, E24)
+2. Mejorar configuración de sesiones (Sessions)
+3. Agregar rate limiting en login (RateLimit)
+4. Sanitizar entrada con `escape` (Sanitization, E25)
+5. Limpiar credenciales expuestas (E26)
+
+### Fase 4 (Semana 4): Validación y Código Limpio
+1. Crear `utils.py` con `format_whatsapp()` (E7)
+2. Implementar WTForms para validación (E8, E29)
+3. Actualizar `requirements.txt` con versiones estables (E9)
+4. Agregar validación de archivos en uploads (E24)
+5. Mejorar validación frontend (E29)
+6. Sanitizar datos en templates (E25)
+
+### Fase 5 (Semana 5): Base de Datos y Performance
+1. Agregar índices en `models.py` (E12)
+2. Optimizar queries con `joinedload` (E11)
+3. Implementar paginación en listados (E17)
+4. Agregar caché de templates (E16)
+5. Optimizar CSS para rendimiento móvil (E33)
+6. Mejorar manejo SQL en migraciones (E30)
+
+### Fase 6 (Semana 6): Testing y Accesibilidad
+1. Crear tests unitarios con `pytest` (E19, E20)
+2. Tests de rutas críticas (login, creación de pedidos)
+3. Tests de modelos (cálculos de comisiones)
+4. Coverage > 70%
+5. Agregar atributos ARIA y labels (E28)
+6. Corregir contraste de colores (E27)
+7. Implementar navegación por teclado
+
+### Fase 7 (Semana 7): Manejo de Errores y Logs
+1. Agregar handler personalizado para errors 500 (E25)
+2. Configurar logging centralizado
+3. Monitoreo en producción (Sentry)
+4. Mejorar manejo de errores JavaScript (E32)
+5. Validar y sanitizar datos localStorage (E31)
+
+### Fase 7 (Semana 7): Manejo de Errores y Logs
+1. Agregar handler personalizado para errors 500 (E25)
+2. Configurar logging centralizado
+3. Monitoreo en producción (Sentry)
+
+### Fase 8 (Semana 8+): Escalabilidad
+1. Configurar Celery + Redis para tasks asíncronas (E21)
+2. Implementar Redis para caché y sesiones (E22)
+3. API versioning `/api/v1/` (E23)
+4. Containerización con Docker
+
+---
+
+## Estructura Recomendada (Post-Rediseño)
+
 ```
 Shop--Fusion/
 ├── app/
-│   ├── __init__.py
-│   ├── models/
-│   ├── routes/
-│   ├── services/
-│   ├── utils/
-│   └── templates/
-├── tests/
-├── migrations/
-├── config/
-└── scripts/
+│   ├── api/          # Endpoints REST nuevos
+│   ├── models/       # Modelos BD
+│   ├── services/     # Lógica negocio
+│   ├── utils/        # Helpers
+│   ├── web/          # Rutas web
+│   └── templates/    # HTML
+├── tests/            # Tests
+├── config/           # Configuración por entorno
+├── migrations/       # Migraciones BD
+└── scripts/          # Deploy
 ```
 
-#### 2. Configuración de CI/CD
-- GitHub Actions para testing automático
-- Docker para containerización
-- Deployment automatizado
-
-#### 3. Documentación
-- API documentation con Swagger/OpenAPI
-- README actualizado con guías de desarrollo
-- Documentación de arquitectura
-
-### Nuevas Tecnologías Adoptadas
-
-#### 1. Docker y containerización
-- Dockerfile para aplicación
-- Docker Compose para desarrollo local
-- Multi-stage builds para optimización
-
-#### 2. Sistema de cache
-- Redis para sesiones y cache
-- Cache de templates y consultas frecuentes
-
-#### 3. Monitoreo y observabilidad
-- Sentry para error tracking
-- Prometheus + Grafana para métricas
-- Structured logging con ELK stack
-
-#### 4. Seguridad mejorada
-- Helmet para headers de seguridad
-- Rate limiting con Flask-Limiter
-- CORS configurado apropiadamente
-
-#### 5. API RESTful
-- Flask-RESTful para APIs
-- Serialización con Marshmallow
-- Documentación automática con Flasgger
-
-#### 6. Task queue
-- Celery para tareas asíncronas (emails, reportes)
-- Redis como broker de mensajes
-
 ---
 
-## Próximos Pasos de Implementación
-
-1. **Fase 1 (Semana 1-2)**: Implementar logging y manejo de excepciones
-2. **Fase 2 (Semana 3-4)**: Refactorizar rutas en módulos más pequeños
-3. **Fase 3 (Semana 5-6)**: Agregar validación de entrada y seguridad
-4. **Fase 4 (Semana 7-8)**: Implementar tests unitarios
-5. **Fase 5 (Semana 9-10)**: Containerización y CI/CD
-6. **Fase 6 (Semana 11-12)**: Migración a PostgreSQL y optimizaciones
-
----
