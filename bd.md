@@ -83,3 +83,5 @@ NOTA: se encarga tanto de crear la base de datos como generar seed data. No reco
 - Usar tipos de datos apropiados.
 - Mantener las tablas normalizadas.
 - Usar índices para consultas frecuentes.
+
+*PRIMER AVANCE: 13/04/2026*
