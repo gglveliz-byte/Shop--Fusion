@@ -13,13 +13,13 @@
 ## 3. Estructura de las tablas:
 
 A. Productos:
-    - id: Integer, primary_key=True
-    - nombre: String(200), nullable=False
+    - id: Integer, PRIMARY KEY
+    - nombre: String(200), NOT NULL
     - descripcion: Text
-    - categoria: String(50), default='otros', index=True
-    - precio_final: Numeric(10, 2), nullable=False
-    - precio_proveedor: Numeric(10, 2), nullable=False
-    - precio_oferta: Numeric(10, 2), nullable=True
+    - categoria: String(50), default='otros', INDEX
+    - precio_final: Numeric(10, 2), NOT NULL
+    - precio_proveedor: Numeric(10, 2), NOT NULL
+    - precio_oferta: Numeric(10, 2), NULL
     - imagen: String(300)
     - imagenes: JSON, default=list
     - imagen_url: String(500)
@@ -28,54 +28,55 @@ A. Productos:
     - creado_en: DateTime, default=datetime.utcnow
 
 B. Afiliados:
-    - id: Integer, primary_key=True
-    - nombre: String(100), nullable=False
-    - email: String(120), unique=True, nullable=False, index=True
-    - password_hash: String(255), nullable=False
-    - codigo: String(20), unique=True, nullable=False, index=True
-    - porcentaje_comision: Numeric(5, 2), nullable=False, default=80.00
-    - whatsapp: String(20), nullable=True
+    - id: Integer, PRIMARY KEY
+    - nombre: String(100), NOT NULL
+    - email: String(120), UNIQUE, NOT NULL, INDEX
+    - password_hash: String(255), NOT NULL
+    - codigo: String(20), UNIQUE, NOT NULL, INDEX
+    - porcentaje_comision: Numeric(5, 2), NOT NULL, default=80.00
+    - whatsapp: String(20), NULL
     - activo: Boolean, default=True
     - creado_en: DateTime, default=datetime.utcnow
 
 C. Pedidos:
-    - id: Integer, primary_key=True
-    - afiliado_id: Integer, ForeignKey('afiliados.id'), nullable=False
-    - cliente_nombre: String(100), nullable=False
-    - cliente_telefono: String(20), nullable=False
-    - cliente_direccion: Text, nullable=False
-    - productos_json: JSON, nullable=False
-    - total: Numeric(10, 2), nullable=False
+    - id: Integer, PRIMARY KEY
+    - afiliado_id: Integer, ForeignKey('afiliados.id'), NOT NULL
+    - cliente_nombre: String(100), NOT NULL
+    - cliente_telefono: String(20), NOT NULL
+    - cliente_direccion: Text, NOT NULL
+    - productos_json: JSON, NOT NULL
+    - total: Numeric(10, 2), NOT NULL
     - estado: String(20), default='pendiente'
     - validado_por_vendedor: Boolean, default=False
-    - validado_en:DateTime, nullable=True
+    - validado_en:DateTime, NULL
     - creado_en: DateTime, default=datetime.utcnow
-    - pagado_en: DateTime, nullable=True
+    - pagado_en: DateTime, NULL
 
 D. Comisiones:
-    - id: Integer, primary_key=True
-    - afiliado_id: Integer, ForeignKey('afiliados.id'), nullable=False
-    - pedido_id: Integer, ForeignKey('pedidos.id'), nullable=False
-    - monto: Numeric(10, 2), nullable=False
-    - margen: Numeric(10, 2), nullable=False
+    - id: Integer, PRIMARY KEY
+    - afiliado_id: Integer, ForeignKey('afiliados.id'), NOT NULL
+    - pedido_id: Integer, ForeignKey('pedidos.id'), NOT NULL
+    - monto: Numeric(10, 2), NOT NULL
+    - margen: Numeric(10, 2), NOT NULL
     - estado: String(20), default='pendiente'
     - creado_en: DateTime, default=datetime.utcnow
-    - pagada_en: DateTime, nullable=True
+    - pagada_en: DateTime, NULL
 
 ## 4. Relaciones:
 FOREIGN KEYS:
     - pedidos.afiliado_id -> afiliados.id
     - comisiones.afiliado_id -> afiliados.id
     - comisiones.pedido_id -> pedidos.id
+
 DEPENDENCIA ENTRE ENTIDADES:
     - Un afiliado puede tener muchos pedidos
     - Un afiliado puede tener muchas comisiones
-    - Un pedido tiene una comision
+    - Un pedido tiene una comisión
 
 ## 5. Scripts para iniciar la Base de Datos:
 
 - python init_db.py
-NOTA: se encarga tanto de crear la base de datos como generar seed data. No recomendado para producción.
+NOTA: El archivo *init_db.py* se encarga tanto de crear la base de datos como generar seed data. No recomendado para producción ya que al ejecutarse, se eliminan los datos existentes.
 
 ## 6. Buenas Prácticas para la Base de Datos:
 
@@ -85,3 +86,4 @@ NOTA: se encarga tanto de crear la base de datos como generar seed data. No reco
 - Usar índices para consultas frecuentes.
 
 *PRIMER AVANCE: 13/04/2026*
+*CORRECCIÓN 1: 14/04/2026*
