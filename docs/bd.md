@@ -82,7 +82,12 @@ DEPENDENCIA ENTRE ENTIDADES:
 ## 5. Scripts para iniciar la Base de Datos:
 
 - python init_db.py
-NOTA: El archivo *init_db.py* se encarga tanto de crear la base de datos como generar seed data. No recomendado para producción ya que al ejecutarse, se eliminan los datos existentes.
+
+NOTA 1: El archivo *init_db.py* se encarga tanto de crear la base de datos como generar seed data. No recomendado para producción ya que al ejecutarse, se eliminan los datos existentes.
+
+NOTA 2: En el archivo  .env, en caso se utilice URL para base de datos de prueba con Neon, se tienen dos posibles opciones para que funcione:
+    - URL: postgresql+psycopg://....
+    - En requirements.txt, cambiar la librería psycopg[binary] por psycopg-2-binary para que no presente error al conectar con la base de datos.
 
 ## 6. Buenas Prácticas para la Base de Datos:
 
@@ -91,10 +96,10 @@ NOTA: El archivo *init_db.py* se encarga tanto de crear la base de datos como ge
 - Mantener las tablas normalizadas.
 - Usar índices para consultas frecuentes.
 
-*PRIMER AVANCE: 13/04/2026*
-*CORRECCIÓN: 14/04/2026*
-
-
 ### Apéndice: Verificación de Esquema
 Se realizó una auditoría manual y automática del código fuente el 14/04/2026 para confirmar el esquema de trabajo. No se encontraron definiciones de `schema` o `__table_args__` en el proyecto. Se tienen llamadas a la base de datos y tablas, pero sin indicar el esquema
 necesario. Por lo tanto, se asume que se está utilizando el esquema por defecto `public`.
+
+*PRIMER AVANCE: 13/04/2026*
+*CORRECCIÓN: 14/04/2026*
+*ADICIÓN: 15/04/26*
