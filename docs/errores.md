@@ -4,14 +4,19 @@
 
 | Prioridad | Error | Ubicación | Acción |
 |-----------|-------|-----------|--------|
-| 🔴 | Import `os` faltante | `app.py:27` | Agregar `import os` |
-| 🔴 | `codigo` puede ser nulo | `routes/admin.py:439` | Validar existencia |
-| 🔴 | Config insegura | `config.py` | Requerir vars entorno |
-| 🟡 | print() en producción | `migrate_db.py`, `init_db.py` | Usar logging |
-| 🟡 | Excepciones genéricas | `routes/admin.py`, `tienda.py` | Capturar específicas |
-| 🟡 | Contraseñas débiles | `init_db.py` | Generar aleatorias |
+| 🔴 | Import `os` faltante      | `app.py:27` | Agregar `import os` |
+| 🔴 | `codigo` puede ser nulo   | `routes/admin.py:439` | Validar existencia |
+| 🔴 | Config insegura           | `config.py` | Requerir vars entorno |
+| � | Sin rate limiting login    | `routes/auth.py` | Usar flask-limiter |
+| 🟡 | print() en producción     | `migrate_db.py`, `init_db.py` | Usar logging |
+| 🟡 | Excepciones genéricas     | `routes/admin.py`, `tienda.py`, `afiliado.py` | Capturar específicas |
+| 🟡 | Contraseñas débiles       | `init_db.py` | Generar aleatorias |
+| 🟡 | Validación WhatsApp faltante | `routes/afiliado.py:286` | Validar formato |
+| 🟡 | Cambio contraseña sin validación | `routes/afiliado.py:289` | Validar fortaleza |
+| 🟡 | Endpoint expone sesión    | `routes/auth.py:101+` | Eliminar o proteger |
+| 🟡 | Credenciales en docs      | `README.md`, `bd.md` | Reemplazar por placeholders |
 | 🟢 | Código duplicado WhatsApp | `routes/tienda.py` | Crear función |
-| 🟢 | Sin validación entrada | Todos forms | Usar WTForms |
+| 🟢 | Sin validación entrada    | Todos forms | Usar WTForms |
 
 ---
 
@@ -20,11 +25,17 @@
 ### E1: Import `os` Faltante
 **Archivo**: `app.py:27` - Agregar `import os` para crear carpetas
 
+**Para desarrolladores nuevos**: Abre el archivo `app.py` en tu editor de código (como VS Code), ve a la línea 1 (después de los otros imports como `from flask import Flask`), y agrega la línea `import os` al inicio del archivo. Esto permite usar funciones del sistema operativo como crear carpetas.
+
 ### E2: Campo `codigo` Puede Ser Nulo
 **Archivo**: `routes/admin.py:439` - Validar existencia y no aplicar `.upper()` sin verificación
 
+**Para desarrolladores nuevos**: Abre el archivo `routes/admin.py` en tu editor de código, busca la línea aproximada 439 (puede variar), donde se maneja el campo `codigo`. Agrega una verificación `if codigo:` antes de aplicar `.upper()`, para evitar errores si el campo está vacío.
+
 ### E3: Configuración Insegura
 **Archivo**: `config.py` - Requerir SECRET_KEY y DATABASE_URL como variables de entorno, activar SESSION_COOKIE_SECURE en producción
+
+**Para desarrolladores nuevos**: Abre el archivo `config.py` en tu editor de código, ve a las líneas 10-15 donde se definen las configuraciones. Cambia las asignaciones directas por `os.environ.get('VARIABLE', 'default')` para SECRET_KEY y DATABASE_URL, y agrega `SESSION_COOKIE_SECURE = True` para producción. Esto hace la configuración más segura.
 
 ---
 
@@ -32,6 +43,9 @@
 
 ### E4: Contraseñas Por Defecto Débiles
 **Archivo**: `init_db.py`
+
+**Para desarrolladores nuevos**: Abre el archivo `init_db.py` en tu editor de código, busca donde se establece la contraseña del admin (alrededor de la línea donde dice `admin.set_password('admin123')`). Reemplaza esa línea con el código que usa `secrets.token_urlsafe(12)` para generar una contraseña segura aleatoria.
+
 ```python
 # ❌ Actual
 admin.set_password('admin123')
@@ -45,6 +59,9 @@ print(f"Contraseña: {password}")
 
 ### E5: Usa print() en Lugar de Logging
 **Archivos**: `migrate_db.py`, `init_db.py`, `test_app.py`
+
+**Para desarrolladores nuevos**: Abre cada archivo mencionado (`migrate_db.py`, `init_db.py`, `test_app.py`) en tu editor de código. Busca las líneas con `print()` y reemplázalas con `logging.info()` o `logging.error()`. Agrega `import logging` y `logging.basicConfig(level=logging.INFO)` al inicio de cada archivo.
+
 ```python
 # ❌ Actual
 print("Migrando base de datos...")
@@ -58,6 +75,9 @@ logging.error("Error: %s", error)
 
 ### E6: Excepciones Genéricas
 **Archivos**: `routes/admin.py`, `routes/tienda.py`
+
+**Para desarrolladores nuevos**: Abre los archivos `routes/admin.py` y `routes/tienda.py` en tu editor de código. Busca bloques `try-except` que usen `except:` genérico. Cambia a excepciones específicas como `except ValueError:` o `except Exception as e:`. Agrega logging para errores inesperados.
+
 ```python
 # ❌ Actual (captura TODO)
 try:
@@ -77,6 +97,9 @@ except Exception as e:
 
 ### E7: Código Duplicado (WhatsApp)
 **Archivo**: `routes/tienda.py` (se repite 6 veces)
+
+**Para desarrolladores nuevos**: Abre el archivo `routes/tienda.py` en tu editor de código. Busca las 6 repeticiones del código de formateo de WhatsApp. Crea un nuevo archivo `utils.py` en la raíz del proyecto y mueve la función ahí. Luego importa y usa la función en `routes/tienda.py`.
+
 ```python
 # ❌ Actual (repetido varias veces)
 if whatsapp.startswith('0'):
@@ -99,12 +122,20 @@ from utils import format_whatsapp
 whatsapp = format_whatsapp(whatsapp)
 ```
 
+### E39: Endpoint Expone Información de Sesión
+**Archivo**: `routes/auth.py:101+` - Eliminar o proteger endpoint `/check-session`
+
+**Para desarrolladores nuevos**: Abre el archivo `routes/auth.py` en tu editor de código, busca la ruta `/check-session` (alrededor de la línea 101 o más). Elimina toda la función o protégela con autenticación, ya que expone información sensible de la sesión del usuario.
+
 ---
 
 ## Errores Menores (🟢 Mejoras)
 
 ### E8: Sin Validación de Entrada
 **Archivos**: Todos los formularios
+
+**Para desarrolladores nuevos**: Abre los archivos de rutas que manejan formularios (como `routes/admin.py`, `routes/tienda.py`) en tu editor de código. Busca donde se obtiene data de `request.form.get()`. Instala `flask-wtf` si no está, crea clases de formulario con validadores, y usa `form.validate_on_submit()` en las rutas.
+
 ```python
 # ❌ Actual
 precio = request.form.get('precio')
@@ -127,6 +158,9 @@ if form.validate_on_submit():
 
 ### E9: Dependencias Inestables
 **Archivo**: `requirements.txt`
+
+**Para desarrolladores nuevos**: Abre el archivo `requirements.txt` en tu editor de código. Busca la línea `Flask==3.0.0` y cámbiala a `Flask==2.3.3`. Agrega `Flask-SQLAlchemy==3.0.5` si no está. Ejecuta `pip install -r requirements.txt` en la terminal para actualizar las dependencias.
+
 ```txt
 # ✅ Cambiar de:
 Flask==3.0.0
@@ -165,6 +199,9 @@ Flask-SQLAlchemy==3.0.5
 ### ⚠️ Rate Limiting Faltante
 - **Problema**: Login sin protección contra fuerza bruta
 - **Solución**: `pip install flask-limiter`
+
+**Para desarrolladores nuevos**: Abre el archivo `routes/auth.py` en tu editor de código. Busca las rutas de login (alrededor de las líneas 20-50). Instala `flask-limiter`, importa `Limiter`, crea una instancia, y agrega el decorador `@limiter.limit("5 per minute")` a las rutas POST de login.
+
 ```python
 from flask_limiter import Limiter
 limiter = Limiter(app)
@@ -255,9 +292,53 @@ pedidos = Pedido.query.options(
 ### 🟡 E12: Sin Índices en Campos de Búsqueda
 - **Problema**: Campos como `codigo`, `email`, `username` sin índices
 - **Ubicación**: `models.py`
-- **Solución**:
-```python
-codigo = db.Column(db.String(20), nullable=False, unique=True, index=True)
+- **Solución**: Agregar `index=True` en campos de búsqueda frecuente
+
+---
+
+## Errores en `routes/afiliado.py` (No Analizados Previamente)
+
+### 🔴 E34: Validación Insuficiente de WhatsApp en Perfil
+- **Problema**: `mi_cuenta()` acepta WhatsApp sin validar formato
+- **Ubicación**: `routes/afiliado.py:286`
+- **Riesgo**: Números inválidos pueden causar errores al enviar mensajes
+- **Solución**: Validar formato ecuatoriano antes de guardar
+
+### 🟡 E35: Sin Validación de Nombre en Perfil
+- **Problema**: Campo nombre puede ser vacío o excesivamente largo
+- **Ubicación**: `routes/afiliado.py:282`
+- **Riesgo**: Nombres inválidos en reportes y comunicaciones
+- **Solución**: Validar longitud (2-100 caracteres) y caracteres permitidos
+
+### 🟡 E36: Sin Validación de Contraseña Débil en Cambio
+- **Problema**: Contraseña nueva no se valida por fortaleza
+- **Ubicación**: `routes/afiliado.py:289`
+- **Riesgo**: Usuario puede establecer contraseña débil
+- **Solución**: Requerir mínimo 8 caracteres, mayúscula, número
+
+### 🟡 E37: Consultas N+1 en Listados de Afiliado
+- **Problema**: `pedidos()` y `comisiones()` usan queries ineficientes
+- **Ubicación**: `routes/afiliado.py:119-164`
+- **Riesgo**: Lentitud con muchos pedidos/comisiones
+- **Solución**: Usar `joinedload()` para relaciones
+
+### 🔴 E38: Sin Rate Limiting en Login
+- **Problema**: Rutas `/auth/admin/login` y `/auth/afiliado/login` sin protección contra fuerza bruta
+- **Ubicación**: `routes/auth.py:11-94`
+- **Riesgo**: Ataques de diccionario y fuerza bruta
+- **Solución**: Implementar `flask-limiter` con máximo 5 intentos por minuto
+
+### 🟡 E39: Endpoint Expone Información de Sesión
+- **Problema**: `/auth/check-session` devuelve datos sensibles sin validación
+- **Ubicación**: `routes/auth.py:101+`
+- **Riesgo**: Leak de información para atacantes
+- **Solución**: Eliminar endpoint o proteger con autenticación + rate limiting
+
+### 🟡 E40: Credenciales Expuestas en README.md y bd.md
+- **Problema**: Documentos muestran credenciales por defecto (admin/admin123, afiliado123)
+- **Ubicación**: `README.md` líneas 96-104, `bd.md` línea referencias
+- **Riesgo**: Acceso no autorizado en producción
+- **Solución**: Reemplazar con placeholders genéricos
 email = db.Column(db.String(255), nullable=False, unique=True, index=True)
 ```
 
@@ -625,22 +706,33 @@ async function procesarPedido(event) {
 
 ---
 
-## Estructura Recomendada (Post-Rediseño)
+## ✅ Cobertura Completa de Auditoria
 
-```
-Shop--Fusion/
-├── app/
-│   ├── api/          # Endpoints REST nuevos
-│   ├── models/       # Modelos BD
-│   ├── services/     # Lógica negocio
-│   ├── utils/        # Helpers
-│   ├── web/          # Rutas web
-│   └── templates/    # HTML
-├── tests/            # Tests
-├── config/           # Configuración por entorno
-├── migrations/       # Migraciones BD
-└── scripts/          # Deploy
-```
+### Archivos Críticos Auditados (Afectan Funcionamiento)
+- ✅ `app.py` - Inicialización Flask
+- ✅ `config.py` - Configuración seguridad
+- ✅ `models.py` - Modelos y ORM
+- ✅ `routes/auth.py` - Autenticación
+- ✅ `routes/admin.py` - Panel administrador
+- ✅ `routes/afiliado.py` - Panel afiliado
+- ✅ `routes/tienda.py` - Tienda pública
+- ✅ `init_db.py` - Inicialización BD
+- ✅ `migrate_db.py` - Migraciones BD
+- ✅ `test_app.py` - Tests
+- ✅ `templates/` - Plantillas HTML
+- ✅ `static/css/style.css` - Estilos CSS
+
+### Archivos No Críticos (No Afectan Funcionamiento)
+- ⚪ `run.bat` - Script de arranque auxiliar
+- ⚪ `runtime.txt` - Especifica Python 3.12.3
+- ⚪ `requirements.txt` - ✅ Analizado
+- ⚪ `README.md` - ✅ Analizado (credenciales)
+- ⚪ `bd.md` - Documentación técnica
+
+### Total de Errores/Riesgos Identificados: 40
+- **🔴 Críticos (4)**: E1, E2, E3, E38
+- **🟡 Importantes (16)**: E4-E37, E39, E40
+- **🟢 Mejoras (20)**: E8, E9, E13-E37 (excluidos críticos e importantes)
 
 ---
 
