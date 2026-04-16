@@ -160,4 +160,34 @@ El sistema Shop Fusion implementa un modelo de e-commerce B2B2C (Business-to-Bus
 - **Afiliados**: Vendedores independientes con comisiones
 - **Clientes**: Compradores finales con múltiples opciones de pago
 
+
+
+## Comparación de Paneles
+
+| Panel         | Tipo de Usuario           | Función Principal | Acceso | Acciones Clave |
+|---------------|---------------------------|------------------|--------|----------------|
+| Administrador | Administrador del sistema | Gestión completa del e-commerce | Privado | Crear productos, gestionar pedidos, pagar comisiones |
+| Afiliado      | Vendedor independiente    | Promoción y venta de productos | Privado | Compartir enlaces, validar pedidos, ver ganancias |
+| Cliente       | Usuario final             | Compra de productos | Público | Navegar, comprar, pagar |
+
+## Diagrama de Flujo del Cliente
+
+Inicio  
+↓  
+Accede a tienda (normal o afiliado)  
+↓  
+Explora productos  
+↓  
+Agrega al carrito  
+↓  
+Revisa carrito  
+↓  
+Ingresa datos  
+↓  
+Selecciona método de pago  
+↓  
+Confirma pedido  
+↓  
+Fin
+
 La arquitectura soporta escalabilidad con separación clara de responsabilidades y flujos optimizados para conversión de ventas.
