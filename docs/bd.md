@@ -96,6 +96,18 @@ NOTA 2: En el archivo  .env, en caso se utilice URL para base de datos de prueba
 - Mantener las tablas normalizadas.
 - Usar índices para consultas frecuentes.
 
+## 7. Configuración de Entorno (.env)
+
+Para el correcto funcionamiento del sistema y la base de datos, el archivo `.env` en la raíz del proyecto debe contener las siguientes variables:
+
+- `DATABASE_URL`: URL completa de conexión a PostgreSQL.
+- `SECRET_KEY`: Clave secreta para el cifrado de sesiones y seguridad de Flask.
+- `ADMIN_USER`: Nombre de usuario maestro para el administrador único.
+- `ADMIN_PASS`: Contraseña maestra para el administrador único.
+
+- IMPORTANTE:
+    El sistema de administración es de **Registro Único**. Esto significa que solo existe una fila en la tabla `admins`. Si cambias el `ADMIN_USER` y/o `ADMIN_PASS` en el `.env`, el sistema simplemente actualizará el nombre y/o contraseña de la fila existente la próxima vez que inicies sesión.
+
 ### Apéndice: Verificación de Esquema
 Se realizó una auditoría manual y automática del código fuente el 14/04/2026 para confirmar el esquema de trabajo. No se encontraron definiciones de `schema` o `__table_args__` en el proyecto. Se tienen llamadas a la base de datos y tablas, pero sin indicar el esquema
 necesario. Por lo tanto, se asume que se está utilizando el esquema por defecto `public`.
@@ -103,3 +115,4 @@ necesario. Por lo tanto, se asume que se está utilizando el esquema por defecto
 *PRIMER AVANCE: 13/04/2026*
 *CORRECCIÓN: 14/04/2026*
 *ADICIÓN: 15/04/26*
+*ADICIÓN .ENV: 16/04/26*
