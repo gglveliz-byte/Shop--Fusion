@@ -641,68 +641,82 @@ async function procesarPedido(event) {
 
 ---
 
-## Plan de Implementación
+## Errores Arquitectónicos y de Negocio (¡Nuevos Hallazgos Críticos!)
 
-### Fase 1 (Semana 1): Errores Críticos
-1. Agregar `import os` en `app.py` (E1)
+### 🔴 E41: Ausencia de Control de Inventario (Stock)
+- **Problema**: `Producto` permite ventas ilimitadas (solo tiene boolean `activo`).
+- **Ubicación**: `models.py` (Línea 121), `routes/tienda.py`
+- **Riesgo**: Sobreventa de productos físicos, reembolsos forzados y problemas legales.
+- **Para desarrolladores nuevos**: Abre `models.py`. Agrega `stock = db.Column(db.Integer, default=0)` en el modelo `Producto`. Luego, en `routes/tienda.py`, antes de procesar el pago o checkout, debes asegurarte de que `producto.stock >= cantidad_solicitada` y restarlo al confirmar.
+
+### 🔴 E42: Almacenamiento Volátil de Imágenes
+- **Problema**: Las imágenes se suben a `/static/uploads/`, lo cual es efímero en hosts como Render/Heroku.
+- **Ubicación**: `config.py` (Línea 28), `routes/admin.py`
+- **Riesgo**: Al reiniciar el servidor (cada deploy), todos los productos perderán sus imágenes locales.
+- **Para desarrolladores nuevos**: Necesitan integrar Cloud Storage. Crea funciones para conectarte con Amazon S3 o Cloudinary usando `boto3` o sus respectivos SDKs. Actualiza en `models.py` para leer siempre URLs absolutas.
+
+### 🟡 E43: Confirmaciones PayPal sin Webhooks
+- **Problema**: El checkout confía en `/api/paypal/capture-order` invocado por el frontend sincrónicamente.
+- **Ubicación**: `routes/tienda.py` (Línea 560+)
+- **Riesgo**: Si el usuario cierra el navegador o pierde internet entre el pago en PayPal y la llamada API, el pedido no se registrará en tu BD, pero su dinero será cobrado.
+- **Para desarrolladores nuevos**: Explora la documentación de PayPal Webhooks. Crea una nueva ruta `@bp.route('/api/paypal/webhook', methods=['POST'])` para que PayPal le confirme directamente a tu servidor (backend) cuando haya capturado un pago correctamente.
+
+### 🟡 E44: Estados Logísticos Básicos Faltantes
+- **Problema**: El e-commerce solo controla `pendiente`, `pagado` y `cancelado`. Faltan estados físicos de entrega.
+- **Ubicación**: `models.py` (Líneas 182)
+- **Riesgo**: Imposible llevar control o informar al cliente sobre la fase de preparación o envío.
+- **Para desarrolladores nuevos**: Agrega en `Pedido` estados nuevos como `preparando`, `enviado`, `entregado`. Suma un campo `tracking_url = db.Column(db.String(255), nullable=True)` para ingresar las guías logísticas del proveedor de entregas.
+
+---
+
+## Plan de Implementación (Reestructurado)
+
+### Fase 1 (Semana 1): Errores Críticos y Seguridad Urgente
+1. Agregar protección CSRF con `Flask-WTF` (E24) - **¡Elevado por gravedad!**
 2. Validar campo `codigo` (E2)
-3. Configurar variables de entorno en `config.py` (E3)
+3. Implementar control de `stock` para evitar sobreventa (E41)
+4. Modificar config de sesiones Web (*SESSION_COOKIE_SECURE*) (Sessions/E16)
+5. Configurar variables de entorno y limpiar Secrets en `config.py` (E3)
 
-### Fase 2 (Semana 2): Seguridad Inmediata
-1. Cambiar contraseñas por defecto en `init_db.py` (E4)
-2. Implementar logging en `migrate_db.py`, `init_db.py` (E5)
-3. Capturar excepciones específicas (E6)
-4. Limpiar credenciales de `README.md` y `bd.md` (Cred)
+### Fase 2 (Semana 2): Seguridad y Manejo de Pagos
+1. Integrar PayPal Webhooks para validación asíncrona de pagos (E43)
+2. Proteger logins con rate limiting `flask-limiter` (E38)
+3. Cambiar contraseñas débiles por defecto en `init_db.py` (E4)
+4. Limpiar credenciales de `README.md` (E40, Cred)
 
-### Fase 3 (Semana 3): Seguridad Web
-1. Agregar CSRF con `Flask-WTF` (CSRF, E24)
-2. Mejorar configuración de sesiones (Sessions)
-3. Agregar rate limiting en login (RateLimit)
-4. Sanitizar entrada con `escape` (Sanitization, E25)
-5. Limpiar credenciales expuestas (E26)
+### Fase 3 (Semana 3): Infraestructura y Archivos
+1. Migrar sistema de uploads locales (`/static/uploads`) a AWS S3 o Cloudinary (E42)
+2. Agregar validación de archivos (formatos y tamaños) en uploads (E24)
+3. Centralizar formateo de números en un nuevo `utils.py` (E7)
+4. Implementar logging global en todo el proyecto (E5)
 
-### Fase 4 (Semana 4): Validación y Código Limpio
-1. Crear `utils.py` con `format_whatsapp()` (E7)
-2. Implementar WTForms para validación (E8, E29)
-3. Actualizar `requirements.txt` con versiones estables (E9)
-4. Agregar validación de archivos en uploads (E24)
-5. Mejorar validación frontend (E29)
-6. Sanitizar datos en templates (E25)
+### Fase 4 (Semana 4): Negocio y Logística
+1. Expandir BD de Pedidos para Tracking (`preparando`, `enviado`, `tracking_url`) (E44)
+2. Implementar WTForms para validación rígida (E8, E29)
+3. Sanitizar entradas con `escape` en JSON y Base de Datos (E25)
+4. Ajustar consultas SQL crudas en `migrate_db.py` (E30)
 
 ### Fase 5 (Semana 5): Base de Datos y Performance
-1. Agregar índices en `models.py` (E12)
-2. Optimizar queries con `joinedload` (E11)
-3. Implementar paginación en listados (E17)
-4. Agregar caché de templates (E16)
-5. Optimizar CSS para rendimiento móvil (E33)
-6. Mejorar manejo SQL en migraciones (E30)
+1. Agregar índices (`index=True`) en `models.py` (E12)
+2. Optimizar queries tipo N+1 usando `joinedload` (E11)
+3. Implementar paginación en listados administrativos (E17)
+4. Mejorar rendimiento en CSS eliminando variables pesadas (E33)
 
-### Fase 6 (Semana 6): Testing y Accesibilidad
-1. Crear tests unitarios con `pytest` (E19, E20)
-2. Tests de rutas críticas (login, creación de pedidos)
-3. Tests de modelos (cálculos de comisiones)
-4. Coverage > 70%
-5. Agregar atributos ARIA y labels (E28)
-6. Corregir contraste de colores (E27)
-7. Implementar navegación por teclado
+### Fase 6 (Semana 6): Testing, QA y Accesibilidad
+1. Crear tests unitarios con `pytest` (cobertura +70%) (E19, E20)
+2. Pruebas focales en checkout y cálculo de comisiones.
+3. Mejorar interfaz visual de Accesibilidad (etiquetas ARIA, colores) (E27, E28)
+4. Validar y purgar manipulación de localStorage en el frontend (E31)
 
-### Fase 7 (Semana 7): Manejo de Errores y Logs
-1. Agregar handler personalizado para errors 500 (E25)
-2. Configurar logging centralizado
-3. Monitoreo en producción (Sentry)
-4. Mejorar manejo de errores JavaScript (E32)
-5. Validar y sanitizar datos localStorage (E31)
+### Fase 7 (Semana 7): Monitoreo de Producción y Asincronía
+1. Centralizar captura de Errores JS en Frontend y 500 en Backend (E32, E25).
+2. Configurar alertas Sentry.
+3. Incorporar Celery + Redis para emails y tasks asíncronas (E21).
 
-### Fase 7 (Semana 7): Manejo de Errores y Logs
-1. Agregar handler personalizado para errors 500 (E25)
-2. Configurar logging centralizado
-3. Monitoreo en producción (Sentry)
-
-### Fase 8 (Semana 8+): Escalabilidad
-1. Configurar Celery + Redis para tasks asíncronas (E21)
-2. Implementar Redis para caché y sesiones (E22)
-3. API versioning `/api/v1/` (E23)
-4. Containerización con Docker
+### Fase 8 (Meta SaaS 🚀): Migración Arquitectura Multi-tenant
+1. Separar configs de PayPal/WhatsApp hacia un nuevo modelo de BD `Tenant` o `AdminStore`.
+2. Habilitar dominios personalizados en enrutador mapeando a `TenantID`.
+3. Containerización general con Docker.
 
 ---
 
@@ -729,10 +743,29 @@ async function procesarPedido(event) {
 - ⚪ `README.md` - ✅ Analizado (credenciales)
 - ⚪ `bd.md` - Documentación técnica
 
-### Total de Errores/Riesgos Identificados: 40
-- **🔴 Críticos (4)**: E1, E2, E3, E38
-- **🟡 Importantes (16)**: E4-E37, E39, E40
+### Total de Errores/Riesgos Identificados: 44
+- **🔴 Críticos (6)**: E1, E2, E3, E38, E41, E42
+- **🟡 Importantes (18)**: E4-E37, E39, E40, E43, E44
 - **🟢 Mejoras (20)**: E8, E9, E13-E37 (excluidos críticos e importantes)
-
 ---
 
+## 🧪 Notas Finales: Ideas Experimentales y Opciones de Rollback
+
+A continuación, se documentan los riesgos vinculados a una **rama de desarrollo experimental** que intentó refactorizar el flujo de login del Administrador central en `app.py`, `routes/auth.py` y `config.py` (sincronizando credenciales permanentemente contra las variables de entorno).
+
+Estos cambios **no son permanentes** y se exponen aquí como "Opciones", detallando por qué este modelo de autenticación trae riesgos si se decide implementar a futuro (a modo de bitácora para el equipo):
+
+### Opción/Idea 1: Login Vía Variables de Entorno (Riesgo de Bypass)
+- **El concepto evaluado:** Forzar al Administrador a loguearse comparando su formulario con un `current_app.config['ADMIN_USER']`.
+- **Problema de la implementación:** Si en un despliegue alguien olvida configurar el `.env`, la variable local será `None`. Si un atacante altera un request de login mandando campos vacíos (`username=None`), el login valida `None == None` y lo deja entrar gratis como Administrador Máximo.
+- **Si se retoma a futuro:** Asegurarse de usar una capa protectora previa: `if not username or not current_app.config['ADMIN_USER']:` lanzar error, o usar `hmac.compare_digest`.
+
+### Opción/Idea 2: Sincronización Forzada de Hash (Antipatrón de DB)
+- **El concepto evaluado:** Por garantizar consistencia, se usaba `admin.set_password(password)` y `db.session.commit()` *cada vez* que el usuario entraba.
+- **Problema de la implementación:** Bcrypt/Werkzeug consume mucha memoria y CPU al hashear. Escribir a la base de datos en cada intento de login roba conexiones y resiente severamente el servidor si entraran muchos administradores a la vez.
+- **Si se retoma a futuro:** Condicionar la carga a la base de datos. Solo llamar a la función `set_password` si la contraseña vieja ya no cincuerda con la nueva.
+
+### Opción/Idea 3: WhatsApp Hardcodeado
+- **El concepto evaluado:** Poner directamente `WHATSAPP_NUMBER = '+51906540885'` en el archivo config de Python.
+- **Problema de la implementación:** Rompe las normas de flexibilidad. Expondrá teléfonos personales si liberan el código y forzará a todos los ambientes locales a apuntar al WhatsApp del dueño principal.
+- **Si se retoma a futuro:** Envolver todo número fijo de este modo: `os.environ.get('WHATSAPP_NUMBER', '+51906540885')`.
