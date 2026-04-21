@@ -7,7 +7,7 @@
 | 🔴 | Import `os` faltante      | `app.py:27` | Agregar `import os` |
 | 🔴 | `codigo` puede ser nulo   | `routes/admin.py:439` | Validar existencia |
 | 🔴 | Config insegura           | `config.py` | Requerir vars entorno |
-| � | Sin rate limiting login    | `routes/auth.py` | Usar flask-limiter |
+|   | Sin rate limiting login    | `routes/auth.py` | Usar flask-limiter |
 | 🟡 | print() en producción     | `migrate_db.py`, `init_db.py` | Usar logging |
 | 🟡 | Excepciones genéricas     | `routes/admin.py`, `tienda.py`, `afiliado.py` | Capturar específicas |
 | 🟡 | Contraseñas débiles       | `init_db.py` | Generar aleatorias |
@@ -17,6 +17,9 @@
 | 🟡 | Credenciales en docs      | `README.md`, `bd.md` | Reemplazar por placeholders |
 | 🟢 | Código duplicado WhatsApp | `routes/tienda.py` | Crear función |
 | 🟢 | Sin validación entrada    | Todos forms | Usar WTForms |
+| 🔴 | Credenciales expuestas    | `config.py`, `init_db.py` | Usar `.env` y borrar en `init` |
+| 🔴 | Riesgo de Bypass Admin    | `routes/auth.py` | Validar `None` en env vars |
+| 🟡 | Sincronización de Hash    | `routes/auth.py` | Automatizar en login |
 
 ---
 
@@ -36,6 +39,16 @@
 **Archivo**: `config.py` - Requerir SECRET_KEY y DATABASE_URL como variables de entorno, activar SESSION_COOKIE_SECURE en producción
 
 **Para desarrolladores nuevos**: Abre el archivo `config.py` en tu editor de código, ve a las líneas 10-15 donde se definen las configuraciones. Cambia las asignaciones directas por `os.environ.get('VARIABLE', 'default')` para SECRET_KEY y DATABASE_URL, y agrega `SESSION_COOKIE_SECURE = True` para producción. Esto hace la configuración más segura.
+
+### E45: Credenciales de Administrador Expuestas
+**Archivos**: `config.py`, `init_db.py`
+
+**Problema**: El sistema depende de que un administrador sea creado manualmente o tenga claves fijas en el código. Si la base de datos se filtra o se borra, se pierde el acceso maestro. Además, permite la coexistencia de múltiples administradores sin un control centralizado.
+
+### E46: Riesgo de Bypass por Variables de Entorno no Definidas
+**Archivo**: `routes/auth.py`
+
+**Problema**: Al usar variables de entorno, si estas no se verifican antes de comparar (`None == None`), el sistema podría permitir el acceso con campos vacíos si el archivo `.env` no está configurado.
 
 ---
 
@@ -126,6 +139,11 @@ whatsapp = format_whatsapp(whatsapp)
 **Archivo**: `routes/auth.py:101+` - Eliminar o proteger endpoint `/check-session`
 
 **Para desarrolladores nuevos**: Abre el archivo `routes/auth.py` en tu editor de código, busca la ruta `/check-session` (alrededor de la línea 101 o más). Elimina toda la función o protégela con autenticación, ya que expone información sensible de la sesión del usuario.
+
+### E47: Falta de Sincronización Automática de Hash
+**Archivo**: `routes/auth.py`
+
+**Problema**: Si se cambia la contraseña en el `.env`, el registro de la base de datos queda desactualizado, causando inconsistencias de datos y posibles fallos en la persistencia del login de Flask-Login.
 
 ---
 
@@ -743,9 +761,9 @@ async function procesarPedido(event) {
 - ⚪ `README.md` - ✅ Analizado (credenciales)
 - ⚪ `bd.md` - Documentación técnica
 
-### Total de Errores/Riesgos Identificados: 44
-- **🔴 Críticos (6)**: E1, E2, E3, E38, E41, E42
-- **🟡 Importantes (18)**: E4-E37, E39, E40, E43, E44
+### Total de Errores/Riesgos Identificados: 47
+- **🔴 Críticos (8)**: E1, E2, E3, E38, E41, E42, E45, E46
+- **🟡 Importantes (19)**: E4-E37, E39, E40, E43, E44, E47
 - **🟢 Mejoras (20)**: E8, E9, E13-E37 (excluidos críticos e importantes)
 ---
 

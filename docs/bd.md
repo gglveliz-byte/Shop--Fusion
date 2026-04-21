@@ -12,61 +12,71 @@
 
 ## 3. Estructura de las tablas:
 
-A. Admins:
-    - id: Integer, PRIMARY KEY
-    - username: String(80), UNIQUE, NOT NULL, INDEX
-    - password_hash: String(255), NOT NULL
-    - creado_en: DateTime, default=datetime.utcnow
+### A. Admins
+| Campo | Tipo | Restricciones / Default |
+|-------|------|-------------------------|
+| id | Integer | PRIMARY KEY |
+| username | String(80) | UNIQUE, NOT NULL, INDEX |
+| password_hash | String(255) | NOT NULL |
+| creado_en | DateTime | default=datetime.utcnow |
 
-B. Productos:
-    - id: Integer, PRIMARY KEY
-    - nombre: String(200), NOT NULL
-    - descripcion: Text
-    - categoria: String(50), default='otros', INDEX
-    - precio_final: Numeric(10, 2), NOT NULL
-    - precio_proveedor: Numeric(10, 2), NOT NULL
-    - precio_oferta: Numeric(10, 2), NULL
-    - imagen: String(300)
-    - imagenes: JSON, default=list
-    - imagen_url: String(500)
-    - imagenes_url: JSON, default=list
-    - activo: Boolean, default=True
-    - creado_en: DateTime, default=datetime.utcnow
+### B. Productos
+| Campo | Tipo | Restricciones / Default |
+|-------|------|-------------------------|
+| id | Integer | PRIMARY KEY |
+| nombre | String(200) | NOT NULL |
+| descripcion | Text | |
+| categoria | String(50) | default='otros', INDEX |
+| precio_final | Numeric(10, 2) | NOT NULL |
+| precio_proveedor | Numeric(10, 2) | NOT NULL |
+| precio_oferta | Numeric(10, 2) | NULL |
+| imagen | String(300) | |
+| imagenes | JSON | default=list |
+| imagen_url | String(500) | |
+| imagenes_url | JSON | default=list |
+| activo | Boolean | default=True |
+| creado_en | DateTime | default=datetime.utcnow |
 
-C. Afiliados:
-    - id: Integer, PRIMARY KEY
-    - nombre: String(100), NOT NULL
-    - email: String(120), UNIQUE, NOT NULL, INDEX
-    - password_hash: String(255), NOT NULL
-    - codigo: String(20), UNIQUE, NOT NULL, INDEX
-    - porcentaje_comision: Numeric(5, 2), NOT NULL, default=80.00
-    - whatsapp: String(20), NULL
-    - activo: Boolean, default=True
-    - creado_en: DateTime, default=datetime.utcnow
+### C. Afiliados
+| Campo | Tipo | Restricciones / Default |
+|-------|------|-------------------------|
+| id | Integer | PRIMARY KEY |
+| nombre | String(100) | NOT NULL |
+| email | String(120) | UNIQUE, NOT NULL, INDEX |
+| password_hash | String(255) | NOT NULL |
+| codigo | String(20) | UNIQUE, NOT NULL, INDEX |
+| porcentaje_comision | Numeric(5, 2) | NOT NULL, default=80.00 |
+| whatsapp | String(20) | NULL |
+| activo | Boolean | default=True |
+| creado_en | DateTime | default=datetime.utcnow |
 
-D. Pedidos:
-    - id: Integer, PRIMARY KEY
-    - afiliado_id: Integer, ForeignKey('afiliados.id'), NOT NULL
-    - cliente_nombre: String(100), NOT NULL
-    - cliente_telefono: String(20), NOT NULL
-    - cliente_direccion: Text, NOT NULL
-    - productos_json: JSON, NOT NULL
-    - total: Numeric(10, 2), NOT NULL
-    - estado: String(20), default='pendiente'
-    - validado_por_vendedor: Boolean, default=False
-    - validado_en:DateTime, NULL
-    - creado_en: DateTime, default=datetime.utcnow
-    - pagado_en: DateTime, NULL
+### D. Pedidos
+| Campo | Tipo | Restricciones / Default |
+|-------|------|-------------------------|
+| id | Integer | PRIMARY KEY |
+| afiliado_id | Integer | ForeignKey('afiliados.id'), NOT NULL |
+| cliente_nombre | String(100) | NOT NULL |
+| cliente_telefono | String(20) | NOT NULL |
+| cliente_direccion | Text | NOT NULL |
+| productos_json | JSON | NOT NULL |
+| total | Numeric(10, 2) | NOT NULL |
+| estado | String(20) | default='pendiente' |
+| validado_por_vendedor | Boolean | default=False |
+| validado_en | DateTime | NULL |
+| creado_en | DateTime | default=datetime.utcnow |
+| pagado_en | DateTime | NULL |
 
-E. Comisiones:
-    - id: Integer, PRIMARY KEY
-    - afiliado_id: Integer, ForeignKey('afiliados.id'), NOT NULL
-    - pedido_id: Integer, ForeignKey('pedidos.id'), NOT NULL
-    - monto: Numeric(10, 2), NOT NULL
-    - margen: Numeric(10, 2), NOT NULL
-    - estado: String(20), default='pendiente'
-    - creado_en: DateTime, default=datetime.utcnow
-    - pagada_en: DateTime, NULL
+### E. Comisiones
+| Campo | Tipo | Restricciones / Default |
+|-------|------|-------------------------|
+| id | Integer | PRIMARY KEY |
+| afiliado_id | Integer | ForeignKey('afiliados.id'), NOT NULL |
+| pedido_id | Integer | ForeignKey('pedidos.id'), NOT NULL |
+| monto | Numeric(10, 2) | NOT NULL |
+| margen | Numeric(10, 2) | NOT NULL |
+| estado | String(20) | default='pendiente' |
+| creado_en | DateTime | default=datetime.utcnow |
+| pagada_en | DateTime | NULL |
 
 ## 4. Relaciones:
 FOREIGN KEYS:
@@ -111,8 +121,3 @@ Para el correcto funcionamiento del sistema y la base de datos, el archivo `.env
 ### Apéndice: Verificación de Esquema
 Se realizó una auditoría manual y automática del código fuente el 14/04/2026 para confirmar el esquema de trabajo. No se encontraron definiciones de `schema` o `__table_args__` en el proyecto. Se tienen llamadas a la base de datos y tablas, pero sin indicar el esquema
 necesario. Por lo tanto, se asume que se está utilizando el esquema por defecto `public`.
-
-*PRIMER AVANCE: 13/04/2026*
-*CORRECCIÓN: 14/04/2026*
-*ADICIÓN: 15/04/26*
-*ADICIÓN .ENV: 16/04/26*
