@@ -22,6 +22,7 @@ def admin_login():
         else:
             return redirect(url_for('afiliado.dashboard'))
 
+
     #INICIA LOS CAMBIOS INDICADOS EN FASE 1
     # SEGURIDAD: Verificar si el usuario está bloqueado temporalmente por demasiados intentos fallidos
     # Ayuda a mitigar ataques de fuerza bruta al forzar un tiempo de espera

@@ -18,8 +18,12 @@ def create_app(config_class=Config):
     # Inicializar extensiones con la app
     db.init_app(app)
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
+    #INICIA LOS CAMBIOS INDICADOS EN FASE 1
+    # Configuración de la vista de login por defecto para redirecciones automáticas de Flask-Login.
+    # Ayuda a evitar errores 500 cuando el contexto de usuario no es válido.
+    login_manager.login_view = 'auth.admin_login'
     login_manager.login_message = 'Por favor inicia sesión para acceder a esta página.'
+    #FIN DE LOS CAMBIOS INDICADOS EN FASE 1
 
     # Configurar user loader
     setup_login_manager(login_manager)

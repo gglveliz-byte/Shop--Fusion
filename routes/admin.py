@@ -13,17 +13,23 @@ import os
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 
+#INICIA LOS CAMBIOS INDICADOS EN FASE 1
 def admin_required(f):
-    """Decorador para verificar que el usuario sea admin"""
+    """
+    Decorador de Seguridad: Verifica que el usuario esté autenticado y sea Administrador.
+    Evita errores 500 al bloquear el acceso antes de ejecutar consultas a la DB.
+    """
     @login_required
     def decorated_function(*args, **kwargs):
-        if not isinstance(current_user, Admin):
-            flash('Acceso denegado. Solo administradores.', 'error')
-            return redirect(url_for('tienda.index'))
+        # Si no hay usuario o no es de tipo Admin, denegar acceso inmediatamente
+        if not current_user.is_authenticated or not isinstance(current_user, Admin):
+            flash('Acceso denegado. Se requiere sesión de administrador.', 'error')
+            return redirect('/auth/admin/login')
         return f(*args, **kwargs)
     decorated_function.__name__ = f.__name__
     return decorated_function
 
+#FIN DE LOS CAMBIOS INDICADOS EN FASE 1
 
 def allowed_file(filename):
     """Verificar si el archivo tiene extensión permitida"""
