@@ -15,13 +15,24 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    #INICIA LOS CAMBIOS INDICADOS EN FASE 1
+    # Credenciales de Administrador Único obtenidos del .env
+    ADMIN_USER = os.environ.get('ADMIN_USER')
+    ADMIN_PASS = os.environ.get('ADMIN_PASS')
+
+    # Seguridad de Login: Previene ataques de fuerza bruta al limitar intentos fallidos
+    LOGIN_ATTEMPTS_LIMIT = 5  # Máximo de intentos permitidos antes de bloquear
+    LOGIN_LOCK_MINUTES = 5    # Tiempo de espera (en minutos) tras superar el límite de intentos
+    
+    #FIN DE LOS CAMBIOS INDICADOS EN FASE 1
+
     # Configuración de sesiones
     SESSION_COOKIE_SECURE = False  # Cambiar a True en producción con HTTPS
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
 
     # Configuración de WhatsApp
-    WHATSAPP_NUMBER = '+593997811011'  # CAMBIAR POR TU NÚMERO (sin espacios, con código de país)
+    WHATSAPP_NUMBER = ''  # CAMBIAR POR TU NÚMERO (sin espacios, con código de país)
 
     # Configuración de archivos
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size

@@ -3,8 +3,9 @@ Rutas de autenticación
 Maneja login/logout para Admin y Afiliado
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from flask_login import login_user, logout_user, current_user
+from datetime import datetime, timedelta  # Para manejar el bloqueo temporal de login
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -21,6 +22,16 @@ def admin_login():
         else:
             return redirect(url_for('afiliado.dashboard'))
 
+    #INICIA LOS CAMBIOS INDICADOS EN FASE 1
+    # SEGURIDAD: Verificar si el usuario está bloqueado temporalmente por demasiados intentos fallidos
+    # Ayuda a mitigar ataques de fuerza bruta al forzar un tiempo de espera
+    if 'admin_login_lock' in session:
+        lock_until = datetime.fromisoformat(session['admin_login_lock'])
+        if datetime.now() < lock_until:
+            minutos_restantes = int((lock_until - datetime.now()).total_seconds() // 60) + 1
+            flash(f'Demasiados intentos fallidos. Por seguridad, espera {minutos_restantes} minuto(s).', 'error')
+            return render_template('auth/admin_login.html')
+
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -29,14 +40,39 @@ def admin_login():
             flash('Por favor completa todos los campos', 'error')
             return render_template('auth/admin_login.html')
 
-        # Buscar admin
-        admin = Admin.query.filter_by(username=username).first()
+        # 1. Validar contra las credenciales de administrador mediante .env
+        from flask import current_app
+        is_correct_admin = (
+            username == current_app.config['ADMIN_USER'] and 
+            password == current_app.config['ADMIN_PASS']
+        )
 
-        if admin and admin.check_password(password):
+        if is_correct_admin:
+            # 2. Sincronizar con el ÚNICO registro permitido en la base de datos
+            from models import db
+            # Siempre intentamos obtener el primer administrador (ID 1 o cualquiera que exista)
+            admin = Admin.query.first()
+            
+            if not admin:
+                # Crear el registro único si la tabla está vacía
+                admin = Admin(username=username)
+                db.session.add(admin)
+            else:
+                # Sincronizar nombre de usuario con el registro existente
+                admin.username = username
+            
+            # Sincronizar siempre el hash de la contraseña por seguridad y consistencia
+            admin.set_password(password)
+            db.session.commit()
+
             # Login exitoso
             login_user(admin)
             session['user_type'] = 'admin'
             session['user_id'] = f'admin_{admin.id}'
+
+            # Login exitoso: Limpiar rastros de intentos fallidos previos
+            session.pop('admin_login_attempts', None)
+            session.pop('admin_login_lock', None)
 
             flash(f'¡Bienvenido {admin.username}!', 'success')
 
@@ -44,10 +80,21 @@ def admin_login():
             next_page = request.args.get('next')
             return redirect(next_page if next_page else url_for('admin.dashboard'))
         else:
-            flash('Usuario o contraseña incorrectos', 'error')
+            # SEGURIDAD: Incrementar contador de intentos fallidos
+            attempts = session.get('admin_login_attempts', 0) + 1
+            session['admin_login_attempts'] = attempts
+            
+            # Si se supera el límite definido en config.py, se bloquea la sesión temporalmente
+            if attempts >= current_app.config.get('LOGIN_ATTEMPTS_LIMIT', 5):
+                lock_time = current_app.config.get('LOGIN_LOCK_MINUTES', 5)
+                session['admin_login_lock'] = (datetime.now() + timedelta(minutes=lock_time)).isoformat()
+                flash(f'Has superado el límite de intentos. Bloqueado por {lock_time} minutos.', 'error')
+            else:
+                intentos_restantes = current_app.config.get('LOGIN_ATTEMPTS_LIMIT', 5) - attempts
+                flash(f'Usuario o contraseña incorrectos. Intentos restantes: {intentos_restantes}', 'error')
 
     return render_template('auth/admin_login.html')
-
+    #FIN DE LOS CAMBIOS INDICADOS EN FASE 1
 
 @bp.route('/afiliado/login', methods=['GET', 'POST'])
 def afiliado_login():

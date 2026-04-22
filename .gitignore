@@ -49,3 +49,7 @@ logs/
 .pytest_cache/
 
 nul
+
+# TestSprite y docs
+testsprite_tests/
+docs/
