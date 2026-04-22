@@ -32,23 +32,37 @@ def init_database():
         print("   - pedidos")
         print("   - comisiones")
 
-        # Verificar si ya existe un admin
+        # Obtener credenciales desde la configuración (que lee del .env)
+        # NUEVA LÓGICA SEGURA (FASE 1): Creación de administrador desde variables de entorno (.env).
+        # Sirve para: Eliminar credenciales hardcoded y prevenir exposición de claves en consola.
+        # Afecta a: Proceso de inicialización (requiere configurar el .env previamente).
+        env_user = app.config.get('ADMIN_USER')
+        env_pass = app.config.get('ADMIN_PASS')
+
+        if not env_user or not env_pass:
+            print("\n[AVISO DE SEGURIDAD] No se detectaron ADMIN_USER o ADMIN_PASS en el .env")
+            print("El script continuará creando productos, pero no se generará un administrador inseguro.")
+        else:
+            admin_existente = Admin.query.filter_by(username=env_user).first()
+            if not admin_existente:
+                admin = Admin(username=env_user)
+                admin.set_password(env_pass)
+                db.session.add(admin)
+                db.session.commit()
+                print(f"\n[OK] Administrador '{env_user}' creado exitosamente desde el .env")
+            else:
+                print(f"\n[OK] El administrador '{env_user}' ya existe en la base de datos")
+
+        # --- CÓDIGO ORIGINAL COMENTADO Y REEMPLAZADO POR SEGURIDAD (Error E10 / E4) ---
+        """
         admin_existente = Admin.query.filter_by(username='admin').first()
-
         if not admin_existente:
-            # Crear administrador por defecto
             admin = Admin(username='admin')
-            admin.set_password('admin123')  # CAMBIAR EN PRODUCCIÓN
-
+            admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
-
-            print("\n[OK] Administrador creado:")
-            print(f"   Usuario: admin")
-            print(f"   Contraseña: admin123")
-            print("\n[IMPORTANTE] Cambia la contrasena en produccion")
-        else:
-            print("\n[OK] Admin ya existe en la base de datos")
+            print("\n[OK] Administrador creado: admin / admin123")
+        """
 
         # Crear algunos productos de ejemplo
         productos_ejemplo = [
@@ -90,7 +104,13 @@ def init_database():
             db.session.commit()
             print(f"[OK] {len(productos_ejemplo)} productos creados")
 
-        # Crear un afiliado de ejemplo
+        # SEGURIDAD (FASE 1): Se deshabilita la creación de afiliados de ejemplo con claves hardcoded.
+        # Sirve para: Evitar el Error E10 y asegurar que todos los afiliados sean creados con claves seguras.
+        print("\n[AVISO] No se crearán afiliados de ejemplo por razones de seguridad (Error E10).")
+        print("Utiliza el panel de administrador para registrar afiliados con credenciales seguras.")
+
+        # --- CÓDIGO ORIGINAL COMENTADO Y REEMPLAZADO POR SEGURIDAD (Error E10 / E4) ---
+        """
         if Afiliado.query.count() == 0:
             print("\nCreando afiliado de ejemplo...")
             afiliado = Afiliado(
@@ -110,6 +130,7 @@ def init_database():
             print(f"   Codigo: AFI001")
             print(f"   Comision: 80%")
             print(f"   Contrasena: afiliado123")
+        """
 
         print("\n" + "="*50)
         print("[OK] BASE DE DATOS INICIALIZADA CORRECTAMENTE")
