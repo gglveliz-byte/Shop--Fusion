@@ -196,5 +196,3 @@ Error Mitigado: E39 - Fuga de Información (Information Disclosure).
   bloqueando una fase vital de reconocimiento para el secuestro de cuentas.
 ======================================================================
 """
-
-
