@@ -158,14 +158,42 @@ def logout():
     else:
         return redirect(url_for('tienda.index'))
 
+# =====================================================================
+# CÓDIGO COMENTADO Y DESACTIVADO POR SEGURIDAD (Error Crítico E39):
+# Se desactiva este endpoint porque permitía Fuga de Información 
+# y exposición pasiva de IDs de sesión (Information Disclosure).
+# =====================================================================
+# @bp.route('/check-session')
+# def check_session():
+#     """Endpoint para verificar sesión (útil para debugging)"""
+#     if current_user.is_authenticated:
+#         return {
+#             'authenticated': True,
+#             'user_type': session.get('user_type'),
+#             'user_id': session.get('user_id')
+#         }
+#     return {'authenticated': False}
 
-@bp.route('/check-session')
-def check_session():
-    """Endpoint para verificar sesión (útil para debugging)"""
-    if current_user.is_authenticated:
-        return {
-            'authenticated': True,
-            'user_type': session.get('user_type'),
-            'user_id': session.get('user_id')
-        }
-    return {'authenticated': False}
+"""
+======================================================================
+REPORTE DE AUDITORÍA Y CORRECCIÓN (FASE 1)
+======================================================================
+Error Mitigado: E39 - Fuga de Información (Information Disclosure).
+
+¿Qué se hizo?
+- Se comentó y desactivó permanentemente el endpoint `/check-session`.
+
+¿A qué afecta operacionalmente?
+- Afectación: CERO (0). 
+- Justificación: Se verificó el código del frontend (Jinja/JS) y ninguna 
+  vista consume esta API. La tienda funciona puramente por renderizado 
+  desde el servidor validando con `current_user.is_authenticated`.
+
+¿Qué riesgos se eliminaron?
+- Se neutralizó la enumeración de roles. Un atacante ya no puede 
+  consultar externamente qué 'user_id' o 'user_type' posee una sesión,
+  bloqueando una fase vital de reconocimiento para el secuestro de cuentas.
+======================================================================
+"""
+
+
