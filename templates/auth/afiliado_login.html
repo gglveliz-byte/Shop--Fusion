@@ -10,6 +10,9 @@
             <p class="subtitle">Acceso al panel de afiliado</p>
 
             <form method="POST" action="{{ url_for('auth.afiliado_login') }}">
+                <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+                <!-- Token requerido para prevenir ataques de falsificación de solicitudes -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input type="email" id="email" name="email" class="form-control" required autofocus>

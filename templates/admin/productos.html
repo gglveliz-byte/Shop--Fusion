@@ -49,6 +49,8 @@
                             <a href="{{ url_for('admin.editar_producto', id=producto.id) }}" class="btn btn-sm btn-primary">Editar</a>
                             {% if producto.activo %}
                                 <form method="POST" action="{{ url_for('admin.eliminar_producto', id=producto.id) }}" style="display:inline;">
+                                    <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Desactivar este producto?')">Desactivar</button>
                                 </form>
                             {% endif %}

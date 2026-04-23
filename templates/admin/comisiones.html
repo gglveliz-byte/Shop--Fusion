@@ -65,6 +65,8 @@
                         <td>
                             {% if comision.estado == 'generada' %}
                                 <form method="POST" action="{{ url_for('admin.marcar_comision_pagada', id=comision.id) }}" style="display:inline;">
+                                    <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('¿Marcar esta comisión como PAGADA?')">
                                         ✓ Marcar Pagada
                                     </button>

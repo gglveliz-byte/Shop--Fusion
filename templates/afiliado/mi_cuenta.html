@@ -10,6 +10,8 @@
     <div class="mi-cuenta-contenedor">
         <div class="mi-cuenta-form">
             <form method="POST" action="{{ url_for('afiliado.mi_cuenta') }}" class="form-afiliado">
+                <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-seccion">
                     <h3>📋 Datos personales</h3>
                     <div class="form-group">

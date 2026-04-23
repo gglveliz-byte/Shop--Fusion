@@ -7,6 +7,8 @@
     <h1>✏️ Editar Afiliado</h1>
 
     <form method="POST" action="{{ url_for('admin.editar_afiliado', id=afiliado.id) }}" class="form-afiliado">
+        <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="nombre">Nombre Completo *</label>

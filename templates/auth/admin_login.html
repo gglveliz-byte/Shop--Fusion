@@ -10,6 +10,9 @@
             <p class="subtitle">Acceso al panel de administración</p>
 
             <form method="POST" action="{{ url_for('auth.admin_login') }}">
+                <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+                <!-- Token requerido para prevenir ataques de falsificación de solicitudes -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-group">
                     <label for="username">Usuario</label>
                     <input type="text" id="username" name="username" class="form-control" required autofocus>

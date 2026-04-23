@@ -155,11 +155,15 @@
         <div class="pedido-acciones">
             {% if pedido.estado == 'pendiente' %}
                 <form method="POST" action="{{ url_for('admin.marcar_pedido_pagado', id=pedido.id) }}" id="form-pagar" onsubmit="return aprobarYContactar()" style="display: inline;">
+                    <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-success btn-lg">
                         ✓ Aprobar Pedido y Contactar por WhatsApp
                     </button>
                 </form>
                 <form method="POST" action="{{ url_for('admin.cancelar_pedido', id=pedido.id) }}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de cancelar este pedido?');">
+                    <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger btn-lg">
                         ✕ Cancelar Pedido
                     </button>
@@ -172,6 +176,8 @@
                 <p class="text-success">✅ Este pedido ya fue marcado como pagado</p>
                 {% if not pedido.afiliado_id %}
                 <form method="POST" action="{{ url_for('admin.cancelar_pedido', id=pedido.id) }}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de cancelar este pedido pagado?');">
+                    <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger">✕ Cancelar Pedido</button>
                 </form>
                 {% endif %}

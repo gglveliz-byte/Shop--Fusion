@@ -75,11 +75,15 @@
         <div class="pedido-acciones">
             {% if pedido.estado == 'pendiente' %}
                 <form method="POST" action="{{ url_for('afiliado.marcar_pedido_pagado', id=pedido.id) }}" style="display: inline;">
+                    <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-success btn-lg">
                         ✓ Marcar como Pagado
                     </button>
                 </form>
                 <form method="POST" action="{{ url_for('afiliado.cancelar_pedido', id=pedido.id) }}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de cancelar este pedido?');">
+                    <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger btn-lg">
                         ✕ Cancelar Pedido
                     </button>
@@ -90,6 +94,8 @@
                 </div>
             {% elif pedido.estado == 'pagado' and not pedido.validado_por_vendedor %}
                 <form method="POST" action="{{ url_for('afiliado.validar_pedido', id=pedido.id) }}" style="display: inline;">
+                    <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-primary btn-lg">
                         ✓ Validar Pedido (Para que Admin lo vea)
                     </button>
@@ -98,6 +104,8 @@
                     </p>
                 </form>
                 <form method="POST" action="{{ url_for('afiliado.cancelar_pedido', id=pedido.id) }}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de cancelar este pedido pagado?');">
+                    <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger">✕ Cancelar Pedido</button>
                 </form>
             {% elif pedido.validado_por_vendedor %}

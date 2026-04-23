@@ -4,6 +4,7 @@ Gestión de productos, pedidos, afiliados y comisiones
 """
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
+from sqlalchemy.orm import joinedload
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from models import db, Admin, Producto, Pedido, Afiliado, Comision
@@ -72,8 +73,9 @@ def dashboard():
     comisiones_pendientes = db.session.query(db.func.sum(Comision.monto))\
         .filter(Comision.estado.in_(['pendiente', 'generada'])).scalar() or Decimal('0.00')
 
-    # Últimos pedidos (solo validados o sin vendedor)
-    ultimos_pedidos = Pedido.query.filter(
+    # [OPTIMIZACIÓN E11 - FASE 4]
+    # Uso de joinedload para traer el afiliado en la misma consulta y evitar N+1
+    ultimos_pedidos = Pedido.query.options(joinedload(Pedido.afiliado)).filter(
         db.or_(
             Pedido.afiliado_id.is_(None),
             Pedido.validado_por_vendedor == True
@@ -325,7 +327,9 @@ def pedidos():
     elif tipo_filter == 'sin_vendedor':
         query = query.filter(Pedido.afiliado_id.is_(None))
 
-    pedidos = query.order_by(Pedido.creado_en.desc()).all()
+    # [OPTIMIZACIÓN E11 - FASE 4]
+    # Se inyecta joinedload(Pedido.afiliado) para mitigar el error crítico E11 sobre desempeño nocivo
+    pedidos = query.options(joinedload(Pedido.afiliado)).order_by(Pedido.creado_en.desc()).all()
     
     # Estadísticas
     total_validados = Pedido.query.filter_by(validado_por_vendedor=True).count()
@@ -552,7 +556,12 @@ def comisiones():
     if estado_filter != 'todos':
         query = query.filter_by(estado=estado_filter)
 
-    comisiones = query.order_by(Comision.creado_en.desc()).all()
+    # [OPTIMIZACIÓN E11 - FASE 4]
+    # Se cargan de forma optimizada las relaciones 'pedido' y 'afiliado' para evitar ciclo de consultas N+1
+    comisiones = query.options(
+        joinedload(Comision.pedido), 
+        joinedload(Comision.afiliado)
+    ).order_by(Comision.creado_en.desc()).all()
 
     # Totales
     total_generadas = db.session.query(db.func.sum(Comision.monto))\

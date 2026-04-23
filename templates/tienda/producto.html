@@ -321,6 +321,8 @@
             </div>
 
             <form method="POST" action="{{ url_for('tienda.agregar_carrito', id=producto.id) }}">
+                <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="compra-section">
                     <div class="cantidad-grupo">
                         <label for="cantidad">Cantidad:</label>

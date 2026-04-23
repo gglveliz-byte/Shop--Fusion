@@ -7,6 +7,8 @@
     <h1>📦 Crear Nuevo Producto</h1>
 
     <form method="POST" action="{{ url_for('admin.crear_producto') }}" enctype="multipart/form-data" class="form-producto">
+        <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-row">
             <div class="form-group col-md-6">
                 <label for="nombre">Nombre del Producto *</label>
