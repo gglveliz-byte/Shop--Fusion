@@ -940,6 +940,14 @@ async function procesarPedido(event) {
     btnSubmit.innerHTML = 'Procesando...';
 
     try {
+        //INICIA LOS CAMBIOS INDICADOS EN FASE 3
+        // SEGURIDAD TRANSACCIONAL (Mitiga E42):
+        // Solo enviamos IDs y Cantidades. El servidor calculará el precio real de la DB.
+        const carritoSeguro = carrito.map(item => ({
+            id: item.id,
+            cantidad: item.cantidad
+        }));
+
         const response = await fetch('/api/crear-pedido', {
             method: 'POST',
             headers: {
@@ -949,9 +957,10 @@ async function procesarPedido(event) {
                 nombre: nombre,
                 telefono: telefono,
                 direccion: direccion,
-                carrito: carrito
+                carrito: carritoSeguro
             })
         });
+        //FIN DE LOS CAMBIOS INDICADOS EN FASE 3
 
         const resultado = await response.json();
 

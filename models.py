@@ -140,8 +140,32 @@ class Producto(db.Model):
     imagenes = db.Column(db.JSON, default=list)  # Lista de imágenes adicionales locales
     imagen_url = db.Column(db.String(500))  # URL externa de imagen principal
     imagenes_url = db.Column(db.JSON, default=list)  # Lista de URLs externas de imágenes
+    #INICIA LOS CAMBIOS INDICADOS EN FASE 3
+    # Columna stock: Mitiga el error crítico E41 (Inventarios Ciegos)
+    stock = db.Column(db.Integer, default=0, nullable=False)
+    #FIN DE LOS CAMBIOS INDICADOS EN FASE 3
+
     activo = db.Column(db.Boolean, default=True)
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+
+    #INICIA LOS CAMBIOS INDICADOS EN FASE 3
+    # Métodos para la gestión de stock
+    def reducir_stock(self, cantidad):
+        """Reduce el stock disponible. Retorna True si fue exitoso."""
+        if self.stock >= cantidad:
+            self.stock -= cantidad
+            return True
+        return False
+
+    def aumentar_stock(self, cantidad):
+        """Aumenta el stock disponible."""
+        self.stock += cantidad
+        return True
+
+    def esta_disponible(self, cantidad=1):
+        """Verifica si hay stock suficiente y el producto está activo."""
+        return self.activo and self.stock >= cantidad
+    #FIN DE LOS CAMBIOS INDICADOS EN FASE 3
 
     def calcular_margen(self):
         """Calcular margen del producto"""

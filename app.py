@@ -9,8 +9,9 @@ from models import db, setup_login_manager
 
 # Inicializar login manager
 login_manager = LoginManager()
-# [MODIFICACIÓN SEGURIDAD E22]
-# Inicialización de protección CSRF global.
+
+# [MODIFICACIÓN SEGURIDAD E22 / FASE 3]
+# Inicialización de protección CSRF global para mitigación de E22 y blindaje E43.
 csrf = CSRFProtect()
 
 
@@ -22,7 +23,11 @@ def create_app(config_class=Config):
     # Inicializar extensiones con la app
     db.init_app(app)
     login_manager.init_app(app)
+    
+    # [FASE 3 / SEGURIDAD E22]
+    # Inicialización de CSRF para protección criptográfica (E43) y validación de formularios (E22)
     csrf.init_app(app)
+
     #INICIA LOS CAMBIOS INDICADOS EN FASE 1
     # Configuración de la vista de login por defecto para redirecciones automáticas de Flask-Login.
     # Ayuda a evitar errores 500 cuando el contexto de usuario no es válido.
