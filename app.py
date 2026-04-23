@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template
 from flask_login import LoginManager
+from flask_wtf.csrf import CSRFProtect
 from config import Config
 
 # Importar db desde models
@@ -8,6 +9,7 @@ from models import db, setup_login_manager
 
 # Inicializar login manager
 login_manager = LoginManager()
+csrf = CSRFProtect()
 
 
 def create_app(config_class=Config):
@@ -18,6 +20,12 @@ def create_app(config_class=Config):
     # Inicializar extensiones con la app
     db.init_app(app)
     login_manager.init_app(app)
+    
+    #INICIA LOS CAMBIOS INDICADOS EN FASE 3
+    # Inicialización de CSRF para protección criptográfica (E43)
+    csrf.init_app(app)
+    #FIN DE LOS CAMBIOS INDICADOS EN FASE 3
+
     #INICIA LOS CAMBIOS INDICADOS EN FASE 1
     # Configuración de la vista de login por defecto para redirecciones automáticas de Flask-Login.
     # Ayuda a evitar errores 500 cuando el contexto de usuario no es válido.
