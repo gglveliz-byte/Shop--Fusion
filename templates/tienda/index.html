@@ -565,9 +565,15 @@
                 `<span class="precio-actual">$${producto.precio_final.toFixed(2)}</span>`
             }
                 </div>
+                <div class="stock-info-basica" style="margin-bottom: 10px; font-size: 0.85rem; font-weight: 600; color: ${producto.stock > 0 ? '#22c55e' : '#ef4444'}">
+                    ${producto.stock > 0 ? `✅ Disponible: ${producto.stock}` : '❌ Agotado'}
+                </div>
                 <div class="producto-acciones">
                     <button onclick="verDetalle(${producto.id})" class="btn btn-secondary btn-sm">Ver Mas</button>
-                    <button onclick="agregarAlCarrito(${producto.id}, '${producto.nombre.replace(/'/g, "\\'")}', ${precioMostrar}, '${primeraImagen || ''}')" class="btn btn-primary">Agregar</button>
+                    ${producto.stock > 0 ? 
+                        `<button onclick="agregarAlCarrito(${producto.id}, '${producto.nombre.replace(/'/g, "\\'")}', ${precioMostrar}, '${primeraImagen || ''}')" class="btn btn-primary">Agregar</button>` :
+                        `<button disabled class="btn btn-secondary btn-sm" style="opacity: 0.6; cursor: not-allowed;">Agotado</button>`
+                    }
                 </div>
             </div>
         </div>
@@ -955,11 +961,13 @@
                 id: item.id,
                 cantidad: item.cantidad
             }));
+            const token = document.querySelector('input[name="csrf_token"]').value;
 
             const response = await fetch('/api/crear-pedido', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-CSRFToken': token
                 },
                 body: JSON.stringify({
                     nombre: nombre,
