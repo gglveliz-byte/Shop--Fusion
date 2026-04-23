@@ -16,6 +16,17 @@ class Admin(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # [MODIFICACIÓN SEGURIDAD TC015]
+    # Se añadió propiedad 'is_admin' para identificación robusta en plantillas.
+    # Archivos que dependen de este cambio: templates/base.html
+    @property
+    def is_admin(self):
+        return True
+
+    @property
+    def is_afiliado(self):
+        return False
+
     def set_password(self, password):
         """Encriptar contraseña"""
         self.password_hash = generate_password_hash(password)
@@ -45,6 +56,17 @@ class Afiliado(UserMixin, db.Model):
     whatsapp = db.Column(db.String(20), nullable=True)  # WhatsApp del vendedor
     activo = db.Column(db.Boolean, default=True)
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # [MODIFICACIÓN SEGURIDAD TC015]
+    # Se añadió propiedad 'is_afiliado' para identificación robusta en plantillas.
+    # Archivos que dependen de este cambio: templates/base.html
+    @property
+    def is_afiliado(self):
+        return True
+
+    @property
+    def is_admin(self):
+        return False
 
     # Relaciones
     pedidos = db.relationship('Pedido', backref='afiliado', lazy='dynamic')

@@ -11,9 +11,12 @@ class Config:
     # Secret key para sesiones
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
 
-    # Base de datos PostgreSQL
+    # Configuración de base de datos
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Modo Debug (Desactivado por defecto para corregir E21)
+    DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() in ['true', '1', 't']
 
     #INICIA LOS CAMBIOS INDICADOS EN FASE 1
     # Credenciales de Administrador Único obtenidos del .env

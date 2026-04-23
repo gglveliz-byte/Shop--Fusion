@@ -209,6 +209,9 @@
         <h2 class="text-center mb-3">Completa tu Pedido</h2>
 
         <form id="form-checkout" onsubmit="procesarPedido(event)">
+            <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+            <!-- Validación CSRF requerida por el servidor para procesar el pedido -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label>Nombre Completo *</label>
                 <input type="text" id="cliente-nombre" class="form-control" required

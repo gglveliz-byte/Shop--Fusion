@@ -1,6 +1,7 @@
 import os
 from flask import Flask, render_template
 from flask_login import LoginManager
+from flask_wtf.csrf import CSRFProtect
 from config import Config
 
 # Importar db desde models
@@ -8,6 +9,9 @@ from models import db, setup_login_manager
 
 # Inicializar login manager
 login_manager = LoginManager()
+# [MODIFICACIÓN SEGURIDAD E22]
+# Inicialización de protección CSRF global.
+csrf = CSRFProtect()
 
 
 def create_app(config_class=Config):
@@ -18,6 +22,7 @@ def create_app(config_class=Config):
     # Inicializar extensiones con la app
     db.init_app(app)
     login_manager.init_app(app)
+    csrf.init_app(app)
     #INICIA LOS CAMBIOS INDICADOS EN FASE 1
     # Configuración de la vista de login por defecto para redirecciones automáticas de Flask-Login.
     # Ayuda a evitar errores 500 cuando el contexto de usuario no es válido.
@@ -86,5 +91,10 @@ def create_app(config_class=Config):
 app = create_app()
 
 
+# [MODIFICACIÓN SEGURIDAD E21] 
+# Se cambió 'app.run(debug=True)' por 'app.run(debug=app.config["DEBUG"])'
+# Archivo dependiente modificado: config.py (donde se definió DEBUG basado en variables de entorno)
+# Razón: Prevenir la exposición de la consola interactiva de Werkzeug en producción.
 if __name__ == "__main__":
-    app.run(debug=True)
+    # El valor de debug ahora se controla desde config.py / variables de entorno
+    app.run(debug=app.config.get('DEBUG', False))

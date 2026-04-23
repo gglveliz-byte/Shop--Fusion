@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Shop Fusion{% endblock %}</title>
+    <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+    <!-- Token CSRF para validación de solicitudes y protección contra falsificación -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
@@ -15,14 +18,18 @@
 
             <div class="nav-links">
                 {% if current_user.is_authenticated %}
-                    {% if current_user.__class__.__name__ == 'Admin' %}
+                {% if current_user.is_authenticated %}
+                    {# [MODIFICACIÓN SEGURIDAD TC015] #}
+                    {# Se reemplazó el uso de __class__.__name__ por propiedades explícitas definidas en models.py #}
+                    {# Archivo dependiente: models.py (clases Admin y Afiliado) #}
+                    {% if current_user.is_admin %}
                         <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
                         <a href="{{ url_for('admin.productos') }}">Productos</a>
                         <a href="{{ url_for('admin.pedidos') }}">Pedidos</a>
                         <a href="{{ url_for('admin.afiliados') }}">Afiliados</a>
                         <a href="{{ url_for('admin.comisiones') }}">Comisiones</a>
                         <a href="{{ url_for('auth.logout') }}" class="btn-logout">Cerrar Sesión</a>
-                    {% elif current_user.__class__.__name__ == 'Afiliado' %}
+                    {% elif current_user.is_afiliado %}
                         <a href="{{ url_for('afiliado.dashboard') }}">Dashboard</a>
                         <a href="{{ url_for('afiliado.productos') }}">Productos</a>
                         <a href="{{ url_for('afiliado.pedidos') }}">Pedidos</a>

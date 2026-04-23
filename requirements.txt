@@ -6,3 +6,4 @@ Werkzeug==3.0.1
 gunicorn==21.2.0
 psycopg[binary]
 requests
+Flask-WTF==1.2.1

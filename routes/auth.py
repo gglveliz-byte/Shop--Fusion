@@ -41,11 +41,23 @@ def admin_login():
             flash('Por favor completa todos los campos', 'error')
             return render_template('auth/admin_login.html')
 
+        # [MODIFICACIÓN SEGURIDAD TC015]
+        # Se añadió validación para prevenir Error 500 si falta configuración en .env
+        # Archivos relacionados: config.py (donde se cargan estas variables)
+        # CÓDIGO ANTERIOR REEMPLAZADO:
+        # is_correct_admin = (username == current_app.config['ADMIN_USER'] and password == current_app.config['ADMIN_PASS'])
+        admin_user_config = current_app.config.get('ADMIN_USER')
+        admin_pass_config = current_app.config.get('ADMIN_PASS')
+
+        if not admin_user_config or not admin_pass_config:
+            flash('Error de configuración: El administrador no ha sido configurado en el servidor.', 'error')
+            current_app.logger.error("ADMIN_USER o ADMIN_PASS no están definidos en las variables de entorno.")
+            return render_template('auth/admin_login.html')
+
         # 1. Validar contra las credenciales de administrador mediante .env
-        from flask import current_app
         is_correct_admin = (
-            username == current_app.config['ADMIN_USER'] and 
-            password == current_app.config['ADMIN_PASS']
+            username == admin_user_config and 
+            password == admin_pass_config
         )
 
         if is_correct_admin:
