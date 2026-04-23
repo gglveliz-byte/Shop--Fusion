@@ -117,6 +117,7 @@ def crear_producto():
         precio_final = request.form.get('precio_final')
         precio_proveedor = request.form.get('precio_proveedor')
         precio_oferta = request.form.get('precio_oferta')
+        stock = request.form.get('stock', 0)
         activo = request.form.get('activo') == 'on'
 
         # Validaciones
@@ -128,6 +129,7 @@ def crear_producto():
             precio_final = Decimal(precio_final)
             precio_proveedor = Decimal(precio_proveedor)
             precio_oferta = Decimal(precio_oferta) if precio_oferta else None
+            stock = int(stock) if stock else 0
 
             # Validar que precio final > precio proveedor
             if precio_final <= precio_proveedor:
@@ -140,7 +142,7 @@ def crear_producto():
                 return render_template('admin/crear_producto.html')
 
         except:
-            flash('Los precios deben ser números válidos', 'error')
+            flash('Los precios y el stock deben ser números válidos', 'error')
             return render_template('admin/crear_producto.html')
 
         # Manejar imágenes - Priorizar URLs sobre archivos locales
@@ -188,6 +190,7 @@ def crear_producto():
             imagenes=imagenes_adicionales if imagenes_adicionales and not imagen_url else None,
             imagen_url=imagen_url if imagen_url else None,
             imagenes_url=imagenes_url if imagenes_url else None,
+            stock=stock,
             activo=activo
         )
 
@@ -219,6 +222,9 @@ def editar_producto(id):
             producto.precio_proveedor = Decimal(request.form.get('precio_proveedor'))
             precio_oferta = request.form.get('precio_oferta')
             producto.precio_oferta = Decimal(precio_oferta) if precio_oferta else None
+            
+            stock = request.form.get('stock')
+            producto.stock = int(stock) if stock else 0
 
             # Validaciones
             if producto.precio_final <= producto.precio_proveedor:
@@ -230,7 +236,7 @@ def editar_producto(id):
                 return render_template('admin/editar_producto.html', producto=producto)
 
         except:
-            flash('Los precios deben ser números válidos', 'error')
+            flash('Los precios y el stock deben ser números válidos', 'error')
             return render_template('admin/editar_producto.html', producto=producto)
 
         producto.activo = request.form.get('activo') == 'on'

@@ -47,19 +47,24 @@
         </div>
 
         <div class="form-row">
-            <div class="form-group col-md-4">
+            <div class="form-group col-md-3">
                 <label for="precio_final">Precio Final (venta) *</label>
                 <input type="number" id="precio_final" name="precio_final" class="form-control" step="0.01" min="0" value="{{ producto.precio_final }}" required>
             </div>
 
-            <div class="form-group col-md-4">
+            <div class="form-group col-md-3">
                 <label for="precio_proveedor">Precio Proveedor (costo) *</label>
                 <input type="number" id="precio_proveedor" name="precio_proveedor" class="form-control" step="0.01" min="0" value="{{ producto.precio_proveedor }}" required>
             </div>
 
-            <div class="form-group col-md-4">
+            <div class="form-group col-md-3">
                 <label for="precio_oferta">Precio Oferta (opcional)</label>
                 <input type="number" id="precio_oferta" name="precio_oferta" class="form-control" step="0.01" min="0" value="{{ producto.precio_oferta if producto.precio_oferta else '' }}">
+            </div>
+
+            <div class="form-group col-md-3">
+                <label for="stock">Stock Disponible *</label>
+                <input type="number" id="stock" name="stock" class="form-control" min="0" value="{{ producto.stock }}" required>
             </div>
         </div>
 
