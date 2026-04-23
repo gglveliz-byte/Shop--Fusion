@@ -3,6 +3,7 @@ Rutas de la tienda pública
 Home, productos, carrito, checkout
 """
 
+from app import csrf
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, jsonify
 from decimal import Decimal
 from models import db
@@ -849,8 +850,6 @@ def producto_vendedor(id, codigo):
                          es_tienda_vendedor=True)
 
 #INICIA LOS CAMBIOS INDICADOS EN FASE 3
-from app import csrf
-
 @bp.route('/webhook/paypal', methods=['POST'])
 @csrf.exempt
 def paypal_webhook():
