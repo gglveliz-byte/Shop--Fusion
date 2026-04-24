@@ -114,12 +114,13 @@ def afiliado_login():
     """Login de afiliado"""
     from models import Afiliado
 
-    if current_user.is_authenticated:
-        # Si ya está logueado, redirigir al dashboard correspondiente
-        if isinstance(current_user, Afiliado):
-            return redirect(url_for('afiliado.dashboard'))
-        else:
-            return redirect(url_for('admin.dashboard'))
+    # SEGURIDAD (E21): Verificar si el usuario está bloqueado temporalmente
+    if 'afiliado_login_lock' in session:
+        lock_until = datetime.fromisoformat(session['afiliado_login_lock'])
+        if datetime.now() < lock_until:
+            minutos_restantes = int((lock_until - datetime.now()).total_seconds() // 60) + 1
+            flash(f'Demasiados intentos fallidos. Por seguridad, espera {minutos_restantes} minuto(s).', 'error')
+            return render_template('auth/afiliado_login.html')
 
     if request.method == 'POST':
         email = request.form.get('email')
@@ -142,6 +143,10 @@ def afiliado_login():
             login_user(afiliado)
             session['user_type'] = 'afiliado'
             session['user_id'] = f'afiliado_{afiliado.id}'
+            
+            # Limpiar rastros de intentos fallidos
+            session.pop('afiliado_login_attempts', None)
+            session.pop('afiliado_login_lock', None)
 
             flash(f'¡Bienvenido {afiliado.nombre}!', 'success')
 
@@ -149,7 +154,18 @@ def afiliado_login():
             next_page = request.args.get('next')
             return redirect(next_page if next_page else url_for('afiliado.dashboard'))
         else:
-            flash('Email o contraseña incorrectos', 'error')
+            # SEGURIDAD (E21): Incrementar contador de intentos fallidos
+            attempts = session.get('afiliado_login_attempts', 0) + 1
+            session['afiliado_login_attempts'] = attempts
+            
+            limit = current_app.config.get('LOGIN_ATTEMPTS_LIMIT', 5)
+            if attempts >= limit:
+                lock_time = current_app.config.get('LOGIN_LOCK_MINUTES', 5)
+                session['afiliado_login_lock'] = (datetime.now() + timedelta(minutes=lock_time)).isoformat()
+                flash(f'Has superado el límite de intentos. Bloqueado por {lock_time} minutos.', 'error')
+            else:
+                intentos_restantes = limit - attempts
+                flash(f'Email o contraseña incorrectos. Intentos restantes: {intentos_restantes}', 'error')
 
     return render_template('auth/afiliado_login.html')
 
