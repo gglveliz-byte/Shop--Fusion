@@ -214,7 +214,7 @@
 <!-- Modal de Checkout -->
 <div id="modal-checkout" class="modal">
     <div class="modal-content modal-checkout">
-        <span class="modal-close" onclick="cerrarCheckout()">&times;</span>
+        <span class="modal-close" onclick="cerrarCheckout()" aria-label="Cerrar modal de checkout">&times;</span>
 
         <h2 class="text-center mb-3">Completa tu Pedido</h2>
 
@@ -229,7 +229,9 @@
 
             <div class="form-group">
                 <label>Telefono (WhatsApp) *</label>
-                <input type="tel" id="cliente-telefono" class="form-control" required placeholder="Ej: +593987654321">
+                <input type="tel" id="cliente-telefono" class="form-control" required pattern="^\+593\d{9}$"
+                    title="Debe iniciar con +593 seguido de 9 números" placeholder="Ej: +593987654321"
+                    oninput="this.value = this.value.replace(/\s+/g, '')">
                 <small class="form-text">Incluye codigo de pais</small>
             </div>
 
@@ -260,7 +262,15 @@
 
 <script>
     // Estado global de la aplicacion
-    let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+    let carritoRaw = [];
+    try {
+        carritoRaw = JSON.parse(localStorage.getItem('carrito')) || [];
+    } catch (e) {
+        console.error("Error al leer carrito", e);
+    }
+    // [E31] Validación de estructura
+    let carrito = Array.isArray(carritoRaw) ? carritoRaw.filter(item => item.id && typeof item.precio === 'number' && item.cantidad > 0) : [];
+
     let productos = {{ (productos | tojson | safe) if productos else '[]' }};
     let categoriaActual = 'todos';
     let marcaActual = 'todas';
@@ -570,10 +580,10 @@
                 </div>
                 <div class="producto-acciones">
                     <button onclick="verDetalle(${producto.id})" class="btn btn-secondary btn-sm">Ver Mas</button>
-                    ${producto.stock > 0 ? 
-                        `<button onclick="agregarAlCarrito(${producto.id}, '${producto.nombre.replace(/'/g, "\\'")}', ${precioMostrar}, '${primeraImagen || ''}')" class="btn btn-primary">Agregar</button>` :
-                        `<button disabled class="btn btn-secondary btn-sm" style="opacity: 0.6; cursor: not-allowed;">Agotado</button>`
-                    }
+                    ${producto.stock > 0 ?
+                `<button onclick="agregarAlCarrito(${producto.id}, '${producto.nombre.replace(/'/g, "\\'")}', ${precioMostrar}, '${primeraImagen || ''}')" class="btn btn-primary">Agregar</button>` :
+                `<button disabled class="btn btn-secondary btn-sm" style="opacity: 0.6; cursor: not-allowed;">Agotado</button>`
+            }
                 </div>
             </div>
         </div>
@@ -745,7 +755,7 @@
                     <button onclick="cambiarCantidad(${item.id}, -1)" class="btn-cantidad">-</button>
                     <span>${item.cantidad}</span>
                     <button onclick="cambiarCantidad(${item.id}, 1)" class="btn-cantidad">+</button>
-                    <button onclick="eliminarDelCarrito(${item.id})" class="btn-eliminar">🗑️</button>
+                    <button onclick="eliminarDelCarrito(${item.id})" class="btn-eliminar" aria-label="Eliminar producto">🗑️</button>
                 </div>
             </div>
         `).join('');
@@ -1142,7 +1152,8 @@
             linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
         background-size: 50px 50px;
         z-index: 0;
-        animation: gridMove 20s linear infinite;
+        animation: gridMove 40s linear infinite;
+        /* [E33] Optimizado */
     }
 
     @keyframes gridMove {
