@@ -66,6 +66,9 @@ def create_app(config_class=Config):
     app.register_blueprint(admin.bp)
     app.register_blueprint(afiliado.bp)
     app.register_blueprint(tienda.bp)
+    
+    # [FASE 3 / E43] Eximir el webhook de PayPal de la protección CSRF
+    csrf.exempt('routes.tienda.paypal_webhook')
 
     # Manejadores de errores
     @app.errorhandler(404)

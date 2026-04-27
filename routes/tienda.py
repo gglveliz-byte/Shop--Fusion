@@ -3,7 +3,7 @@ Rutas de la tienda pública
 Home, productos, carrito, checkout
 """
 
-from app import csrf
+# from app import csrf  <-- ELIMINADO PARA EVITAR IMPORT CIRCULAR
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, jsonify
 from decimal import Decimal
 from models import db
@@ -853,7 +853,6 @@ def producto_vendedor(id, codigo):
 
 #INICIA LOS CAMBIOS INDICADOS EN FASE 3
 @bp.route('/webhook/paypal', methods=['POST'])
-@csrf.exempt
 def paypal_webhook():
     """
     Ruta pasiva para Webhooks de PayPal (Mitiga E43).
