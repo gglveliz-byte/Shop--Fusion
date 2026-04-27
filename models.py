@@ -68,9 +68,9 @@ class Afiliado(UserMixin, db.Model):
     def is_admin(self):
         return False
 
-    # Relaciones
-    pedidos = db.relationship('Pedido', backref='afiliado', lazy='dynamic')
-    comisiones = db.relationship('Comision', backref='afiliado', lazy='dynamic')
+    # [FASE 3 / E11 - ERRORES MEDIOS] Relaciones optimizadas con carga ansiosa
+    pedidos = db.relationship('Pedido', backref='afiliado', lazy='joined')
+    comisiones = db.relationship('Comision', backref='afiliado', lazy='joined')
 
     def set_password(self, password):
         """Encriptar contraseña"""
@@ -232,8 +232,8 @@ class Pedido(db.Model):
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
     pagado_en = db.Column(db.DateTime, nullable=True)
 
-    # Relaciones
-    comisiones = db.relationship('Comision', backref='pedido', lazy='dynamic', cascade='all, delete-orphan')
+    # [FASE 3 / E11 - ERRORES MEDIOS] Relación optimizada
+    comisiones = db.relationship('Comision', backref='pedido', lazy='joined', cascade='all, delete-orphan')
 
     def marcar_como_pagado(self):
         """Marcar pedido como pagado (solo cambia estado, no genera comisión aún)"""

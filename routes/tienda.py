@@ -67,12 +67,8 @@ def index():
         })
 
     # Número de WhatsApp del admin (Shop Fusion)
-    whatsapp_numero = current_app.config.get('WHATSAPP_NUMBER', '')
-    # Asegurar formato internacional (sin el 0 inicial, con código de país)
-    if whatsapp_numero.startswith('0'):
-        whatsapp_numero = '593' + whatsapp_numero[1:]  # Ecuador
-    elif not whatsapp_numero.startswith('+') and not whatsapp_numero.startswith('593'):
-        whatsapp_numero = '593' + whatsapp_numero
+    from utils import format_whatsapp
+    whatsapp_numero = format_whatsapp(current_app.config.get('WHATSAPP_NUMBER', ''))
 
     return render_template('tienda/index.html',
                          productos=productos,
@@ -741,13 +737,8 @@ def get_vendedor_whatsapp():
     if not vendedor:
         return jsonify({'error': 'Vendedor no encontrado'}), 404
     
-    whatsapp = vendedor.whatsapp or current_app.config.get('WHATSAPP_NUMBER', '')
-    
-    # Formatear número
-    if whatsapp.startswith('0'):
-        whatsapp = '593' + whatsapp[1:]
-    elif not whatsapp.startswith('+') and not whatsapp.startswith('593'):
-        whatsapp = '593' + whatsapp
+    from utils import format_whatsapp
+    whatsapp = format_whatsapp(vendedor.whatsapp or current_app.config.get('WHATSAPP_NUMBER', ''))
     
     return jsonify({'whatsapp': whatsapp})
 

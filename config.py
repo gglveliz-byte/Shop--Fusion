@@ -47,5 +47,13 @@ class Config:
     PAYPAL_SECRET = os.environ.get('PAYPAL_SECRET')
     PAYPAL_MODE = os.environ.get('PAYPAL_MODE', 'sandbox')  # 'sandbox' o 'live'
 
+    # [FASE 3 / E39 - ERRORES MEDIOS] Seguridad de Cookies de Sesión
+    # HTTPOnly: Impide que JavaScript acceda a la cookie (Protección XSS)
+    SESSION_COOKIE_HTTPONLY = True
+    # SameSite: Controla el envío de cookies en peticiones de terceros (Protección CSRF)
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    # Secure: Solo envía cookies por HTTPS si el entorno es producción
+    SESSION_COOKIE_SECURE = (os.environ.get('FLASK_ENV') == 'production')
+
     # Duración de la cookie permanente
     PERMANENT_SESSION_LIFETIME = timedelta(days=180)  # 3 meses

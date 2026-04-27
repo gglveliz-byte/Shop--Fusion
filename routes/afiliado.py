@@ -4,6 +4,7 @@ Ver productos con comisiones, ver comisiones ganadas
 """
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from sqlalchemy.orm import joinedload
 from flask_login import login_required, current_user
 from decimal import Decimal
 
@@ -123,7 +124,8 @@ def comisiones():
     # Filtro por estado
     estado_filter = request.args.get('estado', 'todos')
 
-    query = Comision.query.filter_by(afiliado_id=afiliado.id)
+    # [FASE 3 / E11 - ERRORES MEDIOS] Optimización N+1: Cargar el pedido asociado a cada comisión
+    query = Comision.query.options(joinedload(Comision.pedido)).filter_by(afiliado_id=afiliado.id)
     if estado_filter != 'todos':
         query = query.filter_by(estado=estado_filter)
 
@@ -282,6 +284,13 @@ def mi_cuenta():
         whatsapp = request.form.get('whatsapp', '').strip()
         nueva_password = request.form.get('password', '')
 
+        # [FASE 3 / E34 - ERRORES MEDIOS] Validar formato de WhatsApp
+        from utils import validate_whatsapp, is_strong_password
+        
+        if whatsapp and not validate_whatsapp(whatsapp):
+            flash('El número de WhatsApp no parece ser válido. Ingresa al menos 9 dígitos.', 'error')
+            return redirect(url_for('afiliado.mi_cuenta'))
+
         # Actualizar nombre si se proporciona
         if nombre:
             afiliado.nombre = nombre
@@ -289,8 +298,12 @@ def mi_cuenta():
         # Actualizar WhatsApp
         afiliado.whatsapp = whatsapp if whatsapp else None
 
-        # Cambiar contraseña solo si se proporciona
+        # [FASE 3 / E36 - ERRORES MEDIOS] Cambiar contraseña con validación de fortaleza
         if nueva_password:
+            es_segura, mensaje = is_strong_password(nueva_password)
+            if not es_segura:
+                flash(mensaje, 'error')
+                return redirect(url_for('afiliado.mi_cuenta'))
             afiliado.set_password(nueva_password)
 
         db.session.commit()

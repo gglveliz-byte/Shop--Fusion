@@ -97,10 +97,21 @@ def dashboard():
 @bp.route('/productos')
 @admin_required
 def productos():
-    """Lista de productos"""
+    """Lista de productos con paginación (Mitiga E17)"""
     from models import Producto
-    productos = Producto.query.order_by(Producto.creado_en.desc()).all()
-    return render_template('admin/productos.html', productos=productos)
+    
+    # Obtener número de página de la URL (default: 1)
+    page = request.args.get('page', 1, type=int)
+    per_page = 10 # Productos por página
+    
+    # [FASE 3 / E17 - ERRORES MEDIOS] Paginación de productos
+    pagination = Producto.query.order_by(Producto.creado_en.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    return render_template('admin/productos.html', 
+                         productos=pagination.items, 
+                         pagination=pagination)
 
 
 @bp.route('/productos/crear', methods=['GET', 'POST'])
@@ -169,15 +180,19 @@ def crear_producto():
             if 'imagenes' in request.files:
                 files = request.files.getlist('imagenes')
                 for i, file in enumerate(files[:4]):  # Máximo 4 imágenes
-                    if file and file.filename and allowed_file(file.filename):
-                        filename = secure_filename(file.filename)
-                        filename = f"{int(time.time())}_{i}_{filename}"
-                        file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                    if file and file.filename:
+                        if allowed_file(file.filename):
+                            filename = secure_filename(file.filename)
+                            filename = f"{int(time.time())}_{i}_{filename}"
+                            file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
 
-                        if i == 0:
-                            imagen_principal = filename
+                            if i == 0:
+                                imagen_principal = filename
+                            else:
+                                imagenes_adicionales.append(filename)
                         else:
-                            imagenes_adicionales.append(filename)
+                            current_app.logger.warning(f"Intento de subida de archivo no permitido: {file.filename}")
+                            flash(f'Archivo "{file.filename}" no permitido (solo jpg, png, webp)', 'error')
 
         # Crear producto
         producto = Producto(
