@@ -5,6 +5,15 @@ Crea las tablas y un usuario administrador por defecto
 
 import sys
 
+import logging
+
+# [FASE 5 / E5] Configuración de Logging para inicialización
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 # Configurar encoding para Windows
 if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8')
@@ -17,7 +26,7 @@ def init_database():
     app = create_app()
 
     with app.app_context():
-        print("Creando tablas en la base de datos...")
+        logger.info("Creando tablas en la base de datos...")
 
         # Eliminar tablas existentes (¡CUIDADO en producción!)
         db.drop_all()
@@ -25,12 +34,12 @@ def init_database():
         # Crear todas las tablas
         db.create_all()
 
-        print("[OK] Tablas creadas exitosamente:")
-        print("   - admins")
-        print("   - afiliados")
-        print("   - productos")
-        print("   - pedidos")
-        print("   - comisiones")
+        logger.info("Tablas creadas exitosamente:")
+        logger.info("   - admins")
+        logger.info("   - afiliados")
+        logger.info("   - productos")
+        logger.info("   - pedidos")
+        logger.info("   - comisiones")
 
         # Obtener credenciales desde la configuración (que lee del .env)
         # NUEVA LÓGICA SEGURA (FASE 1): Creación de administrador desde variables de entorno (.env).
@@ -40,8 +49,8 @@ def init_database():
         env_pass = app.config.get('ADMIN_PASS')
 
         if not env_user or not env_pass:
-            print("\n[AVISO DE SEGURIDAD] No se detectaron ADMIN_USER o ADMIN_PASS en el .env")
-            print("El script continuará creando productos, pero no se generará un administrador inseguro.")
+            logger.warning("No se detectaron ADMIN_USER o ADMIN_PASS en el .env")
+            logger.info("El script continuará creando productos, pero no se generará un administrador inseguro.")
         else:
             admin_existente = Admin.query.filter_by(username=env_user).first()
             if not admin_existente:
@@ -49,9 +58,9 @@ def init_database():
                 admin.set_password(env_pass)
                 db.session.add(admin)
                 db.session.commit()
-                print(f"\n[OK] Administrador '{env_user}' creado exitosamente desde el .env")
+                logger.info(f"Administrador '{env_user}' creado exitosamente desde el .env")
             else:
-                print(f"\n[OK] El administrador '{env_user}' ya existe en la base de datos")
+                logger.info(f"El administrador '{env_user}' ya existe en la base de datos")
 
         # --- CÓDIGO ORIGINAL COMENTADO Y REEMPLAZADO POR SEGURIDAD (Error E10 / E4) ---
         """
@@ -96,18 +105,18 @@ def init_database():
         ]
 
         if Producto.query.count() == 0:
-            print("\nCreando productos de ejemplo...")
+            logger.info("Creando productos de ejemplo...")
             for prod_data in productos_ejemplo:
                 producto = Producto(**prod_data)
                 db.session.add(producto)
 
             db.session.commit()
-            print(f"[OK] {len(productos_ejemplo)} productos creados")
+            logger.info(f"{len(productos_ejemplo)} productos creados")
 
         # SEGURIDAD (FASE 1): Se deshabilita la creación de afiliados de ejemplo con claves hardcoded.
         # Sirve para: Evitar el Error E10 y asegurar que todos los afiliados sean creados con claves seguras.
-        print("\n[AVISO] No se crearán afiliados de ejemplo por razones de seguridad (Error E10).")
-        print("Utiliza el panel de administrador para registrar afiliados con credenciales seguras.")
+        logger.info("No se crearán afiliados de ejemplo por razones de seguridad (Error E10).")
+        logger.info("Utiliza el panel de administrador para registrar afiliados con credenciales seguras.")
 
         # --- CÓDIGO ORIGINAL COMENTADO Y REEMPLAZADO POR SEGURIDAD (Error E10 / E4) ---
         """
@@ -132,10 +141,10 @@ def init_database():
             print(f"   Contrasena: afiliado123")
         """
 
-        print("\n" + "="*50)
-        print("[OK] BASE DE DATOS INICIALIZADA CORRECTAMENTE")
-        print("="*50)
-        print("\nPuedes iniciar la aplicacion con: python app.py")
+        logger.info("="*50)
+        logger.info("BASE DE DATOS INICIALIZADA CORRECTAMENTE")
+        logger.info("="*50)
+        logger.info("Puedes iniciar la aplicacion con: python app.py")
 
 if __name__ == '__main__':
     init_database()

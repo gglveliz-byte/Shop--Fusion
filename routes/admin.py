@@ -141,7 +141,8 @@ def crear_producto():
                 flash('El precio de oferta debe ser mayor o igual al precio proveedor', 'error')
                 return render_template('admin/crear_producto.html')
 
-        except:
+        except (ValueError, Exception) as e:
+            current_app.logger.error(f"Error al procesar datos numéricos del producto: {e}")
             flash('Los precios y el stock deben ser números válidos', 'error')
             return render_template('admin/crear_producto.html')
 
@@ -235,7 +236,8 @@ def editar_producto(id):
                 flash('El precio de oferta debe ser mayor o igual al precio proveedor', 'error')
                 return render_template('admin/editar_producto.html', producto=producto)
 
-        except:
+        except (ValueError, Exception) as e:
+            current_app.logger.error(f"Error al procesar datos numéricos en edición de producto ID {id}: {e}")
             flash('Los precios y el stock deben ser números válidos', 'error')
             return render_template('admin/editar_producto.html', producto=producto)
 

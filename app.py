@@ -12,6 +12,21 @@ login_manager = LoginManager()
 
 # [MODIFICACIÓN SEGURIDAD E22 / FASE 3]
 # Inicialización de protección CSRF global para mitigación de E22 y blindaje E43.
+import logging
+from logging.handlers import RotatingFileHandler
+
+# [FASE 5 / SEGURIDAD E5]
+# Configuración de Logging Profesional para trazabilidad y auditoría.
+if not os.path.exists('logs'):
+    os.mkdir('logs')
+
+logging.basicConfig(level=logging.INFO)
+file_handler = RotatingFileHandler('logs/shop_fusion.log', maxBytes=10240, backupCount=10)
+file_handler.setFormatter(logging.Formatter(
+    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+))
+file_handler.setLevel(logging.INFO)
+
 csrf = CSRFProtect()
 
 
@@ -41,6 +56,10 @@ def create_app(config_class=Config):
     # Crear carpeta de uploads si no existe
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+    # [FASE 5 / E5] Activar log en archivo
+    app.logger.addHandler(file_handler)
+    app.logger.info('Shop Fusion Startup')
+
     # Registrar blueprints (rutas)
     from routes import auth, admin, afiliado, tienda
     app.register_blueprint(auth.bp)
@@ -60,6 +79,7 @@ def create_app(config_class=Config):
 
     @app.errorhandler(500)
     def internal_error(e):
+        app.logger.error(f'Server Error: {e}')
         return render_template(
             'error.html',
             error_code=500,
@@ -69,6 +89,7 @@ def create_app(config_class=Config):
 
     @app.errorhandler(403)
     def forbidden(e):
+        app.logger.warning(f'Forbidden Access: {e}')
         return render_template(
             'error.html',
             error_code=403,

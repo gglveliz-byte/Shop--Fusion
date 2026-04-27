@@ -595,7 +595,8 @@ def paypal_create_order():
             return jsonify({'error': 'Error creando orden en PayPal'}), 500
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.exception(f"Error fatal creando orden de PayPal: {e}")
+        return jsonify({'error': 'Error interno al procesar el pago'}), 500
 
 
 @bp.route('/api/paypal/capture-order', methods=['POST'])
@@ -713,7 +714,8 @@ def paypal_capture_order():
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        current_app.logger.exception(f"Error fatal capturando orden de PayPal: {e}")
+        return jsonify({'error': 'No se pudo confirmar el pago. Contacta a soporte.'}), 500
 
 
 @bp.route('/pedido-exitoso/<int:pedido_id>')
