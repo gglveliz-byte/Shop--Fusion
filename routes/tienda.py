@@ -843,39 +843,49 @@ def producto_vendedor(id, codigo):
                          es_tienda_vendedor=True)
 
 #INICIA LOS CAMBIOS INDICADOS EN FASE 3
-@bp.route('/webhook/paypal', methods=['POST'])
+@bp.route('/paypal-webhook', methods=['POST'])
 def paypal_webhook():
     """
-    Ruta pasiva para Webhooks de PayPal (Mitiga E43).
-    Valida notificaciones de pago servidor-servidor para evitar asincronía 
-    cuando el usuario cierra la ventana prematuramente.
+    [FASE 4 / E43 - ERRORES MEDIOS] Blindaje Transaccional
+    Maneja notificaciones asíncronas de PayPal para evitar pérdida de pedidos.
     """
     from models import Pedido
     from app import db
     
     # PayPal envía los datos en formato JSON
-    data = request.get_json()
-    if not data:
-        return jsonify({'status': 'no_data'}), 400
+    try:
+        data = request.get_json()
+        if not data:
+            current_app.logger.warning("Webhook de PayPal recibido sin datos JSON")
+            return jsonify({'status': 'no_data'}), 400
 
-    event_type = data.get('event_type')
-    resource = data.get('resource', {})
+        event_type = data.get('event_type')
+        resource = data.get('resource', {})
+        current_app.logger.info(f"Webhook PayPal recibido: {event_type}")
 
-    # Verificamos eventos de pago completado o captura exitosa
-    if event_type in ['PAYMENT.CAPTURE.COMPLETED', 'CHECKOUT.ORDER.APPROVED']:
-        # En una implementación real, aquí se validaría la firma del Webhook
-        # Para Shop Fusion, buscamos el pedido relacionado (ej: vía custom_id o notas)
-        # Por ahora, registramos el evento para asegurar que no se pierda la transacción
-        
-        # Ejemplo de recuperación lógica:
-        # custom_id = resource.get('custom_id')
-        # if custom_id:
-        #     pedido = Pedido.query.get(custom_id)
-        #     if pedido and pedido.estado != 'pagado':
-        #         pedido.estado = 'pagado'
-        #         db.session.commit()
-        
-        return jsonify({'status': 'procesado'}), 200
+        # Verificamos eventos de pago completado
+        if event_type in ['PAYMENT.CAPTURE.COMPLETED', 'CHECKOUT.ORDER.APPROVED']:
+            # El ID de la transacción o el ID personalizado ayuda a rastrear el pedido
+            paypal_id = resource.get('id')
+            custom_id = resource.get('custom_id') # Campo clave para vincular con nuestra DB
+            
+            current_app.logger.info(f"Pago confirmado por Webhook. PayPal ID: {paypal_id}, Custom ID: {custom_id}")
+            
+            # Si logramos vincularlo con un pedido existente que no esté marcado como pagado
+            if custom_id:
+                pedido = Pedido.query.get(custom_id)
+                if pedido and pedido.estado != 'pagado':
+                    pedido.estado = 'pagado'
+                    pedido.marcar_como_pagado()
+                    db.session.commit()
+                    current_app.logger.info(f"Pedido {custom_id} actualizado a 'pagado' vía Webhook")
+            
+            return jsonify({'status': 'procesado'}), 200
 
-    return jsonify({'status': 'recibido'}), 200
-#FIN DE LOS CAMBIOS INDICADOS EN FASE 3
+        return jsonify({'status': 'evento_no_critico'}), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error procesando Webhook de PayPal: {e}")
+        return jsonify({'status': 'error_interno'}), 500
+
+#FIN DE LOS CAMBIOS INDICADOS EN FASE 4
