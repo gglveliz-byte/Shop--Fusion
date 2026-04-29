@@ -40,7 +40,7 @@ class Config:
     # Configuración de archivos
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
     UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif'}
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif', 'ico'}
 
     # Configuración de PayPal
     PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')

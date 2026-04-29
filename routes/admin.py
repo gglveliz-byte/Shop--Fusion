@@ -7,13 +7,14 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from sqlalchemy.orm import joinedload
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from models import db, Admin, Producto, Pedido, Afiliado, Comision
+from models import db, Admin, Producto, Pedido, Afiliado, Comision, Configuracion
 from decimal import Decimal
 import os
+import time
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
-
+#PARA EVITAR PROBLEMAS DE ORDEN, ESTE BLOQUE admin_required DEBE ESTAR AL INICIO
 #INICIA LOS CAMBIOS INDICADOS EN FASE 1
 def admin_required(f):
     """
@@ -31,6 +32,56 @@ def admin_required(f):
     return decorated_function
 
 #FIN DE LOS CAMBIOS INDICADOS EN FASE 1
+
+
+# ============== CONFIGURACIÓN WHITE-LABEL FASE 3 ==============
+
+@bp.route('/configuracion', methods=['GET', 'POST'])
+@admin_required
+def configuracion():
+    """Panel de configuración de marca blanca (Fase 3)"""
+    config = Configuracion.query.first()
+    
+    if request.method == 'POST':
+        if not config:
+            config = Configuracion()
+            db.session.add(config)
+        
+        # Identidad
+        config.nombre_tienda = request.form.get('nombre_tienda', 'Shop Fusion')
+        config.mensaje_bienvenida = request.form.get('mensaje_bienvenida')
+        config.mensaje_footer = request.form.get('mensaje_footer')
+        config.meta_descripcion = request.form.get('meta_descripcion')
+        
+        # Colores
+        config.color_primario = request.form.get('color_primario', '#6366f1')
+        config.color_secundario = request.form.get('color_secundario', '#22c55e')
+        config.color_acento = request.form.get('color_acento', '#06b6d4')
+        
+        # Contacto
+        config.whatsapp_contacto = request.form.get('whatsapp_contacto')
+
+        # Manejo de archivos (Logo y Favicon)
+        if 'logo' in request.files:
+            file = request.files['logo']
+            if file and file.filename and allowed_file(file.filename):
+                filename = secure_filename(f"logo_{int(time.time())}_{file.filename}")
+                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                config.logo_path = filename
+
+        if 'favicon' in request.files:
+            file = request.files['favicon']
+            if file and file.filename and allowed_file(file.filename):
+                filename = secure_filename(f"favicon_{int(time.time())}_{file.filename}")
+                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                config.favicon_path = filename
+
+        db.session.commit()
+        flash('Configuración actualizada correctamente ✨', 'success')
+        return redirect(url_for('admin.configuracion'))
+
+    return render_template('admin/configuracion.html', config=config)
+
 
 def allowed_file(filename):
     """Verificar si el archivo tiene extensión permitida"""
