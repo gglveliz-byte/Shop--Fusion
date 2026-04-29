@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const direccion = document.getElementById('direccion').value.trim();
 
         // Crear mensaje para WhatsApp
-        let mensaje = "¡Hola! Quiero comprar:\n\n";
+        let mensaje = "¡Hola {{ config_web.nombre_tienda if config_web else 'Tienda' }}! Quiero comprar:\n\n";
 
         carrito.forEach(item => {
             mensaje += `- ${item.nombre} x${item.cantidad} - $${item.subtotal.toFixed(2)}\n`;
@@ -326,8 +326,6 @@ document.addEventListener('DOMContentLoaded', function() {
         mensaje += `👤 ${nombre}\n`;
         mensaje += `📱 ${telefono}\n`;
         mensaje += `📍 ${direccion}`;
-
-        // Abrir WhatsApp - usar del vendedor si existe
         let whatsappNumero = '{{ config.WHATSAPP_NUMBER }}';
         {% if afiliado_codigo %}
         // Si hay código de vendedor, obtener su WhatsApp del servidor

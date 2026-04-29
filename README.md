@@ -1,4 +1,4 @@
-# 🛍️ Shop Fusion - Sistema de Tienda con Afiliados
+# 🛍️ Plataforma Ecommerce - Sistema de Tienda con Afiliados (Marca Blanca)
 
 Sistema completo de tienda en línea con programa de afiliados, comisiones automáticas y checkout por WhatsApp.
 
@@ -104,7 +104,7 @@ La aplicación estará disponible en: `http://localhost:5000`
 ## 📁 Estructura del Proyecto
 
 ```
-SHOP FUSION NUEVO/
+PLATAFORMA ECOMMERCE NUEVA/
 ├── app.py                  # Aplicación principal
 ├── config.py               # Configuración
 ├── models.py               # Modelos de base de datos

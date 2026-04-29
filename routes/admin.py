@@ -48,7 +48,7 @@ def configuracion():
             db.session.add(config)
         
         # Identidad
-        config.nombre_tienda = request.form.get('nombre_tienda', 'Shop Fusion')
+        config.nombre_tienda = request.form.get('nombre_tienda', 'Mi Tienda Online')
         config.mensaje_bienvenida = request.form.get('mensaje_bienvenida')
         config.mensaje_footer = request.form.get('mensaje_footer')
         config.meta_descripcion = request.form.get('meta_descripcion')

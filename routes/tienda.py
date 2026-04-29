@@ -466,7 +466,11 @@ def api_crear_pedido():
 def unete():
     """Página para unirse como afiliado"""
     # Mensaje pre-llenado para WhatsApp
-    mensaje = "¡Hola! Me interesa trabajar como afiliado.\n\n¿Podrías darme más información sobre:\n- Comisiones\n- Cómo funciona\n- Requisitos\n\n¡Gracias!"
+    from models import Configuracion
+    config_web = Configuracion.query.first()
+    nombre_tienda = config_web.nombre_tienda if config_web else "la tienda"
+    
+    mensaje = f"¡Hola {nombre_tienda}! Me interesa trabajar como afiliado.\n\n¿Podrías darme más información sobre:\n- Comisiones\n- Cómo funciona\n- Requisitos\n\n¡Gracias!"
 
     whatsapp_numero = current_app.config['WHATSAPP_NUMBER']
     import urllib.parse

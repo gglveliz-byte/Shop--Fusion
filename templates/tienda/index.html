@@ -996,7 +996,7 @@
                 throw new Error(resultado.error || 'Error al crear el pedido');
             }
 
-            let mensaje = `*NUEVO PEDIDO #${resultado.pedido_id}*\n\n`;
+            let mensaje = "¡Hola {{ config_web.nombre_tienda if config_web else 'Tienda' }}!\n\n*NUEVO PEDIDO #" + resultado.pedido_id + "*\n\n";
             mensaje += `*Cliente:* ${nombre}\n`;
             mensaje += `*Telefono:* ${telefono}\n`;
             mensaje += `*Direccion:* ${direccion}\n\n`;
