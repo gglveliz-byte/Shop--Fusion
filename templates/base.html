@@ -3,18 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Shop Fusion{% endblock %}</title>
+    <title>{% block title %}{% endblock %} | {{ config_web.nombre_tienda if config_web else 'Tienda' }}</title>
+    
+    <!-- Metadatos SEO Dinámicos -->
+    <meta name="description" content="{{ config_web.meta_descripcion if config_web and config_web.meta_descripcion else 'Tu tienda online de confianza' }}">
+    
+    {% if config_web and config_web.favicon_path %}
+    <link rel="icon" href="{{ url_for('static', filename='uploads/' + config_web.favicon_path) }}" type="image/x-icon">
+    {% endif %}
+
     <!-- [MODIFICACIÓN SEGURIDAD E22] -->
     <!-- Token CSRF para validación de solicitudes y protección contra falsificación -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Motor de Color Dinámico (White-Label) -->
+    <style>
+        :root {
+            --primary-color: {{ config_web.color_primario if config_web else '#6366f1' }};
+            --secondary-color: {{ config_web.color_secundario if config_web else '#22c55e' }};
+            --accent-color: {{ config_web.color_acento if config_web else '#06b6d4' }};
+            
+            /* Generar variantes automáticas para hover */
+            --primary-dark: {{ config_web.color_primario if config_web else '#4f46e5' }};
+            --secondary-dark: {{ config_web.color_secundario if config_web else '#16a34a' }};
+        }
+    </style>
+    
     {% block extra_css %}{% endblock %}
 </head>
 <body>
     {% block body %}
     <nav class="navbar">
         <div class="container">
-            <a href="{{ url_for('tienda.index') }}" class="logo">🛍️ Shop Fusion</a>
+            <a href="{{ url_for('tienda.index') }}" class="logo">
+                {% if config_web and config_web.logo_path %}
+                    <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}" alt="{{ config_web.nombre_tienda }}" style="height: 40px;">
+                {% else %}
+                    🛍️ {{ config_web.nombre_tienda if config_web else 'Tienda' }}
+                {% endif %}
+            </a>
 
             <div class="nav-links">
                 {% if current_user.is_authenticated %}
@@ -64,7 +92,7 @@
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2026 Shop Fusion - Sistema de Afiliados</p>
+            <p>{{ config_web.mensaje_footer if config_web else '&copy; 2026 Todos los derechos reservados.' }}</p>
         </div>
     </footer>
     {% endblock %}

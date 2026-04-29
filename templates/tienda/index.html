@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Shop Fusion - Tu Tienda Online{% endblock %}
+{% block title %}Inicio{% endblock %}
 
 {% block content %}
 <!-- Hero Section con Video de Fondo -->
@@ -19,8 +19,10 @@
     <!-- Contenido del Hero -->
     <div class="hero-content">
         <div class="container">
-            <img src="{{ url_for('static', filename='propio/logotipo.png') }}" alt="Shop Fusion" class="hero-logo">
-            <h1 class="hero-title">Shop Fusion</h1>
+            {% if config_web and config_web.logo_path %}
+                <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}" alt="{{ config_web.nombre_tienda }}" class="hero-logo">
+            {% endif %}
+            <h1 class="hero-title">{{ config_web.nombre_tienda if config_web else 'Nuestra Tienda' }}</h1>
             <p class="hero-subtitle">Tecnologia al mejor precio</p>
             <div class="hero-features">
                 <span class="hero-feature"><i class="feature-icon">🚚</i> Envio Gratis</span>
@@ -1082,13 +1084,13 @@
 
 <style>
     /* ========================================
-   ESTILOS TECNOLOGICOS - SHOP FUSION
+   ESTILOS TECNOLOGICOS PERSONALIZADOS
    ======================================== */
 
     :root {
-        --tech-primary: #6366f1;
-        --tech-secondary: #22c55e;
-        --tech-accent: #06b6d4;
+        --tech-primary: {{ config_web.color_primario if config_web else '#6366f1' }};
+        --tech-secondary: {{ config_web.color_secundario if config_web else '#22c55e' }};
+        --tech-accent: {{ config_web.color_acento if config_web else '#06b6d4' }};
         --tech-dark: #0f172a;
         --tech-darker: #020617;
         --tech-glow: rgba(99, 102, 241, 0.5);

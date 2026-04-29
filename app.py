@@ -58,7 +58,7 @@ def create_app(config_class=Config):
 
     # [FASE 5 / E5] Activar log en archivo
     app.logger.addHandler(file_handler)
-    app.logger.info('Shop Fusion Startup')
+    app.logger.info('Plataforma Ecommerce - Sistema Iniciado')
 
     # Registrar blueprints (rutas)
     from routes import auth, admin, afiliado, tienda

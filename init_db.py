@@ -47,7 +47,7 @@ def init_database():
         # Inicializar configuración White-Label por defecto
         logger.info("Inicializando configuración de marca por defecto...")
         nueva_config = Configuracion(
-            nombre_tienda='Shop Fusion',
+            nombre_tienda='Mi Tienda Online',
             color_primario='#6366f1',
             color_secundario='#22c55e',
             color_acento='#06b6d4',

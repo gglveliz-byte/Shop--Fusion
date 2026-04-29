@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo   SHOP FUSION - Sistema de Afiliados
+echo   PLATAFORMA ECOMMERCE - Sistema de Afiliados
 echo ========================================
 echo.
 

@@ -1,5 +1,5 @@
 """
-Funciones de utilidad compartidas para Shop Fusion (Error E7)
+Funciones de utilidad compartidas para la Plataforma (Error E7)
 """
 
 def format_whatsapp(num):

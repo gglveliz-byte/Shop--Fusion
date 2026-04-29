@@ -357,7 +357,7 @@ class Configuracion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     
     # Identidad
-    nombre_tienda = db.Column(db.String(100), default='Shop Fusion')
+    nombre_tienda = db.Column(db.String(100), default='Mi Tienda Online')
     logo_path = db.Column(db.String(300), nullable=True)
     favicon_path = db.Column(db.String(300), nullable=True)
     

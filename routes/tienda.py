@@ -16,7 +16,7 @@ bp = Blueprint('tienda', __name__)
 
 @bp.route('/')
 def index():
-    """Página principal de la tienda (Shop Fusion - Admin)"""
+    """Página principal de la tienda (Admin)"""
     from models import Producto, Afiliado, CATEGORIAS_PRODUCTO
     from sqlalchemy import func
 
@@ -66,7 +66,7 @@ def index():
             'imagenes': todas_imagenes
         })
 
-    # Número de WhatsApp del admin (Shop Fusion)
+    # Número de WhatsApp del admin
     from utils import format_whatsapp
     whatsapp_numero = format_whatsapp(current_app.config.get('WHATSAPP_NUMBER', ''))
 
@@ -309,7 +309,11 @@ def checkout():
         session['carrito'] = []
 
         # Generar mensaje de WhatsApp
-        mensaje = f"¡Hola! Quiero comprar:\n\n"
+        from models import Configuracion
+        config_web = Configuracion.query.first()
+        nombre_tienda = config_web.nombre_tienda if config_web else "la tienda"
+        
+        mensaje = f"¡Hola {nombre_tienda}! Quiero comprar:\n\n"
 
         for item in productos_pedido:
             mensaje += f"- {item['nombre']} x{item['cantidad']} - ${item['subtotal']:.2f}\n"
