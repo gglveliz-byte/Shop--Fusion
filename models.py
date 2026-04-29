@@ -343,3 +343,38 @@ def setup_login_manager(login_manager):
         elif user_id.startswith('afiliado_'):
             return Afiliado.query.get(int(user_id.split('_')[1]))
         return None
+
+
+# ==================== WHITE-LABEL CONFIGURATION ====================
+
+class Configuracion(db.Model):
+    """
+    Modelo para almacenar la identidad visual y configuración dinámica del sitio.
+    Permite transformar el sistema en White-Label (Marca Blanca).
+    """
+    __tablename__ = 'configuraciones'
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Identidad
+    nombre_tienda = db.Column(db.String(100), default='Shop Fusion')
+    logo_path = db.Column(db.String(300), nullable=True)
+    favicon_path = db.Column(db.String(300), nullable=True)
+    
+    # Estética (Colores Hexadecimales)
+    color_primario = db.Column(db.String(7), default='#6366f1')
+    color_secundario = db.Column(db.String(7), default='#22c55e')
+    color_acento = db.Column(db.String(7), default='#06b6d4')
+    
+    # Contacto y Textos
+    whatsapp_contacto = db.Column(db.String(20), nullable=True)
+    mensaje_bienvenida = db.Column(db.String(255), default='¡Bienvenido a nuestra tienda!')
+    mensaje_footer = db.Column(db.String(255), default='© 2024 Todos los derechos reservados.')
+    
+    # Metadatos SEO
+    meta_descripcion = db.Column(db.Text, nullable=True)
+    
+    actualizado_en = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Configuracion {self.nombre_tienda}>'

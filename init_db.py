@@ -19,7 +19,7 @@ if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8')
 
 from app import create_app
-from models import db, Admin, Afiliado, Producto
+from models import db, Admin, Afiliado, Producto, Configuracion
 
 def init_database():
     """Inicializar base de datos y crear admin por defecto"""
@@ -40,7 +40,27 @@ def init_database():
         logger.info("   - productos")
         logger.info("   - pedidos")
         logger.info("   - comisiones")
+        
+        #CAMBIOS DE FASE 1 - WHITE LABEL
+        logger.info("   - configuraciones (WHITE-LABEL)")
 
+        # Inicializar configuración White-Label por defecto
+        logger.info("Inicializando configuración de marca por defecto...")
+        nueva_config = Configuracion(
+            nombre_tienda='Shop Fusion',
+            color_primario='#6366f1',
+            color_secundario='#22c55e',
+            color_acento='#06b6d4',
+            mensaje_bienvenida='¡Bienvenido a nuestra tienda!',
+            mensaje_footer='© 2024 Todos los derechos reservados.',
+            whatsapp_contacto='51900000000'
+        )
+        db.session.add(nueva_config)
+        db.session.commit()
+        logger.info("✅ Configuración de marca creada con éxito.")
+
+        #FIN DE LOS CAMBIOS INDICADOS EN FASE 1
+        
         # Obtener credenciales desde la configuración (que lee del .env)
         # NUEVA LÓGICA SEGURA (FASE 1): Creación de administrador desde variables de entorno (.env).
         # Sirve para: Eliminar credenciales hardcoded y prevenir exposición de claves en consola.

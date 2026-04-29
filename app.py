@@ -67,6 +67,17 @@ def create_app(config_class=Config):
     app.register_blueprint(afiliado.bp)
     app.register_blueprint(tienda.bp)
     
+    # [Fase 1 / WHITE-LABEL] Inyectar configuración de marca globalmente
+    @app.context_processor
+    def inject_branding():
+        from models import Configuracion
+        try:
+            config = Configuracion.query.first()
+            return dict(config_web=config)
+        except Exception:
+            # Si falla (ej: tabla no creada aún), devolvemos un diccionario vacío para evitar errores 500
+            return dict(config_web=None)
+
     # [FASE 3 / E43] Eximir el webhook de PayPal de la protección CSRF
     csrf.exempt('routes.tienda.paypal_webhook')
 
