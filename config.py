@@ -1,38 +1,49 @@
 import os
-from datetime import timedelta  # <--- esto faltaba
+from datetime import timedelta
 from dotenv import load_dotenv
 
 # Cargar variables de entorno
 load_dotenv()
 
 class Config:
-    """Configuración de la aplicación"""
+    """Configuración de la aplicación blindada (Hardening Fase 1)"""
 
-    # Secret key para sesiones
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    @staticmethod
+    def get_required_env(name):
+        """Obtiene una variable de entorno o lanza error fatal si falta."""
+        val = os.environ.get(name)
+        if not val:
+            # Error crítico: El sistema no debe arrancar sin sus secretos
+            raise EnvironmentError(f"ERROR DE SEGURIDAD CRÍTICO: La variable de entorno '{name}' es obligatoria.")
+        return val
+
+    # Secret key para sesiones y CSRF - OBLIGATORIO
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    if not SECRET_KEY:
+        # Error crítico: El sistema no debe arrancar sin su secreto principal
+        raise EnvironmentError("ERROR DE SEGURIDAD CRÍTICO: La variable 'SECRET_KEY' no está configurada en el entorno (.env).")
+
+    # Credenciales de Administrador Único (Blindaje E21)
+    ADMIN_USER = os.environ.get('ADMIN_USER')
+    ADMIN_PASS = os.environ.get('ADMIN_PASS')
+    
+    # Validación de credenciales en arranque
+    if not ADMIN_USER or not ADMIN_PASS:
+        # Solo permitimos que falten si estamos en modo desarrollo local muy básico
+        if os.environ.get('FLASK_ENV') == 'production':
+            raise EnvironmentError("ERROR DE SEGURIDAD: ADMIN_USER o ADMIN_PASS no configurados.")
 
     # Configuración de base de datos
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    #FIN DE LOS CAMBIOS INDICADOS EN FASE 1 DE HARDENING
 
-    # Modo Debug (Desactivado por defecto para corregir E21)
+    # Modo Debug (Controlado estrictamente por entorno)
     DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() in ['true', '1', 't']
-
-    #INICIA LOS CAMBIOS INDICADOS EN FASE 1
-    # Credenciales de Administrador Único obtenidos del .env
-    ADMIN_USER = os.environ.get('ADMIN_USER')
-    ADMIN_PASS = os.environ.get('ADMIN_PASS')
-
-    # Seguridad de Login: Previene ataques de fuerza bruta al limitar intentos fallidos
     LOGIN_ATTEMPTS_LIMIT = 5  # Máximo de intentos permitidos antes de bloquear
     LOGIN_LOCK_MINUTES = 5    # Tiempo de espera (en minutos) tras superar el límite de intentos
     
     #FIN DE LOS CAMBIOS INDICADOS EN FASE 1
-
-    # Configuración de sesiones
-    SESSION_COOKIE_SECURE = False  # Cambiar a True en producción con HTTPS
-    SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
 
     # Configuración de WhatsApp
     WHATSAPP_NUMBER = ''  # CAMBIAR POR TU NÚMERO (sin espacios, con código de país)
@@ -51,9 +62,9 @@ class Config:
     # HTTPOnly: Impide que JavaScript acceda a la cookie (Protección XSS)
     SESSION_COOKIE_HTTPONLY = True
     # SameSite: Controla el envío de cookies en peticiones de terceros (Protección CSRF)
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'Strict'
     # Secure: Solo envía cookies por HTTPS si el entorno es producción
     SESSION_COOKIE_SECURE = (os.environ.get('FLASK_ENV') == 'production')
 
     # Duración de la cookie permanente
-    PERMANENT_SESSION_LIFETIME = timedelta(days=180)  # 3 meses
+    PERMANENT_SESSION_LIFETIME = timedelta(days=30)  # 1 mes para evitar brechas de seguridad
