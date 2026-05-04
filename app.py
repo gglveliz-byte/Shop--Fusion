@@ -94,8 +94,7 @@ def create_app(config_class=Config):
         strict_transport_security=True,
         session_cookie_secure=app.config.get('FLASK_ENV') == 'production',
         frame_options='SAMEORIGIN',
-        referrer_policy='strict-origin-when-cross-origin', # Protege la privacidad en enlaces externos
-        content_security_policy_nonce_in=['script-src'] # Mejora la seguridad de scripts inline si se usaran nonces
+        referrer_policy='strict-origin-when-cross-origin' # Protege la privacidad en enlaces externos
     )
 
     #INICIA LOS CAMBIOS INDICADOS EN FASE 1
