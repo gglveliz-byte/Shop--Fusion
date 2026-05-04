@@ -1,5 +1,6 @@
 """
-Funciones de utilidad compartidas para la Plataforma (Error E7)
+Funciones de utilidad y validación para la Plataforma (Hardening Fase 3)
+Mapeado desde el antiguo utils.py para mejor organización.
 """
 
 def format_whatsapp(num):
@@ -30,12 +31,15 @@ def validate_whatsapp(num):
 
 def is_strong_password(password):
     """
-    Verifica si una contraseña cumple con requisitos mínimos (Mitiga E36).
-    - Mínimo 8 caracteres.
-    - Al menos un número.
+    Valida la fortaleza de una contraseña.
+    Retorna (True, "") si es válida o (False, "mensaje de error") si no lo es.
     """
     if len(password) < 8:
         return False, "La contraseña debe tener al menos 8 caracteres."
-    if not any(char.isdigit() for char in password):
-        return False, "La contraseña debe incluir al menos un número."
+    if not any(c.isupper() for c in password):
+        return False, "La contraseña debe tener al menos una letra mayúscula."
+    if not any(c.isdigit() for c in password):
+        return False, "La contraseña debe tener al menos un número."
+    if not any(c in "!@#$%^&*()-_+=[]{}|;:,.<>?/" for c in password):
+        return False, "La contraseña debe tener al menos un carácter especial."
     return True, ""

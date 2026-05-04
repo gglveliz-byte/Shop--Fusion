@@ -7,6 +7,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from sqlalchemy.orm import joinedload
 from flask_login import login_required, current_user
 from decimal import Decimal
+from models import db
+from utils.validators import validate_whatsapp, is_strong_password
 
 bp = Blueprint('afiliado', __name__, url_prefix='/afiliado')
 
@@ -285,7 +287,6 @@ def mi_cuenta():
         nueva_password = request.form.get('password', '')
 
         # [FASE 3 / E34 - ERRORES MEDIOS] Validar formato de WhatsApp
-        from utils import validate_whatsapp, is_strong_password
         
         if whatsapp and not validate_whatsapp(whatsapp):
             flash('El número de WhatsApp no parece ser válido. Ingresa al menos 9 dígitos.', 'error')

@@ -12,6 +12,7 @@ import requests
 import base64
 from utils.rate_limit import limiter
 from utils.security_logger import log_security_event
+from utils.validators import format_whatsapp
 
 bp = Blueprint('tienda', __name__)
 
@@ -69,7 +70,6 @@ def index():
         })
 
     # Número de WhatsApp del admin
-    from utils import format_whatsapp
     whatsapp_numero = format_whatsapp(current_app.config.get('WHATSAPP_NUMBER', ''))
 
     return render_template('tienda/index.html',
@@ -749,7 +749,6 @@ def get_vendedor_whatsapp():
     if not vendedor:
         return jsonify({'error': 'Vendedor no encontrado'}), 404
     
-    from utils import format_whatsapp
     whatsapp = format_whatsapp(vendedor.whatsapp or current_app.config.get('WHATSAPP_NUMBER', ''))
     
     return jsonify({'whatsapp': whatsapp})

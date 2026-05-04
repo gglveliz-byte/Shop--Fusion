@@ -93,9 +93,9 @@ def create_app(config_class=Config):
         force_https=app.config.get('FLASK_ENV') == 'production', 
         strict_transport_security=True,
         session_cookie_secure=app.config.get('FLASK_ENV') == 'production',
-        x_frame_options='SAMEORIGIN',
+        frame_options='SAMEORIGIN',
         referrer_policy='strict-origin-when-cross-origin', # Protege la privacidad en enlaces externos
-        x_xss_protection=True # Filtro adicional contra XSS para navegadores compatibles
+        content_security_policy_nonce_in=['script-src'] # Mejora la seguridad de scripts inline si se usaran nonces
     )
 
     #INICIA LOS CAMBIOS INDICADOS EN FASE 1
