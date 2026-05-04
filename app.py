@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
+from flask_talisman import Talisman
 from config import Config
 
 # Importar db desde models
@@ -42,6 +43,55 @@ def create_app(config_class=Config):
     # [FASE 3 / SEGURIDAD E22]
     # Inicialización de CSRF para protección criptográfica (E43) y validación de formularios (E22)
     csrf.init_app(app)
+
+    # [FASE 2 / SEGURIDAD - MURALLA EXTERIOR]
+    # Configuración de Content Security Policy (CSP) y Headers de Seguridad
+    csp = {
+        'default-src': "'self'",
+        'script-src': [
+            "'self'",
+            "'unsafe-inline'",  # Permitir scripts en línea necesarios para la lógica actual
+            "https://www.paypal.com",
+            "https://www.sandbox.paypal.com"
+        ],
+        'style-src': [
+            "'self'",
+            "'unsafe-inline'",  # Requerido para variables de color dinámicas (White-Label)
+            "https://fonts.googleapis.com"
+        ],
+        'font-src': [
+            "'self'",
+            "https://fonts.gstatic.com"
+        ],
+        'img-src': [
+            "'self'",
+            "data:",
+            "*"  # Permitir imágenes de cualquier fuente para productos externos
+        ],
+        'connect-src': [
+            "'self'",
+            "https://www.paypal.com",
+            "https://www.sandbox.paypal.com"
+        ],
+        'frame-src': [
+            "'self'",
+            "https://www.paypal.com",
+            "https://www.sandbox.paypal.com"
+        ],
+        'object-src': "'none'", # Bloquear plugins peligrosos (Flash, Java, etc.)
+        'media-src': "'self'" # Permitir solo videos/audio locales (fondo de pantalla)
+    }
+
+    Talisman(
+        app,
+        content_security_policy=csp,
+        force_https=app.config.get('FLASK_ENV') == 'production', 
+        strict_transport_security=True,
+        session_cookie_secure=app.config.get('FLASK_ENV') == 'production',
+        x_frame_options='SAMEORIGIN',
+        referrer_policy='strict-origin-when-cross-origin', # Protege la privacidad en enlaces externos
+        x_xss_protection=True # Filtro adicional contra XSS para navegadores compatibles
+    )
 
     #INICIA LOS CAMBIOS INDICADOS EN FASE 1
     # Configuración de la vista de login por defecto para redirecciones automáticas de Flask-Login.
