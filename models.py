@@ -1,3 +1,7 @@
+import os
+import bleach
+from sqlalchemy.orm import validates
+from cryptography.fernet import Fernet
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -6,6 +10,39 @@ from decimal import Decimal
 
 # Crear instancia de SQLAlchemy
 db = SQLAlchemy()
+
+# [FASE 3 / HARDENING - SANITIZACIÓN]
+def sanitize_html(text):
+    """Limpia el texto de cualquier etiqueta HTML peligrosa (Anti-XSS)"""
+    if not text: return text
+    # bleach.clean elimina etiquetas como <script>, <iframe>, etc.
+    return bleach.clean(text, tags=[], attributes={}, strip=True)
+
+# [FASE 3 / HARDENING - CIFRADO PII]
+
+# Obtener la llave maestra desde el entorno (Fase 1)
+_fernet_key = os.environ.get('FERNET_KEY')
+if not _fernet_key:
+    # Si no existe, generamos una solo para desarrollo (esto dará error en producción Fase 1)
+    if os.environ.get('FLASK_ENV') == 'production':
+        raise EnvironmentError("ERROR DE SEGURIDAD: FERNET_KEY no configurada en producción.")
+    _fernet_key = Fernet.generate_key().decode()
+
+cipher_suite = Fernet(_fernet_key.encode())
+
+def encrypt_data(data):
+    """Cifra un string y retorna el token cifrado."""
+    if not data: return data
+    return cipher_suite.encrypt(data.encode()).decode()
+
+def decrypt_data(data):
+    """Descifra un token y retorna el string original."""
+    if not data: return data
+    try:
+        return cipher_suite.decrypt(data.encode()).decode()
+    except Exception:
+        # Si el dato no está cifrado (datos antiguos), lo devolvemos tal cual
+        return data
 
 # Modelo de Administrador
 class Admin(UserMixin, db.Model):
@@ -53,8 +90,24 @@ class Afiliado(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     codigo = db.Column(db.String(20), unique=True, nullable=False, index=True)
     porcentaje_comision = db.Column(db.Numeric(5, 2), nullable=False, default=80.00)  # Default 80%
-    whatsapp = db.Column(db.String(20), nullable=True)  # WhatsApp del vendedor
+    # [MODIFICACIÓN SEGURIDAD - FASE 3]
+    # Se renombró la variable interna a 'whatsapp_encrypted' pero la columna en DB sigue siendo 'whatsapp'.
+    whatsapp_encrypted = db.Column('whatsapp', db.String(500), nullable=True)
     activo = db.Column(db.Boolean, default=True)
+
+    # @property: Convierte esta función en un "atributo" falso. 
+    # Cuando haces 'afiliado.whatsapp', se ejecuta esto y te devuelve el dato ya descifrado.
+    @property
+    def whatsapp(self):
+        """Descifra el número de WhatsApp automáticamente al leerlo"""
+        return decrypt_data(self.whatsapp_encrypted)
+
+    # @whatsapp.setter: Se ejecuta cuando intentas guardar algo: 'afiliado.whatsapp = "123"'.
+    # Antes de guardarlo en la base de datos, lo cifra automáticamente.
+    @whatsapp.setter
+    def whatsapp(self, value):
+        """Cifra el número de WhatsApp automáticamente antes de guardarlo"""
+        self.whatsapp_encrypted = encrypt_data(value)
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
 
     # [MODIFICACIÓN SEGURIDAD TC015]
@@ -83,6 +136,12 @@ class Afiliado(UserMixin, db.Model):
     def get_id(self):
         """Override get_id para Flask-Login"""
         return f'afiliado_{self.id}'
+
+    # [PASO 2 - SANITIZACIÓN]
+    @validates('nombre')
+    def validate_nombre(self, key, value):
+        """Sanitiza el nombre del afiliado (Anti-XSS)"""
+        return sanitize_html(value)
 
     def total_comisiones_pendientes(self):
         """Calcular total de comisiones pendientes"""
@@ -147,6 +206,12 @@ class Producto(db.Model):
 
     activo = db.Column(db.Boolean, default=True)
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # [PASO 2 - SANITIZACIÓN]
+    @validates('nombre', 'descripcion')
+    def validate_producto_text(self, key, value):
+        """Sanitiza campos de texto del producto (Anti-XSS)"""
+        return sanitize_html(value)
 
     #INICIA LOS CAMBIOS INDICADOS EN FASE 3
     # Métodos para la gestión de stock
@@ -221,8 +286,30 @@ class Pedido(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     cliente_nombre = db.Column(db.String(100), nullable=False)
-    cliente_telefono = db.Column(db.String(20), nullable=False)
-    cliente_direccion = db.Column(db.Text, nullable=False)
+    # [MODIFICACIÓN SEGURIDAD - FASE 3]
+    # Mapeo de columnas originales con lógica de cifrado transparente
+    cliente_telefono_encrypted = db.Column('cliente_telefono', db.String(500), nullable=False)
+    cliente_direccion_encrypted = db.Column('cliente_direccion', db.Text, nullable=False)
+
+    @property
+    def cliente_telefono(self):
+        """Interceptor para descifrar el teléfono al vuelo"""
+        return decrypt_data(self.cliente_telefono_encrypted)
+
+    @cliente_telefono.setter
+    def cliente_telefono(self, value):
+        """Interceptor para cifrar el teléfono antes de persistir"""
+        self.cliente_telefono_encrypted = encrypt_data(value)
+
+    @property
+    def cliente_direccion(self):
+        """Interceptor para descifrar la dirección al vuelo"""
+        return decrypt_data(self.cliente_direccion_encrypted)
+
+    @cliente_direccion.setter
+    def cliente_direccion(self, value):
+        """Interceptor para cifrar la dirección antes de persistir"""
+        self.cliente_direccion_encrypted = encrypt_data(value)
     productos_json = db.Column(db.JSON, nullable=False)  # [{id, nombre, cantidad, precio}]
     total = db.Column(db.Numeric(10, 2), nullable=False)
     estado = db.Column(db.String(20), default='pendiente')  # pendiente, pagado, cancelado
@@ -231,6 +318,12 @@ class Pedido(db.Model):
     validado_en = db.Column(db.DateTime, nullable=True)  # Fecha de validación
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
     pagado_en = db.Column(db.DateTime, nullable=True)
+
+    # [PASO 2 - SANITIZACIÓN]
+    @validates('cliente_nombre', 'cliente_direccion')
+    def validate_pedido_text(self, key, value):
+        """Sanitiza datos del cliente (Anti-XSS)"""
+        return sanitize_html(value)
 
     # [FASE 3 / E11 - ERRORES MEDIOS] Relación optimizada
     comisiones = db.relationship('Comision', backref='pedido', lazy='joined', cascade='all, delete-orphan')
@@ -367,7 +460,19 @@ class Configuracion(db.Model):
     color_acento = db.Column(db.String(7), default='#06b6d4')
     
     # Contacto y Textos
-    whatsapp_contacto = db.Column(db.String(20), nullable=True)
+    # [MODIFICACIÓN SEGURIDAD - FASE 3]
+    # Blindaje del contacto de la tienda (White-Label Protegido)
+    whatsapp_contacto_encrypted = db.Column('whatsapp_contacto', db.String(500), nullable=True)
+
+    @property
+    def whatsapp_contacto(self):
+        """Descarga y descifra el contacto para mostrarlo en la web"""
+        return decrypt_data(self.whatsapp_contacto_encrypted)
+
+    @whatsapp_contacto.setter
+    def whatsapp_contacto(self, value):
+        """Cifra el contacto antes de guardarlo en la configuración"""
+        self.whatsapp_contacto_encrypted = encrypt_data(value)
     mensaje_bienvenida = db.Column(db.String(255), default='¡Bienvenido a nuestra tienda!')
     mensaje_footer = db.Column(db.String(255), default='© 2024 Todos los derechos reservados.')
     
@@ -375,6 +480,12 @@ class Configuracion(db.Model):
     meta_descripcion = db.Column(db.Text, nullable=True)
     
     actualizado_en = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # [PASO 2 - SANITIZACIÓN]
+    @validates('nombre_tienda', 'mensaje_bienvenida', 'mensaje_footer', 'meta_descripcion')
+    def validate_config_text(self, key, value):
+        """Sanitiza la configuración de marca blanca (Anti-XSS)"""
+        return sanitize_html(value)
 
     def __repr__(self):
         return f'<Configuracion {self.nombre_tienda}>'
