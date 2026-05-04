@@ -4,6 +4,7 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_talisman import Talisman
 from config import Config
+from utils.rate_limit import limiter
 
 # Importar db desde models
 from models import db, setup_login_manager
@@ -43,6 +44,10 @@ def create_app(config_class=Config):
     # [FASE 3 / SEGURIDAD E22]
     # Inicialización de CSRF para protección criptográfica (E43) y validación de formularios (E22)
     csrf.init_app(app)
+
+    # [FASE 4 / SEGURIDAD - ANTI-DDOS]
+    # Inicialización del limitador de tráfico
+    limiter.init_app(app)
 
     # [FASE 2 / SEGURIDAD - MURALLA EXTERIOR]
     # Configuración de Content Security Policy (CSP) y Headers de Seguridad

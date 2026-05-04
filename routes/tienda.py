@@ -10,6 +10,8 @@ from models import db
 import json
 import requests
 import base64
+from utils.rate_limit import limiter
+from utils.security_logger import log_security_event
 
 bp = Blueprint('tienda', __name__)
 
@@ -369,7 +371,8 @@ def checkout():
 
 
 @bp.route('/api/crear-pedido', methods=['POST'])
-def api_crear_pedido():
+@limiter.limit("3 per minute", error_message='Demasiados pedidos en poco tiempo. Por seguridad, espera un momento.')
+def finalizar_pedido():
     """API para crear pedido desde SPA (sin recargar página)"""
     from models import Producto, Pedido, Afiliado
     from app import db
@@ -508,6 +511,7 @@ def get_paypal_access_token():
 
 
 @bp.route('/api/paypal/create-order', methods=['POST'])
+@limiter.limit("3 per minute", error_message='Demasiados intentos de pago. Por seguridad, espera un momento.')
 def paypal_create_order():
     """Crear orden de PayPal"""
     from models import Producto

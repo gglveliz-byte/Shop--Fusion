@@ -5,12 +5,15 @@ Maneja login/logout para Admin y Afiliado
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 from flask_login import login_user, logout_user, current_user
-from datetime import datetime, timedelta  # Para manejar el bloqueo temporal de login
+from datetime import datetime, timedelta  
+from utils.security_logger import log_security_event
+from utils.rate_limit import limiter
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 @bp.route('/admin/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute", error_message='Demasiados intentos. Por seguridad, inténtalo en un minuto.')
 def admin_login():
     """Login de administrador"""
     from models import Admin
@@ -30,6 +33,7 @@ def admin_login():
         lock_until = datetime.fromisoformat(session['admin_login_lock'])
         if datetime.now() < lock_until:
             minutos_restantes = int((lock_until - datetime.now()).total_seconds() // 60) + 1
+            log_security_event('LOGIN_ATTEMPT', 'BLOCKED', details=f"Admin login blocked for {minutos_restantes}m")
             flash(f'Demasiados intentos fallidos. Por seguridad, espera {minutos_restantes} minuto(s).', 'error')
             return render_template('auth/admin_login.html')
 
@@ -87,6 +91,7 @@ def admin_login():
             session.pop('admin_login_attempts', None)
             session.pop('admin_login_lock', None)
 
+            log_security_event('LOGIN', 'SUCCESS', user_id=admin.username, details="Admin login successful")
             flash(f'¡Bienvenido {admin.username}!', 'success')
 
             # Redirigir a la página solicitada o al dashboard
@@ -101,15 +106,18 @@ def admin_login():
             if attempts >= current_app.config.get('LOGIN_ATTEMPTS_LIMIT', 5):
                 lock_time = current_app.config.get('LOGIN_LOCK_MINUTES', 5)
                 session['admin_login_lock'] = (datetime.now() + timedelta(minutes=lock_time)).isoformat()
+                log_security_event('LOGIN_BRUTE_FORCE', 'BLOCKED', user_id=username, details=f"Admin locked for {lock_time}m after {attempts} attempts")
                 flash(f'Has superado el límite de intentos. Bloqueado por {lock_time} minutos.', 'error')
             else:
                 intentos_restantes = current_app.config.get('LOGIN_ATTEMPTS_LIMIT', 5) - attempts
+                log_security_event('LOGIN_ATTEMPT', 'FAILURE', user_id=username, details=f"Wrong admin credentials. Attempt {attempts}")
                 flash(f'Usuario o contraseña incorrectos. Intentos restantes: {intentos_restantes}', 'error')
 
     return render_template('auth/admin_login.html')
     #FIN DE LOS CAMBIOS INDICADOS EN FASE 1
 
 @bp.route('/afiliado/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute", error_message='Demasiados intentos. Por seguridad, inténtalo en un minuto.')
 def afiliado_login():
     """Login de afiliado"""
     from models import Afiliado
@@ -119,6 +127,7 @@ def afiliado_login():
         lock_until = datetime.fromisoformat(session['afiliado_login_lock'])
         if datetime.now() < lock_until:
             minutos_restantes = int((lock_until - datetime.now()).total_seconds() // 60) + 1
+            log_security_event('LOGIN_ATTEMPT', 'BLOCKED', details=f"Affiliate login blocked for {minutos_restantes}m")
             flash(f'Demasiados intentos fallidos. Por seguridad, espera {minutos_restantes} minuto(s).', 'error')
             return render_template('auth/afiliado_login.html')
 
@@ -148,6 +157,7 @@ def afiliado_login():
             session.pop('afiliado_login_attempts', None)
             session.pop('afiliado_login_lock', None)
 
+            log_security_event('LOGIN', 'SUCCESS', user_id=afiliado.email, details="Affiliate login successful")
             flash(f'¡Bienvenido {afiliado.nombre}!', 'success')
 
             # Redirigir a la página solicitada o al dashboard
@@ -162,9 +172,11 @@ def afiliado_login():
             if attempts >= limit:
                 lock_time = current_app.config.get('LOGIN_LOCK_MINUTES', 5)
                 session['afiliado_login_lock'] = (datetime.now() + timedelta(minutes=lock_time)).isoformat()
+                log_security_event('LOGIN_BRUTE_FORCE', 'BLOCKED', user_id=email, details=f"Affiliate locked for {lock_time}m after {attempts} attempts")
                 flash(f'Has superado el límite de intentos. Bloqueado por {lock_time} minutos.', 'error')
             else:
                 intentos_restantes = limit - attempts
+                log_security_event('LOGIN_ATTEMPT', 'FAILURE', user_id=email, details=f"Wrong affiliate credentials. Attempt {attempts}")
                 flash(f'Email o contraseña incorrectos. Intentos restantes: {intentos_restantes}', 'error')
 
     return render_template('auth/afiliado_login.html')
