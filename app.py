@@ -23,7 +23,7 @@ if not os.path.exists('logs'):
     os.mkdir('logs')
 
 logging.basicConfig(level=logging.INFO)
-file_handler = RotatingFileHandler('logs/ecommerce.log', maxBytes=10240, backupCount=10)
+file_handler = logging.FileHandler('logs/ecommerce.log')
 file_handler.setFormatter(logging.Formatter(
     '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
 ))
