@@ -3,6 +3,7 @@ from flask import Flask, render_template
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_talisman import Talisman
+from flask_cors import CORS
 from config import Config
 from utils.rate_limit import limiter
 
@@ -36,6 +37,9 @@ def create_app(config_class=Config):
     """Factory para crear la aplicación Flask"""
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    # Permitir CORS para el widget externo
+    CORS(app, resources={r"/ai/*": {"origins": "*"}})
 
     # Inicializar extensiones con la app
     db.init_app(app)
@@ -115,11 +119,12 @@ def create_app(config_class=Config):
     app.logger.info('Plataforma Ecommerce - Sistema Iniciado')
 
     # Registrar blueprints (rutas)
-    from routes import auth, admin, afiliado, tienda
+    from routes import auth, admin, afiliado, tienda, ai
     app.register_blueprint(auth.bp)
     app.register_blueprint(admin.bp)
     app.register_blueprint(afiliado.bp)
     app.register_blueprint(tienda.bp)
+    app.register_blueprint(ai.bp)
     
     # [Fase 1 / WHITE-LABEL] Inyectar configuración de marca globalmente
     @app.context_processor
@@ -132,8 +137,9 @@ def create_app(config_class=Config):
             # Si falla (ej: tabla no creada aún), devolvemos un diccionario vacío para evitar errores 500
             return dict(config_web=None)
 
-    # [FASE 3 / E43] Eximir el webhook de PayPal de la protección CSRF
+    # [FASE 3 / E43] Eximir el webhook de PayPal y el chat de AI de la protección CSRF
     csrf.exempt('routes.tienda.paypal_webhook')
+    csrf.exempt('routes.ai.chat')
 
     # Manejadores de errores
     @app.errorhandler(404)

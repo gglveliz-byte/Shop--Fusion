@@ -9,3 +9,4 @@ limiter = Limiter(
     storage_uri="memory://", # Guardar datos en memoria RAM (rápido y seguro para este volumen)
     strategy="fixed-window"
 )
+

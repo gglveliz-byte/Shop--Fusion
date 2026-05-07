@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente AI Qwen | {{ config_web.nombre_tienda if config_web else 'Tienda' }}</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
+    <style>
+        :root {
+            --primary-color: {{ config_web.color_primario if config_web else '#6366f1' }};
+            --primary-dark: {{ config_web.color_primario if config_web else '#4f46e5' }};
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Reutilizamos el estilo pero lo hacemos pantalla completa */
+        #chatbot-window {
+            position: relative;
+            bottom: auto;
+            left: auto;
+            display: flex;
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            margin: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid #eee;
+        }
+
+        #chatbot-bubble {
+            display: none !important;
+            /* Ocultar burbuja en esta página */
+        }
+
+        .chatbot-close {
+            display: none;
+            /* No cerrar en esta página dedicada */
+        }
+
+        .chat-container-full {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="chatbot-window">
+        <div class="chat-container-full">
+            <div class="chatbot-header">
+                <h3>🤖 Asistente AI Qwen</h3>
+            </div>
+            <div class="chatbot-model-select">
+                <select id="chatbot-model">
+                    <option value="qwen3.6-plus">Qwen 3.6 Plus (General)</option>
+                    <option value="qwen3-32b">Qwen 3-32b (Razonamiento)</option>
+                    <option value="qwen3-coder-480b-a35b-instruct">Qwen 3-Coder (Código)</option>
+                </select>
+            </div>
+            <div id="chatbot-messages" class="chatbot-messages">
+                <div class="message ai">¡Bienvenido al asistente inteligente! ¿En qué puedo ayudarte hoy?</div>
+                <div id="chatbot-typing" class="typing">Escribiendo...</div>
+            </div>
+            <div class="chatbot-input">
+                <input type="text" id="chatbot-input-field" placeholder="Escribe tu consulta aquí..." autofocus>
+                <button id="chatbot-send">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+    <script>
+        // Pequeño ajuste para que siempre esté abierto el chat
+        document.getElementById('chatbot-window').style.display = 'flex';
+    </script>
+</body>
+
+</html>

@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock %} | {{ config_web.nombre_tienda if config_web else 'Tienda' }}</title>
-    
+
     <!-- Metadatos SEO Dinámicos -->
-    <meta name="description" content="{{ config_web.meta_descripcion if config_web and config_web.meta_descripcion else 'Tu tienda online de confianza' }}">
-    
+    <meta name="description"
+        content="{{ config_web.meta_descripcion if config_web and config_web.meta_descripcion else 'Tu tienda online de confianza' }}">
+
     {% if config_web and config_web.favicon_path %}
     <link rel="icon" href="{{ url_for('static', filename='uploads/' + config_web.favicon_path) }}" type="image/x-icon">
     {% endif %}
@@ -16,75 +18,75 @@
     <!-- Token CSRF para validación de solicitudes y protección contra falsificación -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
+
     <!-- Motor de Color Dinámico (White-Label) -->
     <style>
         :root {
             --primary-color: {{ config_web.color_primario if config_web else '#6366f1' }};
             --secondary-color: {{ config_web.color_secundario if config_web else '#22c55e' }};
             --accent-color: {{ config_web.color_acento if config_web else '#06b6d4' }};
-            
-            /* Generar variantes automáticas para hover */
             --primary-dark: {{ config_web.color_primario if config_web else '#4f46e5' }};
             --secondary-dark: {{ config_web.color_secundario if config_web else '#16a34a' }};
         }
     </style>
-    
+
     {% block extra_css %}{% endblock %}
 </head>
+
 <body>
     {% block body %}
     <nav class="navbar">
         <div class="container">
             <a href="{{ url_for('tienda.index') }}" class="logo">
                 {% if config_web and config_web.logo_path %}
-                    <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}" alt="{{ config_web.nombre_tienda }}" style="height: 40px;">
+                <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}"
+                    alt="{{ config_web.nombre_tienda }}" style="height: 40px;">
                 {% else %}
-                    🛍️ {{ config_web.nombre_tienda if config_web else 'Tienda' }}
+                🛍️ {{ config_web.nombre_tienda if config_web else 'Tienda' }}
                 {% endif %}
             </a>
 
             <div class="nav-links">
                 {% if current_user.is_authenticated %}
-                    {# [MODIFICACIÓN SEGURIDAD TC015] #}
-                    {# Se reemplazó el uso de __class__.__name__ por propiedades explícitas definidas en models.py #}
-                    {# Archivo dependiente: models.py (clases Admin y Afiliado) #}
-                    {% if current_user.is_admin %}
-                        <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
-                        <a href="{{ url_for('admin.productos') }}">Productos</a>
-                        <a href="{{ url_for('admin.pedidos') }}">Pedidos</a>
-                        <a href="{{ url_for('admin.configuracion') }}">Configuración</a>
-                        <a href="{{ url_for('admin.afiliados') }}">Afiliados</a>
-                        <a href="{{ url_for('admin.comisiones') }}">Comisiones</a>
-                        <a href="{{ url_for('auth.logout') }}" class="btn-logout">Cerrar Sesión</a>
-                    {% elif current_user.is_afiliado %}
-                        <a href="{{ url_for('afiliado.dashboard') }}">Dashboard</a>
-                        <a href="{{ url_for('afiliado.productos') }}">Productos</a>
-                        <a href="{{ url_for('afiliado.pedidos') }}">Pedidos</a>
-                        <a href="{{ url_for('afiliado.comisiones') }}">Mis Comisiones</a>
-                        <a href="{{ url_for('afiliado.mi_cuenta') }}">Mi Cuenta</a>
-                        <a href="{{ url_for('auth.logout') }}" class="btn-logout">Cerrar Sesión</a>
-                    {% endif %}
+                {# [MODIFICACIÓN SEGURIDAD TC015] #}
+                {# Se reemplazó el uso de __class__.__name__ por propiedades explícitas definidas en models.py #}
+                {# Archivo dependiente: models.py (clases Admin y Afiliado) #}
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('admin.productos') }}">Productos</a>
+                <a href="{{ url_for('admin.pedidos') }}">Pedidos</a>
+                <a href="{{ url_for('admin.configuracion') }}">Configuración</a>
+                <a href="{{ url_for('admin.afiliados') }}">Afiliados</a>
+                <a href="{{ url_for('admin.comisiones') }}">Comisiones</a>
+                <a href="{{ url_for('auth.logout') }}" class="btn-logout">Cerrar Sesión</a>
+                {% elif current_user.is_afiliado %}
+                <a href="{{ url_for('afiliado.dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('afiliado.productos') }}">Productos</a>
+                <a href="{{ url_for('afiliado.pedidos') }}">Pedidos</a>
+                <a href="{{ url_for('afiliado.comisiones') }}">Mis Comisiones</a>
+                <a href="{{ url_for('afiliado.mi_cuenta') }}">Mi Cuenta</a>
+                <a href="{{ url_for('auth.logout') }}" class="btn-logout">Cerrar Sesión</a>
+                {% endif %}
                 {% else %}
-                    <a href="{{ url_for('tienda.index') }}">Inicio</a>
-                    <a href="{{ url_for('tienda.carrito') }}">🛒 Carrito</a>
-                    <a href="{{ url_for('tienda.unete') }}" class="btn-primary">Trabaja con Nosotros</a>
+                <a href="{{ url_for('tienda.index') }}">Inicio</a>
+                <a href="{{ url_for('tienda.carrito') }}">🛒 Carrito</a>
+                <a href="{{ url_for('tienda.unete') }}" class="btn-primary">Trabaja con Nosotros</a>
                 {% endif %}
             </div>
         </div>
     </nav>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="container">
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">
-                        {{ message }}
-                        <button class="alert-close" onclick="this.parentElement.remove()">×</button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
+    {% if messages %}
+    <div class="container">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+            {{ message }}
+            <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
     {% endwith %}
 
     <main>
@@ -100,4 +102,5 @@
 
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>
