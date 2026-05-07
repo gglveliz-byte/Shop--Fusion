@@ -1,8 +1,8 @@
 (function() {
-    // Configuración Base - Cambiar esta URL cuando se despliegue en producción (ej: https://shopfusion.com)
+    // Configuración Base - URL de tu servidor en Render
     const BASE_URL = window.location.origin.includes('127.0.0.1') || window.location.origin.includes('localhost') 
                      ? 'http://127.0.0.1:5000' 
-                     : window.location.origin;
+                     : 'https://shop--fusion.onrender.com'; // <--- AQUÍ pones tu URL real de Render
 
     // 1. Cargar CSS del Chatbot
     const link = document.createElement('link');
