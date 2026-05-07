@@ -49,3 +49,6 @@ logs/
 .pytest_cache/
 
 nul
+
+#testsprite
+testsprite_tests/
