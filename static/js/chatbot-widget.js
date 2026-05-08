@@ -7,10 +7,10 @@
     // Detectar posición desde el script tag (?pos=right o ?pos=left)
     const scriptTag = document.currentScript;
     const urlParams = new URLSearchParams(scriptTag.src.split('?')[1]);
-    
+
     // LÓGICA INTELIGENTE DE POSICIONAMIENTO
     let position = urlParams.get('pos') || 'left';
-    
+
     // Función para detectar si una esquina está ocupada
     const isCornerOccupied = (side) => {
         const x = side === 'left' ? 30 : window.innerWidth - 30;
