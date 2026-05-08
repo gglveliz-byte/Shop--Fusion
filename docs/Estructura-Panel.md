@@ -34,13 +34,18 @@ El panel de administración es el centro de control principal de Shop Fusion. Pe
   - Ver todas las comisiones (generadas, pagadas, pendientes)
   - Marcar comisiones individuales como pagadas
   - Pagar todas las comisiones de un afiliado de una vez
+- **Gestión de Marca (White-Label)**: [NUEVO]
+  - Configuración de identidad: Nombre de tienda, Logo y mensajes globales.
+  - Personalización visual: Control total de colores (Primario, Secundario, Acento).
+  - Contacto directo: Configuración de WhatsApp de soporte global.
 
 ### Casos de Uso Principales
 1. **Subir productos**: Administrador crea nuevos productos con imágenes y precios
 2. **Configurar promociones**: Establecer precios de oferta en productos
-3. **Revisar reportes**: Consultar métricas de ventas y rendimiento de afiliados
-4. **Gestionar pagos**: Procesar pagos de comisiones a afiliados
-5. **Control de calidad**: Validar pedidos antes de procesarlos
+3. **Personalizar Marca**: Ajustar la identidad visual del sitio (Colores y Logos)
+4. **Revisar reportes**: Consultar métricas de ventas y rendimiento de afiliados
+5. **Gestionar pagos**: Procesar pagos de comisiones a afiliados
+6. **Control de calidad**: Validar pedidos antes de procesarlos
 
 ---
 
@@ -54,7 +59,10 @@ El panel de afiliados está diseñado para vendedores independientes que promoci
 - **Catálogo de Productos**:
   - Ver todos los productos activos con cálculo automático de comisión
   - Generar enlaces personalizados para cada producto
-  - Filtrar productos por categorías
+  - **Herramientas de Marketing Avanzadas**: [NUEVO]
+    - Botón "Estado": Compartir directamente en WhatsApp Status / Instagram Stories.
+    - Botón "Descargar": Descarga automática de imagen del producto + texto publicitario optimizado.
+    - Botón "Copiar": Copiado rápido de descripción y enlace al portapapeles.
 - **Gestión de Pedidos**:
   - Ver pedidos generados por sus enlaces
   - Marcar pedidos como pagados (cuando recibe el pago del cliente)
@@ -68,9 +76,9 @@ El panel de afiliados está diseñado para vendedores independientes que promoci
   - Ver enlace de tienda personal
 
 ### Casos de Uso Principales
-1. **Compartir enlaces**: Generar y compartir enlaces personalizados en redes sociales
-2. **Consultar ganancias**: Revisar comisiones pendientes y totales ganados
-3. **Descargar recursos**: Acceder a materiales de marketing (logos, banners)
+1. **Compartir en Estados**: Usar el botón de compartir para publicar en Historias de Instagram/WhatsApp
+2. **Descargar material**: Obtener imágenes y textos para publicidad externa
+3. **Consultar ganancias**: Revisar comisiones pendientes y totales ganados
 4. **Gestionar ventas**: Marcar pedidos como pagados y validarlos
 5. **Actualizar perfil**: Mantener información de contacto actualizada
 
@@ -79,29 +87,28 @@ El panel de afiliados está diseñado para vendedores independientes que promoci
 ## Panel Cliente
 
 ### Descripción
-La tienda pública es la interfaz principal para clientes finales. Incluye navegación de productos, carrito de compras, proceso de checkout y seguimiento de pedidos. Soporta tanto la tienda principal como tiendas personalizadas de afiliados.
+La tienda pública es la interfaz principal para clientes finales. Incluye navegación de productos, carrito de compras, proceso de checkout y seguimiento de pedidos. La estética del sitio se adapta dinámicamente a la configuración de Marca Blanca del administrador.
 
 ### Funciones y Opciones Disponibles
-- **Página Principal**: Catálogo de productos con filtros por categoría
-- **Detalle de Producto**: Información completa, imágenes y opciones de compra
+- **Página Principal**: Catálogo de productos con filtros por categoría.
+- **Asistente de IA (Qwen)**: [NUEVO] Chatbot inteligente para soporte y consultas de productos.
+- **Detalle de Producto**: Información completa, imágenes y opciones de compra.
 - **Carrito de Compras**:
-  - Agregar productos con cantidades
-  - Actualizar cantidades
-  - Eliminar productos
-  - Calcular totales automáticamente
+  - Agregar productos con cantidades.
+  - Actualizar cantidades y eliminar productos.
+  - Calcular totales automáticamente con impuestos/comisiones.
 - **Proceso de Checkout**:
-  - Formulario de datos personales (nombre, teléfono, dirección)
-  - Cálculo automático de totales con comisión PayPal (5.4%)
-  - Integración con PayPal para pagos en línea
-  - Opción de pago contra entrega vía WhatsApp
-- **Confirmación de Pedido**: Resumen del pedido con enlace directo a WhatsApp
-- **Página "Únete"**: Información para convertirse en afiliado
+  - Formulario de datos personales (**Cifrados automáticamente** vía Fase 3 Hardening).
+  - Integración con PayPal para pagos en línea.
+  - Opción de pago contra entrega coordinado vía WhatsApp.
+- **Confirmación de Pedido**: Resumen del pedido con enlace directo a WhatsApp.
 
 ### Casos de Uso Principales
-1. **Agregar productos al carrito**: Navegar catálogo y seleccionar productos
-2. **Realizar pago**: Completar checkout con datos personales
-3. **Revisar estado del pedido**: Ver confirmación y detalles del pedido
+1. **Agregar productos al carrito**: Navegar catálogo y seleccionar productos.
+2. **Realizar pago seguro**: Completar checkout con datos protegidos por cifrado.
+3. **Revisar estado del pedido**: Ver confirmación y detalles del pedido.
 4. **Comprar con afiliado**: Acceder a tienda personalizada de vendedor
+5. **Interactuar con IA**: Consultar dudas sobre productos al asistente Qwen.
 
 ---
 
@@ -110,55 +117,54 @@ La tienda pública es la interfaz principal para clientes finales. Incluye naveg
 ### Paso a Paso
 
 1. **Acceso a la Tienda**
-   - Cliente ingresa a la URL principal (tienda del admin) o a URL de afiliado
-   - Si viene por enlace de afiliado, se guarda el código en sesión
+   - Cliente ingresa a la URL principal o a URL de afiliado.
+   - El sistema carga los colores y logo configurados por el administrador (White-Label).
 
 2. **Navegación y Selección**
-   - Explora productos por categorías
-   - Ve detalles de productos individuales
-   - Agrega productos al carrito con cantidades deseadas
+   - Explora productos por categorías y ve detalles individuales.
+   - Agrega productos al carrito con las cantidades deseadas.
 
 3. **Gestión del Carrito**
-   - Revisa productos agregados
-   - Modifica cantidades o elimina productos
-   - Ve total calculado automáticamente
+   - Revisa productos agregados, modifica cantidades o elimina ítems.
+   - Ve el total calculado automáticamente.
 
 4. **Proceso de Checkout**
-   - Ingresa datos personales (nombre, teléfono, dirección)
-   - Revisa resumen del pedido con totales
-   - Elige método de pago:
-     - **Pago contra entrega**: Envía pedido por WhatsApp
-     - **Pago con PayPal**: Procesa pago en línea con comisión adicional
+   - Ingresa datos personales (Nombre, Teléfono, Dirección). 
+   - **Nota de Seguridad**: Estos datos se cifran con Fernet (AES-256) antes de tocar la base de datos.
+   - Elige método de pago (WhatsApp o PayPal).
 
 5. **Confirmación del Pedido**
-   - Recibe confirmación con ID de pedido
-   - Enlace directo a WhatsApp para coordinar entrega
-   - Para pagos PayPal: Confirmación automática de pago completado
+   - Recibe confirmación con ID de pedido y resumen.
+   - Enlace directo a WhatsApp para coordinar la entrega con el vendedor.
+   - Para pagos PayPal: Confirmación automática de pago completado y validación inmediata.
 
 6. **Seguimiento (Futuro)**
-   - Sistema preparado para seguimiento de estado del pedido
-   - Notificaciones por WhatsApp
+   - Sistema preparado para seguimiento de estado del pedido en tiempo real.
+   - Notificaciones automáticas por WhatsApp sobre cambios de estado (Enviado, Entregado).
 
 ### Estados del Pedido
-- **Pendiente**: Pedido creado, esperando pago
-- **Pagado**: Pago confirmado (por vendedor o PayPal)
-- **Validado**: Vendedor confirmó pago y admin puede verlo
-- **Cancelado**: Pedido cancelado por cliente, vendedor o admin
+- **Pendiente**: Pedido creado, esperando pago o validación de comprobante.
+- **Pagado**: Pago confirmado automáticamente (PayPal) o manualmente (Vendedor/Admin).
+- **Validado**: Vendedor confirmó el pago y el administrador ha recibido la notificación para despacho.
+- **Cancelado**: Pedido anulado por el cliente, vendedor o administrador.
 
-### Integraciones Técnicas
-- **PayPal**: Procesamiento automático de pagos con comisión del 5.4%
-- **WhatsApp**: Comunicación directa para pedidos y soporte
-- **Sistema de Afiliados**: Códigos únicos para tracking de ventas
-- **Base de Datos**: Almacenamiento de pedidos, productos y usuarios
+### Integraciones Técnicas y Seguridad
+- **PayPal**: Procesamiento automático de pagos con comisión del 5.4% integrada en el checkout.
+- **WhatsApp**: Comunicación directa y automatizada para confirmación de pedidos y soporte.
+- **Marca Blanca (White-Label)**: Motor de plantillas dinámico que adapta colores y logos según la configuración del administrador.
+- **Protección PII (Fase 3)**: Blindaje de datos sensibles mediante cifrado Fernet (AES-256) en campos críticos (`whatsapp`, `cliente_direccion`, etc.).
+- **Asistente de IA (Qwen)**: Integración vía API para soporte inteligente y orquestación de herramientas.
+- **Logging y Auditoría (Fase 5)**: Sistema de logs rotativos para trazabilidad total de operaciones y errores.
+- **Base de Datos**: PostgreSQL con esquema optimizado y relaciones de integridad para Afiliados, Productos y Pedidos.
 
 ---
 
 ## Conclusiones
 
-El sistema Shop Fusion implementa un modelo de e-commerce B2B2C (Business-to-Business-to-Consumer) con:
-- **Administrador**: Control total del catálogo y operaciones
-- **Afiliados**: Vendedores independientes con comisiones
-- **Clientes**: Compradores finales con múltiples opciones de pago
+El sistema Shop Fusion ha evolucionado hacia una plataforma de **Marca Blanca Blindada**, permitiendo:
+- **Administrador**: Personalización total de la identidad visual y control de seguridad.
+- **Afiliados**: Herramientas de marketing directo para redes sociales.
+- **Clientes**: Una experiencia de compra segura y personalizada.
 
 
 

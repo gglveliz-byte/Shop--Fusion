@@ -78,46 +78,51 @@
 | creado_en | DateTime | default=datetime.utcnow |
 | pagada_en | DateTime | NULL |
 
-## 4. Relaciones:
+### F. Configuraciones (White-Label)
+| Campo | Tipo | Restricciones / Default |
+|-------|------|-------------------------|
+| id | Integer | PRIMARY KEY |
+| nombre_tienda | String(100) | default='Mi Tienda' |
+| logo_url | String(500) | NULL |
+| color_primario | String(20) | default='#6366f1' |
+| color_secundario | String(20) | default='#22c55e' |
+| color_acento | String(20) | default='#06b6d4' |
+| mensaje_bienvenida | Text | NULL |
+| mensaje_footer | Text | NULL |
+| whatsapp_contacto | String(20) | NULL |
+| actualizado_en | DateTime | onupdate=datetime.utcnow |
+
+## 4. Relaciones y Seguridad (Fase 3 Hardening):
 FOREIGN KEYS:
     - pedidos.afiliado_id -> afiliados.id
     - comisiones.afiliado_id -> afiliados.id
     - comisiones.pedido_id -> pedidos.id
 
-DEPENDENCIA ENTRE ENTIDADES:
-    - Un afiliado puede tener muchos pedidos
-    - Un afiliado puede tener muchas comisiones
-    - Un pedido tiene una comisión
+PROTECCIÓN PII (Cifrado Fernet):
+    - **Afiliados**: Campo `whatsapp_cifrado` (Protege el contacto del vendedor).
+    - **Pedidos**: Campos `cliente_nombre_cifrado`, `cliente_telefono_cifrado`, `cliente_direccion_cifrado`.
 
 ## 5. Scripts para iniciar la Base de Datos:
 
 - python init_db.py
 
-NOTA 1: El archivo *init_db.py* se encarga tanto de crear la base de datos como generar seed data. No recomendado para producción ya que al ejecutarse, se eliminan los datos existentes.
-
-NOTA 2: En el archivo  .env, en caso se utilice URL para base de datos de prueba con Neon, se tienen dos posibles opciones para que funcione:
-    - URL: postgresql+psycopg://....
-    - En requirements.txt, cambiar la librería psycopg[binary] por psycopg-2-binary para que no presente error al conectar con la base de datos.
+NOTA 1: El archivo *init_db.py* se encarga de crear las tablas, generar seed data e inicializar la configuración de marca blanca por defecto.
 
 ## 6. Buenas Prácticas para la Base de Datos:
 
 - Asegurar que las claves foráneas importantes estén indexadas.
-- Usar tipos de datos apropiados.
-- Mantener las tablas normalizadas.
-- Usar índices para consultas frecuentes.
+- Usar tipos de datos apropiados (Numeric para precios).
+- Cifrar datos sensibles antes de guardarlos en disco.
 
 ## 7. Configuración de Entorno (.env)
 
-Para el correcto funcionamiento del sistema y la base de datos, el archivo `.env` en la raíz del proyecto debe contener las siguientes variables:
+Para el correcto funcionamiento del sistema, el archivo `.env` debe contener:
 
-- `DATABASE_URL`: URL completa de conexión a PostgreSQL.
-- `SECRET_KEY`: Clave secreta para el cifrado de sesiones y seguridad de Flask.
-- `ADMIN_USER`: Nombre de usuario maestro para el administrador único.
-- `ADMIN_PASS`: Contraseña maestra para el administrador único.
-
-- IMPORTANTE:
-    El sistema de administración es de **Registro Único**. Esto significa que solo existe una fila en la tabla `admins`. Si cambias el `ADMIN_USER` y/o `ADMIN_PASS` en el `.env`, el sistema simplemente actualizará el nombre y/o contraseña de la fila existente la próxima vez que inicies sesión.
+- `DATABASE_URL`: Conexión a PostgreSQL.
+- `SECRET_KEY`: Seguridad de sesiones.
+- `ADMIN_USER` / `ADMIN_PASS`: Credenciales maestras.
+- `FERNET_KEY`: **[CRÍTICO]** Llave para el cifrado de datos PII.
+- `DASHSCOPE_API_KEY`: Llave para la integración con IA Qwen.
 
 ### Apéndice: Verificación de Esquema
-Se realizó una auditoría manual y automática del código fuente el 14/04/2026 para confirmar el esquema de trabajo. No se encontraron definiciones de `schema` o `__table_args__` en el proyecto. Se tienen llamadas a la base de datos y tablas, pero sin indicar el esquema
-necesario. Por lo tanto, se asume que se está utilizando el esquema por defecto `public`.
+Se realizó una auditoría manual y automática del código fuente el 08/05/2026 para confirmar el esquema de trabajo. No se encontraron definiciones de `schema` o `__table_args__` en el proyecto. Se asume que se está utilizando el esquema por defecto `public`.
