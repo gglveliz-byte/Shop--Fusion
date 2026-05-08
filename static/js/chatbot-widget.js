@@ -1,14 +1,53 @@
-(function() {
+(function () {
     // Configuración Base - Cambiar esta URL cuando se despliegue en producción (ej: https://shopfusion.com)
-    const BASE_URL = window.location.origin.includes('127.0.0.1') || window.location.origin.includes('localhost') 
-                     ? 'http://127.0.0.1:5000' 
-                     : window.location.origin;
+    const BASE_URL = window.location.origin.includes('127.0.0.1') || window.location.origin.includes('localhost')
+        ? 'http://127.0.0.1:5000'
+        : window.location.origin;
+
+    // Detectar posición desde el script tag (?pos=right o ?pos=left)
+    const scriptTag = document.currentScript;
+    const urlParams = new URLSearchParams(scriptTag.src.split('?')[1]);
+    
+    // LÓGICA INTELIGENTE DE POSICIONAMIENTO
+    let position = urlParams.get('pos') || 'left';
+    
+    // Función para detectar si una esquina está ocupada
+    const isCornerOccupied = (side) => {
+        const x = side === 'left' ? 30 : window.innerWidth - 30;
+        const y = window.innerHeight - 30;
+        const element = document.elementFromPoint(x, y);
+        // Si hay algo que no sea el cuerpo o la raíz, está ocupado
+        return element && !['HTML', 'BODY'].includes(element.tagName);
+    };
+
+    // Si la posición elegida está ocupada, intentar la otra
+    if (isCornerOccupied(position)) {
+        position = position === 'left' ? 'right' : 'left';
+    }
+
+    // DETECCIÓN DE TEMA (MODO OSCURO/CLARO)
+    const isDarkTheme = window.getComputedStyle(document.body).backgroundColor.match(/\d+/g)?.reduce((a, b) => +a + +b) < 380;
 
     // 1. Cargar CSS del Chatbot
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = BASE_URL + '/static/css/chatbot.css';
     document.head.appendChild(link);
+
+    // Inyectar estilos de posición dinámicos
+    const posStyle = document.createElement('style');
+    posStyle.innerHTML = `
+        #chatbot-bubble { 
+            ${position}: 20px !important; 
+            border: 2px solid ${isDarkTheme ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.1)'};
+            box-shadow: 0 4px 15px ${isDarkTheme ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.3)'} !important;
+        }
+        #chatbot-window { ${position}: 20px !important; }
+        @media (max-width: 600px) {
+            #chatbot-window { width: 90%; left: 5% !important; right: 5% !important; bottom: 80px; height: 70vh; }
+        }
+    `;
+    document.head.appendChild(posStyle);
 
     // 2. Inyectar HTML del Chatbot
     const chatbotHtml = `
@@ -101,7 +140,7 @@
         function addMessage(text, sender, reasoning = null) {
             const msgDiv = document.createElement('div');
             msgDiv.classList.add('message', sender);
-            
+
             if (reasoning) {
                 const rDiv = document.createElement('div');
                 rDiv.classList.add('reasoning');

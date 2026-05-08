@@ -5,7 +5,7 @@
     left: 20px;
     width: 60px;
     height: 60px;
-    background-color: var(--primary-color);
+    background-color: var(--primary-color, #6366f1);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -40,7 +40,7 @@
 }
 
 .chatbot-header {
-    background-color: var(--primary-color);
+    background-color: var(--primary-color, #6366f1);
     color: white;
     padding: 15px;
     display: flex;
@@ -95,7 +95,7 @@
 
 .message.user {
     align-self: flex-end;
-    background-color: var(--primary-color);
+    background-color: var(--primary-color, #6366f1);
     color: white;
     border-bottom-right-radius: 2px;
 }
@@ -135,7 +135,7 @@
 }
 
 .chatbot-input button {
-    background-color: var(--primary-color);
+    background-color: var(--primary-color, #6366f1);
     color: white;
     border: none;
     padding: 10px 15px;
@@ -145,7 +145,7 @@
 }
 
 .chatbot-input button:hover {
-    background-color: var(--primary-dark);
+    background-color: var(--primary-dark, #4f46e5);
 }
 
 /* Typing indicator */
