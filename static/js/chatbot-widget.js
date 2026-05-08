@@ -1,12 +1,9 @@
 (function () {
-    // Configuración Base - Cambiar esta URL cuando se despliegue en producción (ej: https://shopfusion.com)
-    const BASE_URL = window.location.origin.includes('127.0.0.1') || window.location.origin.includes('localhost')
-        ? 'http://127.0.0.1:5000'
-        : window.location.origin;
-
-    // Detectar posición desde el script tag (?pos=right o ?pos=left)
+    // Configuración Base Automática: Se detecta desde donde se carga el script
     const scriptTag = document.currentScript;
-    const urlParams = new URLSearchParams(scriptTag.src.split('?')[1]);
+    const scriptUrl = new URL(scriptTag.src);
+    const BASE_URL = scriptUrl.origin;
+    const urlParams = new URLSearchParams(scriptUrl.search);
 
     // LÓGICA INTELIGENTE DE POSICIONAMIENTO
     let position = urlParams.get('pos') || 'left';
