@@ -86,6 +86,9 @@
         const modelSelect = document.getElementById('chatbot-model');
         const typingIndicator = document.getElementById('chatbot-typing');
 
+        // Memoria del chat (últimos 10 mensajes)
+        let chatHistory = [];
+
         bubble.addEventListener('click', () => {
             windowChat.style.display = windowChat.style.display === 'flex' ? 'none' : 'flex';
             if (windowChat.style.display === 'flex') input.focus();
@@ -94,6 +97,24 @@
         closeBtn.addEventListener('click', () => {
             windowChat.style.display = 'none';
         });
+
+        // Botón para borrar historial
+        const setupClearButton = () => {
+            const header = document.querySelector('.chatbot-header');
+            const clearBtn = document.createElement('span');
+            clearBtn.innerHTML = ' 🗑️ ';
+            clearBtn.title = 'Borrar historial';
+            clearBtn.style.cursor = 'pointer';
+            clearBtn.style.marginLeft = '10px';
+            clearBtn.onclick = () => {
+                chatHistory = [];
+                messagesContainer.innerHTML = '<div class="message ai">Historial borrado. ¿En qué puedo ayudarte?</div>';
+                typingIndicator.style.display = 'none';
+                messagesContainer.appendChild(typingIndicator);
+            };
+            header.insertBefore(clearBtn, closeBtn);
+        };
+        setupClearButton();
 
         const sendMessage = async () => {
             const text = input.value.trim();
@@ -110,7 +131,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         message: text,
-                        model: modelSelect.value
+                        model: modelSelect.value,
+                        history: chatHistory // Enviar historial
                     })
                 });
 
@@ -120,7 +142,20 @@
                 if (data.error) {
                     addMessage("Error: " + data.error, 'ai');
                 } else {
-                    addMessage(data.response, 'ai', data.reasoning);
+                    addMessage(data.response, 'ai', data.reasoning, data.tool_calls);
+                    
+                    // Guardar en el historial
+                    chatHistory.push({"role": "user", "content": text});
+                    if (data.response) {
+                        chatHistory.push({"role": "assistant", "content": data.response});
+                    } else if (data.tool_calls) {
+                        chatHistory.push({"role": "assistant", "content": "Acción de herramienta detectada."});
+                    }
+
+                    // Limitar a los últimos 10 mensajes
+                    if (chatHistory.length > 10) {
+                        chatHistory = chatHistory.slice(-10);
+                    }
                 }
             } catch (error) {
                 typingIndicator.style.display = 'none';
@@ -133,10 +168,11 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-        function addMessage(text, sender, reasoning = null) {
+        function addMessage(text, sender, reasoning = null, tool_calls = null) {
             const msgDiv = document.createElement('div');
             msgDiv.classList.add('message', sender);
-
+            
+            // 1. Mostrar razonamiento si existe
             if (reasoning) {
                 const rDiv = document.createElement('div');
                 rDiv.classList.add('reasoning');
@@ -144,9 +180,37 @@
                 msgDiv.appendChild(rDiv);
             }
 
-            const tSpan = document.createElement('span');
-            tSpan.innerText = text;
-            msgDiv.appendChild(tSpan);
+            // 2. Mostrar acciones de herramientas (Function Calling)
+            if (tool_calls) {
+                tool_calls.forEach(tc => {
+                    const toolDiv = document.createElement('div');
+                    toolDiv.style.cssText = "background: #f0f7ff; border: 1px solid #007bff; border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 0.9rem; color: #0056b3;";
+                    
+                    let args = {};
+                    try { args = JSON.parse(tc.function.arguments); } catch(e) {}
+                    
+                    let itemsHtml = (args.items || []).map(item => `<li>${item.quantity}x ${item.product_name}</li>`).join('');
+                    
+                    toolDiv.innerHTML = `
+                        <strong>🔧 Acción Detectada: ${tc.function.name}</strong><br>
+                        <strong>Proveedor:</strong> ${args.supplier || 'N/A'}<br>
+                        <strong>Pedido:</strong><ul>${itemsHtml}</ul>
+                        <small><em>Estado: Pendiente de confirmación</em></small>
+                    `;
+                    msgDiv.appendChild(toolDiv);
+                });
+            }
+
+            // 3. Mostrar texto final
+            if (text) {
+                const tSpan = document.createElement('span');
+                tSpan.innerText = text;
+                msgDiv.appendChild(tSpan);
+            } else if (tool_calls) {
+                const tSpan = document.createElement('span');
+                tSpan.innerText = "He preparado los datos de la orden de compra solicitada. ¿Deseas proceder?";
+                msgDiv.appendChild(tSpan);
+            }
 
             messagesContainer.appendChild(msgDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;

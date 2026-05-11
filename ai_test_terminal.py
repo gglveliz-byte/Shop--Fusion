@@ -27,19 +27,27 @@ def test_ai():
     print("\nConsultando a la IA... (espera un momento)\n")
     
     # Llamamos al servicio
-    respuesta, razonamiento = qwen_service.get_response(pregunta, model=model_name)
+    result = qwen_service.get_response(pregunta, model=model_name)
     
-    # Si hay razonamiento (modelo 32b), lo mostramos primero
-    if razonamiento:
-        print("--- PROCESO DE PENSAMIENTO (Reasoning) ---")
-        print(razonamiento)
-        print("-" * 40)
-    
-    # Mostramos la respuesta final
-    print("\n--- RESPUESTA FINAL ---")
-    print(respuesta)
-    print("\n" + "="*40 + "\n")
+    # Mostrar Pensamiento si existe
+    if result.get("reasoning"):
+        print("\n" + "="*20 + " PENSAMIENTO " + "="*20)
+        print(result.get("reasoning"))
+        print("="*53 + "\n")
+
+    # Mostrar Llamada a Función si existe
+    if result.get("tool_calls"):
+        print("\n" + "🔧" * 5 + " DETECTADA ACCIÓN DE HERRAMIENTA " + "🔧" * 5)
+        for tc in result.get("tool_calls"):
+            print(f"Función: {tc['function']['name']}")
+            print(f"Argumentos: {tc['function']['arguments']}")
+        print("🔧" * 38 + "\n")
+
+    # Mostrar Respuesta Final
+    if result.get("content"):
+        print(f"Qwen: {result.get('content')}")
+    elif result.get("tool_calls"):
+        print("Qwen: He preparado la información técnica de la orden de compra solicitada.")
 
 if __name__ == "__main__":
-    test_ai()
 
