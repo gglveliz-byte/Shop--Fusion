@@ -111,11 +111,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') sendMessage();
     });
 
-    function addMessage(text, sender, reasoning = null, tool_calls = null) {
+    function addMessage(text, sender, reasoning = null) {
         const div = document.createElement('div');
         div.classList.add('message', sender);
 
-        // 1. Mostrar razonamiento si existe
+        // 1. Mostrar razonamiento si existe (Deep Thinking)
         if (reasoning) {
             const reasoningDiv = document.createElement('div');
             reasoningDiv.classList.add('reasoning');
@@ -123,35 +123,11 @@ document.addEventListener('DOMContentLoaded', () => {
             div.appendChild(reasoningDiv);
         }
 
-        // 2. Mostrar acciones de herramientas (Function Calling)
-        if (tool_calls) {
-            tool_calls.forEach(tc => {
-                const toolDiv = document.createElement('div');
-                toolDiv.style.cssText = "background: #f0f7ff; border: 1px solid #007bff; border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 0.9rem; color: #0056b3;";
-                
-                let args = {};
-                try { args = JSON.parse(tc.function.arguments); } catch(e) {}
-                
-                let itemsHtml = (args.items || []).map(item => `<li>${item.quantity}x ${item.product_name}</li>`).join('');
-                
-                toolDiv.innerHTML = `
-                    <strong>🔧 Acción Detectada: ${tc.function.name}</strong><br>
-                    <strong>Proveedor:</strong> ${args.supplier || 'N/A'}<br>
-                    <strong>Pedido:</strong><ul>${itemsHtml}</ul>
-                    <small><em>Estado: Pendiente de confirmación</em></small>
-                `;
-                div.appendChild(toolDiv);
-            });
-        }
-
-        // 3. Mostrar texto final
+        // 2. Mostrar texto final
         if (text) {
             const textSpan = document.createElement('span');
-            textSpan.innerText = text;
-            div.appendChild(textSpan);
-        } else if (tool_calls) {
-            const textSpan = document.createElement('span');
-            textSpan.innerText = "He preparado los datos de la orden de compra solicitada. ¿Deseas proceder?";
+            // Soporte básico para saltos de línea
+            textSpan.innerHTML = text.replace(/\n/g, '<br>');
             div.appendChild(textSpan);
         }
 

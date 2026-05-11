@@ -63,7 +63,8 @@ def create_order_from_json(order_data):
             "success": True, 
             "pedido_id": nuevo_pedido.id,
             "total": float(total_acumulado),
-            "mensaje": f"Pedido #{nuevo_pedido.id} creado exitosamente."
+            "mensaje": f"Pedido #{nuevo_pedido.id} creado exitosamente.",
+            "productos": productos_json
         }
 
     except Exception as e:

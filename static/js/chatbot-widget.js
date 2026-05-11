@@ -168,11 +168,11 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-        function addMessage(text, sender, reasoning = null, tool_calls = null) {
+        function addMessage(text, sender, reasoning = null) {
             const msgDiv = document.createElement('div');
             msgDiv.classList.add('message', sender);
             
-            // 1. Mostrar razonamiento si existe
+            // 1. Mostrar razonamiento si existe (Deep Thinking)
             if (reasoning) {
                 const rDiv = document.createElement('div');
                 rDiv.classList.add('reasoning');
@@ -180,35 +180,11 @@
                 msgDiv.appendChild(rDiv);
             }
 
-            // 2. Mostrar acciones de herramientas (Function Calling)
-            if (tool_calls) {
-                tool_calls.forEach(tc => {
-                    const toolDiv = document.createElement('div');
-                    toolDiv.style.cssText = "background: #f0f7ff; border: 1px solid #007bff; border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 0.9rem; color: #0056b3;";
-                    
-                    let args = {};
-                    try { args = JSON.parse(tc.function.arguments); } catch(e) {}
-                    
-                    let itemsHtml = (args.items || []).map(item => `<li>${item.quantity}x ${item.product_name}</li>`).join('');
-                    
-                    toolDiv.innerHTML = `
-                        <strong>🔧 Acción Detectada: ${tc.function.name}</strong><br>
-                        <strong>Proveedor:</strong> ${args.supplier || 'N/A'}<br>
-                        <strong>Pedido:</strong><ul>${itemsHtml}</ul>
-                        <small><em>Estado: Pendiente de confirmación</em></small>
-                    `;
-                    msgDiv.appendChild(toolDiv);
-                });
-            }
-
-            // 3. Mostrar texto final
+            // 2. Mostrar texto final
             if (text) {
                 const tSpan = document.createElement('span');
-                tSpan.innerText = text;
-                msgDiv.appendChild(tSpan);
-            } else if (tool_calls) {
-                const tSpan = document.createElement('span');
-                tSpan.innerText = "He preparado los datos de la orden de compra solicitada. ¿Deseas proceder?";
+                // Soporte básico para saltos de línea
+                tSpan.innerHTML = text.replace(/\n/g, '<br>');
                 msgDiv.appendChild(tSpan);
             }
 
