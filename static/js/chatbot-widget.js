@@ -56,9 +56,8 @@
             </div>
             <div class="chatbot-model-select">
                 <select id="chatbot-model">
-                    <option value="qwen3.6-plus">Qwen 3.6 Plus (General)</option>
-                    <option value="qwen3-32b">Qwen 3-32b (Razonamiento)</option>
-                    <option value="qwen3-coder-480b-a35b-instruct">Qwen 3-Coder (Código)</option>
+                    <option value="qwen-plus">Qwen Plus (Lógica y Ventas)</option>
+                    <option value="qwen-vl-max">Qwen VL Max (Visión y OCR)</option>
                 </select>
             </div>
             <div id="chatbot-messages" class="chatbot-messages">
