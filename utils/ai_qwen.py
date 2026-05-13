@@ -8,7 +8,7 @@ load_dotenv()
 class QwenAIService:
     """
     Servicio para interactuar con los modelos de Alibaba Cloud Qwen.
-    Configurado para manejar Ventas, CRM y Facturación.
+    Configurado para manejar Ventas, CRM y Facturación con inteligencia estratégica.
     """
     # Modelos oficiales aprobados (docs/seleccion_modelos_ia.md)
     MODEL_LOGICA = "qwen-plus"      # Para Orquestación, Ventas y Lógica
@@ -48,16 +48,14 @@ class QwenAIService:
         {
             "type": "function",
             "function": {
-                "name": "upsertDeal",
-                "description": "Crea o actualiza una oportunidad en el CRM. Úsalo para prospectos o clientes interesados.",
+                "name": "createDeal",
+                "description": "Registra una nueva oportunidad o prospecto en el CRM.",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "id": {"type": "integer", "description": "ID de la oportunidad si es para actualizar."},
-                        "customer_name": {"type": "string","description": "Nombre del prospecto."},
-                        "estimated_value": {"type": "number","description": "Valor monetario estimado del negocio."},
-                        "stage": {"type": "string", "enum": ["prospecto", "contactado", "negociacion", "cerrado_ganado", "cerrado_perdido"]},
-                        "notes": {"type": "string","description": "Detalles del interés del cliente o seguimiento."}
+                        "customer_name": {"type": "string", "description": "Nombre del prospecto."},
+                        "estimated_value": {"type": "number", "description": "Valor monetario del negocio."},
+                        "notes": {"type": "string", "description": "Detalles del interés."}
                     },
                     "required": ["customer_name", "estimated_value"]
                 }
@@ -67,7 +65,7 @@ class QwenAIService:
             "type": "function",
             "function": {
                 "name": "updateDealStage",
-                "description": "Cambia la etapa de un negocio existente (ej: de negociación a cerrado).",
+                "description": "Actualiza la etapa de un negocio (prospecto, contactado, negociacion, cerrado_ganado, cerrado_perdido).",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -81,8 +79,16 @@ class QwenAIService:
         {
             "type": "function",
             "function": {
-                "name": "getPipelineSummary",
-                "description": "Obtiene estadísticas del pipeline de ventas.",
+                "name": "forecastRevenue",
+                "description": "Extrae métricas básicas y proyecciones de ingresos del pipeline actual.",
+                "parameters": {"type": "object", "properties": {}}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "generateExecutiveSummary",
+                "description": "Genera resúmenes ejecutivos automáticos analizando ventas y CRM con Qwen-Max.",
                 "parameters": {"type": "object", "properties": {}}
             }
         },
@@ -95,7 +101,7 @@ class QwenAIService:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "pedido_id": {"type": "integer", "description": "ID del pedido que se desea facturar (debe estar en estado 'pagado')."}
+                        "pedido_id": {"type": "integer"}
                     },
                     "required": ["pedido_id"]
                 }
@@ -105,11 +111,11 @@ class QwenAIService:
             "type": "function",
             "function": {
                 "name": "getInvoiceStatus",
-                "description": "Consulta el estado y los detalles de una factura por su ID.",
+                "description": "Consulta el estado de una factura por su ID.",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "factura_id": {"type": "integer","description": "ID único de la factura a consultar."}
+                        "factura_id": {"type": "integer"}
                     },
                     "required": ["factura_id"]
                 }
@@ -117,19 +123,17 @@ class QwenAIService:
         }
     ]
 
-    # System Prompt Maestro FUSIONADO
-    SYSTEM_PROMPT = """Eres el Asistente de Gestión Integral de Shop Fusion. Tu rol abarca tres áreas críticas:
+    SYSTEM_PROMPT = """Eres el Asistente de Gestión Integral de Shop Fusion.
     
     1. ASISTENTE DE VENTAS: Ayudas a registrar pedidos con 'createCustomerOrder'. Necesitas Nombre, Teléfono, Dirección e ítems.
     
-    2. GESTIÓN DE CRM: Registras interesados con 'upsertDeal' y gestionas el pipeline con 'updateDealStage' y 'getPipelineSummary'. Úsalo para clientes que aún no están listos para comprar.
+    2. GESTIÓN CRM (Qwen-Plus): Registra prospectos con 'createDeal', actualiza etapas con 'updateDealStage' e informa métricas con 'forecastRevenue'.
     
-    3. FACTURACIÓN: Generas facturas con 'createInvoice' (solo pedidos pagados) y consultas estados con 'getInvoiceStatus'.
+    3. RESÚMENES EJECUTIVOS (Qwen-Max): Para análisis estratégicos de alto nivel, usa 'generateExecutiveSummary'.
     
-    Reglas Generales:
-    - Identidad: Profesional, estratégico y eficiente.
-    - Precisión: Si falta un ID o dato crítico, pídelo cordialmente.
-    - Confirmación: Informa siempre al usuario cuando una acción haya sido exitosa."""
+    4. FACTURACIÓN: Gestiona comprobantes con 'createInvoice' y 'getInvoiceStatus'.
+    
+    Sé profesional, ejecutivo y siempre confirma las acciones realizadas."""
 
     def __init__(self):
         # Configuración del cliente con el endpoint de Singapore (International)
@@ -200,7 +204,6 @@ class QwenAIService:
                 "tool_calls": tool_calls if tool_calls else None
             }
         except Exception as e:
-            print(f"DEBUG ERROR QWEN: {str(e)}")
             return f"Error Qwen: {str(e)}"
 
 # Instancia global del servicio

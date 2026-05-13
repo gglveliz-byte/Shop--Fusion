@@ -1,4 +1,4 @@
-from models import db, Oportunidad, ETAPAS_OPORTUNIDAD
+from models import db, Oportunidad, ETAPAS_OPORTUNIDAD, Pedido
 from decimal import Decimal
 from datetime import datetime
 
@@ -8,18 +8,15 @@ def upsert_opportunity(data):
     data: {cliente_nombre, valor_estimado, etapa, probabilidad, notas, afiliado_id}
     """
     try:
-        # Si viene un ID, intentamos actualizar
         opportunity_id = data.get('id')
         if opportunity_id:
             op = Oportunidad.query.get(opportunity_id)
             if not op:
                 return {"success": False, "error": "Oportunidad no encontrada"}
         else:
-            # Crear nueva
             op = Oportunidad()
             db.session.add(op)
 
-        # Asignar campos (manteniendo los actuales si no vienen en la data)
         op.cliente_nombre = data.get('cliente_nombre', op.cliente_nombre)
         
         if 'valor_estimado' in data:
@@ -29,16 +26,13 @@ def upsert_opportunity(data):
         
         if 'probabilidad' in data:
             op.probabilidad = int(data.get('probabilidad'))
-        
+
         op.notas = data.get('notas', op.notas)
         op.afiliado_id = data.get('afiliado_id', op.afiliado_id)
 
         db.session.commit()
-        return {
-            "success": True, 
-            "id": op.id, 
-            "mensaje": f"Oportunidad de '{op.cliente_nombre}' gestionada correctamente."
-        }
+        return {"success": True, "id": op.id, "mensaje": f"Negocio de '{op.cliente_nombre}' gestionado."}
+        
     except Exception as e:
         db.session.rollback()
         return {"success": False, "error": str(e)}
@@ -49,55 +43,58 @@ def update_opportunity_stage(opportunity_id, new_stage):
     """
     try:
         op = Oportunidad.query.get(opportunity_id)
-        if not op:
-            return {"success": False, "error": "Negocio no encontrado"}
+        if not op: return {"success": False, "error": "Negocio no encontrado"}
         
-        # Validar que la etapa sea una de las oficiales definidas en models.py
         etapas_validas = [e[0] for e in ETAPAS_OPORTUNIDAD]
         if new_stage not in etapas_validas:
-            return {"success": False, "error": f"Etapa '{new_stage}' no es válida."}
+            return {"success": False, "error": f"Etapa '{new_stage}' no válida."}
 
         op.etapa = new_stage
-        
-        # Lógica de probabilidad automática basada en la etapa
-        probabilidades_sugeridas = {
-            'prospecto': 10,
-            'contactado': 25,
-            'negociacion': 50,
-            'cerrado_ganado': 100,
-            'cerrado_perdido': 0
-        }
-        op.probabilidad = probabilidades_sugeridas.get(new_stage, op.probabilidad)
+        probabilidades = {'prospecto': 10, 'contactado': 25, 'negociacion': 50, 'cerrado_ganado': 100, 'cerrado_perdido': 0}
+        op.probabilidad = probabilidades.get(new_stage, op.probabilidad)
 
         db.session.commit()
-        return {"success": True, "mensaje": f"Negocio movido a la etapa: {new_stage}"}
+        return {"success": True, "mensaje": f"Etapa actualizada a {new_stage}"}
     except Exception as e:
         db.session.rollback()
         return {"success": False, "error": str(e)}
 
-def get_pipeline_summary(afiliado_id=None):
+def get_pipeline_summary():
     """
     Paso 2.3: Desarrollo de cálculos de Forecast (Proyección de ingresos).
     Extrae estadísticas para que la IA genere el reporte estratégico.
     """
-    query = Oportunidad.query
-    if afiliado_id:
-        query = query.filter_by(afiliado_id=afiliado_id)
-    
-    deals = query.all()
-    
+    deals = Oportunidad.query.all()
     summary = {
         "total_deals": len(deals),
         "valor_nominal_total": float(sum(d.valor_estimado for d in deals)),
-        "etapas_conteo": {},
-        "forecast_ingresos": 0.0 # Cálculo: Valor * (Probabilidad/100)
+        "forecast_ingresos": sum(float(d.valor_estimado) * (d.probabilidad / 100.0) for d in deals),
+        "etapas": {},
+        "lista_negocios": [{"id": d.id, "cliente": d.cliente_nombre, "valor": float(d.valor_estimado), "etapa": d.etapa} for d in deals]
     }
-
     for d in deals:
-        # Contar por etapa
-        summary["etapas_conteo"][d.etapa] = summary["etapas_conteo"].get(d.etapa, 0) + 1
-        
-        # Calcular Forecast (Ingreso ponderado)
-        summary["forecast_ingresos"] += float(d.valor_estimado) * (d.probabilidad / 100.0)
-
+        summary["etapas"][d.etapa] = summary["etapas"].get(d.etapa, 0) + 1
     return summary
+
+def get_executive_report_data():
+    """
+    Backlog: Generar resúmenes ejecutivos automáticos usando Qwen-Max.
+    Cruza Ventas Reales vs Proyecciones CRM.
+    """
+    pedidos_pagados = Pedido.query.filter_by(estado='pagado').all()
+    ventas_reales = float(sum(p.total for p in pedidos_pagados))
+    conteo_ventas = len(pedidos_pagados)
+    crm = get_pipeline_summary()
+
+    return {
+        "ventas_reales": {"monto": ventas_reales, "cantidad": conteo_ventas},
+        "crm_pipeline": {
+            "total_negocios": crm['total_deals'],
+            "forecast": crm['forecast_ingresos'],
+            "valor_potencial": crm['valor_nominal_total']
+        },
+        "analisis": {
+            "brecha": crm['valor_nominal_total'] - ventas_reales,
+            "eficiencia": (conteo_ventas / crm['total_deals'] * 100) if crm['total_deals'] > 0 else 0
+        }
+    }

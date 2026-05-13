@@ -79,7 +79,7 @@ def chat():
             )
 
         # --- Lógica de CRM ---
-        elif func_name == "upsertDeal":
+        elif func_name == "createDeal":
             from utils.crm import upsert_opportunity
             db_res = upsert_opportunity({
                 'id': args.get('id'),
@@ -95,11 +95,20 @@ def chat():
             db_res = update_opportunity_stage(args.get('deal_id'), args.get('new_stage'))
             system_msg = f"Cambio de etapa realizado. Resultado: {json.dumps(db_res)}. Informa al usuario."
 
-        elif func_name == "getPipelineSummary":
+        elif func_name == "forecastRevenue":
             from utils.crm import get_pipeline_summary
             db_res = get_pipeline_summary()
-            system_msg = f"Estadísticas del pipeline: {json.dumps(db_res)}. Da un resumen estratégico usando Qwen-Max."
-            target_model = "qwen-max" # Forzamos el modelo potente para análisis
+            system_msg = f"Estadísticas del pipeline: {json.dumps(db_res)}. Da un resumen rápido de las proyecciones."
+            target_model = "qwen-plus"
+
+        elif func_name == "generateExecutiveSummary":
+            from utils.crm import get_executive_report_data
+            db_res = get_executive_report_data()
+            system_msg = (
+                f"DATOS ESTRATÉGICOS: {json.dumps(db_res)}. Analiza estos datos como consultor senior. "
+                "Genera un resumen ejecutivo sobre salud financiera y proyecciones. Sé profesional."
+            )
+            target_model = "qwen-max" # REQUERIMIENTO: Qwen-Max para resúmenes
 
         # --- Lógica de Facturación ---
         elif func_name == "createInvoice":
