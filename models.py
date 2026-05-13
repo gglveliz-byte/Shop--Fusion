@@ -124,6 +124,7 @@ class Afiliado(UserMixin, db.Model):
     # [FASE 3 / E11 - ERRORES MEDIOS] Relaciones optimizadas con carga ansiosa
     pedidos = db.relationship('Pedido', backref='afiliado', lazy='joined')
     comisiones = db.relationship('Comision', backref='afiliado', lazy='joined')
+    oportunidades = db.relationship('Oportunidad', backref='vendedor', lazy='dynamic')
 
     def set_password(self, password):
         """Encriptar contraseña"""
@@ -422,6 +423,46 @@ class Comision(db.Model):
 
     def __repr__(self):
         return f'<Comision #{self.id} - Pedido #{self.pedido_id} - ${self.monto}>'
+
+
+# ==================== CRM & PIPELINE MODELS ====================
+
+ETAPAS_OPORTUNIDAD = [
+    ('prospecto', 'Prospecto (Lead)'),
+    ('contactado', 'Contactado'),
+    ('negociacion', 'En Negociación'),
+    ('cerrado_ganado', 'Cerrado (Ganado)'),
+    ('cerrado_perdido', 'Cerrado (Perdido)')
+]
+
+class Oportunidad(db.Model):
+    """
+    Representa una oportunidad de venta o prospecto en el pipeline CRM.
+    Permite a la IA rastrear el progreso de una venta antes de que se convierta en pedido.
+    """
+    __tablename__ = 'oportunidades'
+
+    id = db.Column(db.Integer, primary_key=True)
+    cliente_nombre = db.Column(db.String(100), nullable=False)
+    valor_estimado = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    etapa = db.Column(db.String(30), default='prospecto', index=True)
+    probabilidad = db.Column(db.Integer, default=10)  # 0 a 100%
+    notas = db.Column(db.Text)
+    
+    # Vinculación con el vendedor (afiliado)
+    afiliado_id = db.Column(db.Integer, db.ForeignKey('afiliados.id'), nullable=True)
+    
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+    actualizado_en = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # [PASO 2 - SANITIZACIÓN]
+    @validates('cliente_nombre', 'notas')
+    def validate_crm_text(self, key, value):
+        """Sanitiza datos del CRM (Anti-XSS)"""
+        return sanitize_html(value)
+
+    def __repr__(self):
+        return f'<Oportunidad {self.cliente_nombre} - {self.etapa}>'
 
 
 # User loader para Flask-Login
