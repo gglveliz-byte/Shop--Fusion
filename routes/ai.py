@@ -66,21 +66,46 @@ def chat():
             # EJECUCIÓN REAL EN BASE DE DATOS
             print(f"DEBUG: Ejecutando create_order_from_json con: {order_data}")
             db_res = create_order_from_json(order_data)
-            print(f"DEBUG: Resultado DB: {db_res}")
             
-            # 3. Segunda llamada a la IA para que dé la respuesta final al usuario
+            # Segunda llamada para respuesta final con instrucciones detalladas de calidad
             system_msg = (
                 f"El sistema ha ejecutado la acción. Resultado: {json.dumps(db_res)}. "
                 "Informa al usuario con lenguaje natural. MUY IMPORTANTE: Incluye un resumen detallado "
                 "que enumere los productos comprados, sus cantidades y el total a pagar. "
                 "Si hubo un error (como stock insuficiente), explícalo claramente."
             )
-            print("DEBUG: Solicitando respuesta final con resumen detallado...")
             final_result = qwen_service.get_response(mensaje, model=modelo, history=historial, system_instruction=system_msg)
-            
+
+        elif func_name == "upsertDeal":
+            from utils.crm import upsert_opportunity
+            db_res = upsert_opportunity({
+                'id': args.get('id'),
+                'cliente_nombre': args.get('customer_name'),
+                'valor_estimado': args.get('estimated_value'),
+                'etapa': args.get('stage'),
+                'notas': args.get('notes')
+            })
+            system_msg = f"Se ha actualizado/creado un negocio en el CRM. Resultado: {json.dumps(db_res)}. Informa al usuario."
+            final_result = qwen_service.get_response(mensaje, model=modelo, history=historial, system_instruction=system_msg)
+
+        elif func_name == "updateDealStage":
+            from utils.crm import update_opportunity_stage
+            db_res = update_opportunity_stage(args.get('deal_id'), args.get('new_stage'))
+            system_msg = f"Se ha cambiado la etapa del negocio en el pipeline. Resultado: {json.dumps(db_res)}. Informa al usuario."
+            final_result = qwen_service.get_response(mensaje, model=modelo, history=historial, system_instruction=system_msg)
+
+        elif func_name == "getPipelineSummary":
+            from utils.crm import get_pipeline_summary
+            db_res = get_pipeline_summary()
+            # [USO DE QWEN-MAX PARA REPORTES ESTRATÉGICOS]
+            system_msg = f"Aquí tienes las estadísticas del pipeline: {json.dumps(db_res)}. Analiza los datos y da un resumen ejecutivo estratégico de alta calidad usando Qwen-Max."
+            final_result = qwen_service.get_response(mensaje, model="qwen-max", history=historial, system_instruction=system_msg)
+
+        # 3. Retornar la respuesta final (común para todas las herramientas)
+        if db_res:
             final_content = final_result.get("content")
             if not final_content:
-                final_content = f"He procesado tu solicitud. Resultado: {db_res.get('message', 'Operación completada')}"
+                final_content = f"Operación completada. Detalle: {db_res.get('mensaje', 'Éxito')}"
             
             return jsonify({
                 "response": final_content,

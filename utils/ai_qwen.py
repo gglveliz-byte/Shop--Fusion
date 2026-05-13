@@ -58,18 +58,69 @@ class QwenAIService:
                     "required": ["customer_name", "customer_phone", "customer_address", "items"]
                 }
             }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "upsertDeal",
+                "description": "Crea o actualiza una oportunidad en el CRM. Úsalo para prospectos o clientes interesados que aún no compran.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "integer", "description": "ID de la oportunidad si es para actualizar."},
+                        "customer_name": {"type": "string", "description": "Nombre del prospecto."},
+                        "estimated_value": {"type": "number", "description": "Valor monetario estimado del negocio."},
+                        "stage": {
+                            "type": "string", 
+                            "enum": ["prospecto", "contactado", "negociacion", "cerrado_ganado", "cerrado_perdido"]
+                        },
+                        "notes": {"type": "string", "description": "Detalles del interés del cliente o seguimiento."}
+                    },
+                    "required": ["customer_name", "estimated_value"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "updateDealStage",
+                "description": "Cambia la etapa de un negocio existente (ej: de negociación a cerrado).",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "deal_id": {"type": "integer"},
+                        "new_stage": {
+                            "type": "string", 
+                            "enum": ["prospecto", "contactado", "negociacion", "cerrado_ganado", "cerrado_perdido"]
+                        }
+                    },
+                    "required": ["deal_id", "new_stage"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "getPipelineSummary",
+                "description": "Obtiene estadísticas del pipeline de ventas (totales, pronósticos, conteos por etapa).",
+                "parameters": {
+                    "type": "object",
+                    "properties": {}
+                }
+            }
         }
     ]
 
     # System Prompt Maestro para el comportamiento de la IA
-    SYSTEM_PROMPT = """Eres el Asistente de Ventas Inteligente de Shop Fusion. Tu objetivo es ayudar a los clientes a realizar pedidos.
+    SYSTEM_PROMPT = """Eres el Asistente de Ventas y CRM Inteligente de Shop Fusion.
     
     Tus reglas de comportamiento son:
-    1. Identidad: Eres amable, profesional y enfocado en cerrar ventas.
-    2. Gestión de Pedidos: Cuando un cliente indique qué productos quiere y dé sus datos, usa la herramienta 'createCustomerOrder'.
-    3. Información Requerida: Para crear un pedido necesitas OBLIGATORIAMENTE: Nombre, Teléfono, Dirección y la lista de productos con sus IDs.
-    4. Validación: Si falta alguno de estos datos, pídelo cordialmente antes de procesar la orden.
-    5. Confirmación: Una vez ejecutada la herramienta, confirma al cliente que su pedido ha sido registrado exitosamente."""
+    1. Identidad: Eres amable, profesional y enfocado en cerrar ventas de forma estratégica.
+    2. Ventas Directas: Usa 'createCustomerOrder' cuando un cliente indique qué productos quiere comprar ya mismo. Necesitas: Nombre, Teléfono, Dirección e ítems.
+    3. Gestión de CRM: Usa 'upsertDeal' para registrar prospectos (leads) o negocios que aún están en negociación. Pide siempre el nombre y valor estimado.
+    4. Seguimiento: Usa 'updateDealStage' cuando un cliente avance en su decisión (ej: de negociación a cerrado).
+    5. Análisis: Si te preguntan sobre el estado de las ventas o el pipeline, usa 'getPipelineSummary'.
+    6. Validación: Si faltan datos para un pedido o un negocio, pídelos cordialmente antes de procesar."""
 
     def __init__(self):
         # Configuración del cliente con el endpoint de Singapore (International)
