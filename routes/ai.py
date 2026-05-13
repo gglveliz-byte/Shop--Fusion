@@ -26,9 +26,19 @@ def chat():
     if not mensaje:
         return jsonify({"error": "El mensaje es obligatorio"}), 400
     
-    # 1. Primera llamada a la IA para detectar intención
+    # 1. Determinar qué herramientas puede usar este usuario
+    from flask_login import current_user
+    es_admin = hasattr(current_user, 'username') # Verificación de rol administrativo
+    
+    # Si no es admin, filtramos las herramientas de facturación
+    herramientas_disponibles = qwen_service.TOOLS
+    if not es_admin:
+        herramientas_disponibles = [t for t in qwen_service.TOOLS if t['function']['name'] == 'createCustomerOrder']
+        print("DEBUG: Usuario no-admin detectado. Deshabilitando herramientas de facturación.")
+
+    # 2. Primera llamada a la IA para detectar intención
     print(f"DEBUG: Enviando mensaje a IA: {mensaje}")
-    result = qwen_service.get_response(mensaje, model=modelo, history=historial)
+    result = qwen_service.get_response(mensaje, model=modelo, history=historial, tools=herramientas_disponibles)
     
     # Si ocurrió un error (devuelve un string en lugar de dict en caso de excepción capturada)
     if isinstance(result, str):
@@ -88,6 +98,62 @@ def chat():
                 "status": "tool_executed",
                 "db_result": db_res
             })
+
+        elif func_name == "createInvoice":
+            # [NUEVO] Manejador de creación de facturas desde la IA
+            from models import db, Pedido, Factura
+            from utils.billing import calculate_invoice_data
+            
+            pedido_id = args.get('pedido_id')
+            pedido = Pedido.query.get(pedido_id)
+            
+            if not pedido:
+                res = {"success": False, "message": f"Pedido #{pedido_id} no encontrado."}
+            elif pedido.estado != 'pagado':
+                res = {"success": False, "message": f"El pedido #{pedido_id} aún no está pagado. No se puede facturar."}
+            elif pedido.factura:
+                res = {"success": False, "message": f"El pedido #{pedido_id} ya tiene la factura {pedido.factura.numero_factura}."}
+            else:
+                try:
+                    datos = calculate_invoice_data(pedido)
+                    nueva_f = Factura(
+                        numero_factura=Factura.generar_numero_correlativo(),
+                        pedido_id=pedido.id,
+                        subtotal=datos['subtotal'],
+                        iva_porcentaje=datos['iva_porcentaje'],
+                        iva_monto=datos['iva_monto'],
+                        total=datos['total']
+                    )
+                    db.session.add(nueva_f)
+                    db.session.commit()
+                    res = {"success": True, "message": f"Factura {nueva_f.numero_factura} generada exitosamente.", "factura_id": nueva_f.id}
+                except Exception as e:
+                    db.session.rollback()
+                    res = {"success": False, "message": str(e)}
+
+            # Devolver a la IA para confirmación final al usuario
+            final_res = qwen_service.get_response(f"Acción Factura: {json.dumps(res)}", model=modelo, history=historial)
+            return jsonify(final_res)
+
+        elif func_name == "getInvoiceStatus":
+            # [NUEVO] Manejador de consulta de facturas desde la IA
+            from models import Factura
+            factura_id = args.get('factura_id')
+            f = Factura.query.get(factura_id)
+            
+            if not f:
+                res = {"success": False, "message": "Factura no encontrada."}
+            else:
+                res = {
+                    "success": True, 
+                    "numero": f.numero_factura, 
+                    "estado": f.estado, 
+                    "total": float(f.total),
+                    "fecha": f.creado_en.strftime('%d/%m/%Y')
+                }
+
+            final_res = qwen_service.get_response(f"Resultado Consulta Factura: {json.dumps(res)}", model=modelo, history=historial)
+            return jsonify(final_res)
 
     # Si no hubo herramientas, devolver la respuesta normal
     print(f"DEBUG: Respuesta normal de IA: {result.get('content')[:50] if result.get('content') else 'VACIO'}...")

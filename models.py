@@ -465,6 +465,47 @@ class Oportunidad(db.Model):
         return f'<Oportunidad {self.cliente_nombre} - {self.etapa}>'
 
 
+# ==================== MÓDULO DE FACTURACIÓN ====================
+
+class Factura(db.Model):
+    """
+    Modelo para gestionar la facturación legal de los pedidos.
+    Permite el seguimiento de montos, impuestos y estado de cobro.
+    """
+    __tablename__ = 'facturas'
+
+    id = db.Column(db.Integer, primary_key=True)
+    numero_factura = db.Column(db.String(20), unique=True, nullable=False, index=True)
+    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False, unique=True)
+    
+    # Desglose Financiero
+    subtotal = db.Column(db.Numeric(12, 2), nullable=False)
+    iva_porcentaje = db.Column(db.Numeric(5, 2), nullable=False)
+    iva_monto = db.Column(db.Numeric(12, 2), nullable=False)
+    total = db.Column(db.Numeric(12, 2), nullable=False)
+    
+    estado = db.Column(db.String(20), default='pendiente')  # pendiente, pagada, anulada
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relación uno a uno con Pedido
+    pedido = db.relationship('Pedido', backref=db.backref('factura', uselist=False))
+
+    @classmethod
+    def generar_numero_correlativo(cls):
+        """Genera el siguiente número de factura automático (ej: FAC-0001)"""
+        ultima = cls.query.order_by(cls.id.desc()).first()
+        if not ultima:
+            return "FAC-0001"
+        try:
+            ultimo_num = int(ultima.numero_factura.split('-')[1])
+            return f"FAC-{(ultimo_num + 1):04d}"
+        except:
+            return "FAC-0001"
+
+    def __repr__(self):
+        return f'<Factura {self.numero_factura} - Pedido #{self.pedido_id}>'
+
+
 # User loader para Flask-Login
 def setup_login_manager(login_manager):
     """Configurar login manager"""
@@ -519,6 +560,9 @@ class Configuracion(db.Model):
     
     # Metadatos SEO
     meta_descripcion = db.Column(db.Text, nullable=True)
+    
+    # Configuración de Facturación (Fase 1)
+    iva_porcentaje = db.Column(db.Numeric(5, 2), default=15.00)
     
     actualizado_en = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
