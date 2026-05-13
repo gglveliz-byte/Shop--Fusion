@@ -230,7 +230,7 @@
                 if (data.success) {
                     btn.style.background = "#059669";
                     btn.innerText = "✓ Emitida";
-                    addMessage(`Factura generada: ${data.numero}`, 'ai');
+                    addMessage(`Factura generada: <strong>${data.numero}</strong><br><a href="/facturacion/ver_documento/${data.factura_id}" target="_blank" style="color: #4f46e5; text-decoration: underline;">📄 Ver Factura</a>`, 'ai');
                 } else {
                     alert("Error: " + data.error);
                     btn.disabled = false;
