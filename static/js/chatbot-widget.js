@@ -143,13 +143,13 @@
                     addMessage("Error: " + data.error, 'ai');
                 } else {
                     addMessage(data.response, 'ai', data.reasoning, data.tool_calls);
-                    
+
                     // Guardar en el historial
-                    chatHistory.push({"role": "user", "content": text});
+                    chatHistory.push({ "role": "user", "content": text });
                     if (data.response) {
-                        chatHistory.push({"role": "assistant", "content": data.response});
+                        chatHistory.push({ "role": "assistant", "content": data.response });
                     } else if (data.tool_calls) {
-                        chatHistory.push({"role": "assistant", "content": "Acción de herramienta detectada."});
+                        chatHistory.push({ "role": "assistant", "content": "Acción de herramienta detectada." });
                     }
 
                     // Limitar a los últimos 10 mensajes
@@ -168,28 +168,77 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-        function addMessage(text, sender, reasoning = null) {
-            const msgDiv = document.createElement('div');
-            msgDiv.classList.add('message', sender);
-            
-            // 1. Mostrar razonamiento si existe (Deep Thinking)
+        function addMessage(text, sender, reasoning = null, tool_calls = null) {
+            const div = document.createElement('div');
+            div.classList.add('message', sender);
+
             if (reasoning) {
-                const rDiv = document.createElement('div');
-                rDiv.classList.add('reasoning');
-                rDiv.innerText = "Pensamiento: " + reasoning;
-                msgDiv.appendChild(rDiv);
+                const reasoningDiv = document.createElement('div');
+                reasoningDiv.classList.add('reasoning');
+                reasoningDiv.innerText = "Pensamiento: " + reasoning;
+                div.appendChild(reasoningDiv);
             }
 
-            // 2. Mostrar texto final
             if (text) {
-                const tSpan = document.createElement('span');
-                // Soporte básico para saltos de línea
-                tSpan.innerHTML = text.replace(/\n/g, '<br>');
-                msgDiv.appendChild(tSpan);
+                const textSpan = document.createElement('span');
+                textSpan.innerHTML = text.replace(/\n/g, '<br>');
+                div.appendChild(textSpan);
             }
 
-            messagesContainer.appendChild(msgDiv);
+            // [NUEVO] Soporte para Ficha de Acción de Facturación en el Widget
+            if (tool_calls) {
+                tool_calls.forEach(tool => {
+                    const actionDiv = document.createElement('div');
+                    actionDiv.classList.add('action-box');
+
+                    let toolName = tool.function.name;
+                    let args = JSON.parse(tool.function.arguments);
+
+                    if (toolName === 'createInvoice') {
+                        actionDiv.innerHTML = `
+                            <div style="background: #eef2ff; border-left: 3px solid #4f46e5; padding: 8px; margin-top: 8px; border-radius: 4px; font-size: 0.9em;">
+                                <strong style="color: #4f46e5;">🔧 Factura Disponible</strong><br>
+                                <small>Pedido: #${args.pedido_id}</small><br>
+                                <button class="confirm-btn" onclick="confirmarFacturaWidget(${args.pedido_id}, this)" 
+                                        style="background: #4f46e5; color: white; border: none; padding: 4px 8px; border-radius: 4px; margin-top: 5px; cursor: pointer; width: 100%;">
+                                    Emitir Factura
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        actionDiv.innerHTML = `
+                            <div style="background: #f3f4f6; border-left: 3px solid #9ca3af; padding: 5px; margin-top: 8px; border-radius: 4px; font-size: 0.8em;">
+                                <strong>🔧 Acción: ${toolName}</strong>
+                            </div>
+                        `;
+                    }
+                    div.appendChild(actionDiv);
+                });
+            }
+
+            messagesContainer.appendChild(div);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
+
+        // Función global para el widget
+        window.confirmarFacturaWidget = async (pedidoId, btn) => {
+            btn.disabled = true;
+            btn.innerText = "Emitiendo...";
+            try {
+                const res = await fetch(`/facturacion/generar/${pedidoId}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    btn.style.background = "#059669";
+                    btn.innerText = "✓ Emitida";
+                    addMessage(`Factura generada: <strong>${data.numero}</strong><br><a href="/facturacion/ver_documento/${data.factura_id}" target="_blank" style="color: #4f46e5; text-decoration: underline;">📄 Ver Factura</a>`, 'ai');
+                } else {
+                    alert("Error: " + data.error);
+                    btn.disabled = false;
+                    btn.innerText = "Reintentar";
+                }
+            } catch (e) {
+                alert("Error de conexión");
+            }
+        };
     }, 100);
 })();

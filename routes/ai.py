@@ -1,5 +1,6 @@
 import json
 from flask import Blueprint, request, jsonify, render_template
+from flask_login import current_user
 from utils.ai_qwen import qwen_service
 from utils.rate_limit import limiter
 from utils.orders import create_order_from_json
@@ -14,7 +15,7 @@ def interface():
 @bp.route('/chat', methods=['POST'])
 @limiter.limit("10 per minute")
 def chat():
-    """Endpoint para procesar mensajes del chatbot con soporte para ejecución de herramientas."""
+    """Endpoint para procesar mensajes del chatbot con soporte para Ventas, CRM y Facturación."""
     data = request.get_json()
     if not data:
         return jsonify({"error": "No hay datos en la solicitud"}), 400
@@ -26,34 +27,41 @@ def chat():
     if not mensaje:
         return jsonify({"error": "El mensaje es obligatorio"}), 400
     
-    # 1. Primera llamada a la IA para detectar intención
-    print(f"DEBUG: Enviando mensaje a IA: {mensaje}")
-    result = qwen_service.get_response(mensaje, model=modelo, history=historial)
+    # 1. Determinar qué herramientas puede usar este usuario (Permisos)
+    es_admin = hasattr(current_user, 'username')
     
-    # Si ocurrió un error (devuelve un string en lugar de dict en caso de excepción capturada)
+    herramientas_disponibles = qwen_service.TOOLS
+    if not es_admin:
+        # Si no es admin, solo permitimos ventas directas para evitar acceso a datos sensibles de CRM/Facturación
+        herramientas_disponibles = [t for t in qwen_service.TOOLS if t['function']['name'] == 'createCustomerOrder']
+        print("DEBUG: Usuario no-admin detectado. Deshabilitando herramientas de facturación.")
+
+    # 2. Llamada inicial a la IA para detectar intención
+    result = qwen_service.get_response(mensaje, model=modelo, history=historial, tools=herramientas_disponibles)
+    
     if isinstance(result, str):
-        print(f"DEBUG ERROR IA: {result}")
         return jsonify({"error": result}), 500
 
-    # 2. Verificar si la IA quiere ejecutar una herramienta
+    # 3. Procesar llamadas a herramientas (Tool Calls)
     if result.get("tool_calls"):
         tool_call = result["tool_calls"][0]
         func_name = tool_call["function"]["name"]
         args_str = tool_call["function"]["arguments"]
-        print(f"DEBUG: IA quiere ejecutar {func_name} con args: {args_str}")
         
         try:
             args = json.loads(args_str)
         except json.JSONDecodeError:
-            print("DEBUG ERROR: JSON mal formado por la IA. Intentando limpiar...")
-            # Intento de reparación simple: cerrar llaves si faltan
-            if not args_str.strip().endswith("}"):
-                args_str += "}"
+            if not args_str.strip().endswith("}"): args_str += "}"
             try:
                 args = json.loads(args_str)
             except:
-                return jsonify({"error": "La IA envió datos incompletos. Por favor, intenta de nuevo."}), 400
+                return jsonify({"error": "Error de formato en la IA. Reintente."}), 400
 
+        db_res = None
+        system_msg = ""
+        target_model = modelo # Por defecto usar el modelo actual
+
+        # --- Lógica de Ventas ---
         if func_name == "createCustomerOrder":
             # Traducir campos de la IA a nuestro servicio de la Fase 1
             order_data = {
@@ -62,20 +70,15 @@ def chat():
                 'cliente_direccion': args.get('customer_address'),
                 'productos': [{'id': p['product_id'], 'cantidad': p['quantity']} for p in args.get('items', [])]
             }
-            
-            # EJECUCIÓN REAL EN BASE DE DATOS
-            print(f"DEBUG: Ejecutando create_order_from_json con: {order_data}")
             db_res = create_order_from_json(order_data)
             
             # Segunda llamada para respuesta final con instrucciones detalladas de calidad
             system_msg = (
-                f"El sistema ha ejecutado la acción. Resultado: {json.dumps(db_res)}. "
-                "Informa al usuario con lenguaje natural. MUY IMPORTANTE: Incluye un resumen detallado "
-                "que enumere los productos comprados, sus cantidades y el total a pagar. "
-                "Si hubo un error (como stock insuficiente), explícalo claramente."
+                f"El sistema ejecutó la orden. Resultado: {json.dumps(db_res)}. "
+                "Informa al usuario con lenguaje natural. Incluye resumen de productos y total."
             )
-            final_result = qwen_service.get_response(mensaje, model=modelo, history=historial, system_instruction=system_msg)
 
+        # --- Lógica de CRM ---
         elif func_name == "upsertDeal":
             from utils.crm import upsert_opportunity
             db_res = upsert_opportunity({
@@ -85,37 +88,59 @@ def chat():
                 'etapa': args.get('stage'),
                 'notas': args.get('notes')
             })
-            system_msg = f"Se ha actualizado/creado un negocio en el CRM. Resultado: {json.dumps(db_res)}. Informa al usuario."
-            final_result = qwen_service.get_response(mensaje, model=modelo, history=historial, system_instruction=system_msg)
+            system_msg = f"Se gestionó el negocio en el CRM. Resultado: {json.dumps(db_res)}. Informa al usuario."
 
         elif func_name == "updateDealStage":
             from utils.crm import update_opportunity_stage
             db_res = update_opportunity_stage(args.get('deal_id'), args.get('new_stage'))
-            system_msg = f"Se ha cambiado la etapa del negocio en el pipeline. Resultado: {json.dumps(db_res)}. Informa al usuario."
-            final_result = qwen_service.get_response(mensaje, model=modelo, history=historial, system_instruction=system_msg)
+            system_msg = f"Cambio de etapa realizado. Resultado: {json.dumps(db_res)}. Informa al usuario."
 
         elif func_name == "getPipelineSummary":
             from utils.crm import get_pipeline_summary
             db_res = get_pipeline_summary()
-            # [USO DE QWEN-MAX PARA REPORTES ESTRATÉGICOS]
-            system_msg = f"Aquí tienes las estadísticas del pipeline: {json.dumps(db_res)}. Analiza los datos y da un resumen ejecutivo estratégico de alta calidad usando Qwen-Max."
-            final_result = qwen_service.get_response(mensaje, model="qwen-max", history=historial, system_instruction=system_msg)
+            system_msg = f"Estadísticas del pipeline: {json.dumps(db_res)}. Da un resumen estratégico usando Qwen-Max."
+            target_model = "qwen-max" # Forzamos el modelo potente para análisis
 
-        # 3. Retornar la respuesta final (común para todas las herramientas)
+        # --- Lógica de Facturación ---
+        elif func_name == "createInvoice":
+            from models import db, Pedido, Factura
+            from utils.billing import calculate_invoice_data
+            pedido_id = args.get('pedido_id')
+            pedido = Pedido.query.get(pedido_id)
+            if not pedido: db_res = {"success": False, "mensaje": "Pedido no encontrado."}
+            elif pedido.estado != 'pagado': db_res = {"success": False, "mensaje": "Pedido no pagado."}
+            else:
+                try:
+                    datos = calculate_invoice_data(pedido)
+                    nueva_f = Factura(
+                        numero_factura=Factura.generar_numero_correlativo(),
+                        pedido_id=pedido.id, subtotal=datos['subtotal'],
+                        iva_porcentaje=datos['iva_porcentaje'], iva_monto=datos['iva_monto'], total=datos['total']
+                    )
+                    db.session.add(nueva_f)
+                    db.session.commit()
+                    db_res = {"success": True, "mensaje": f"Factura {nueva_f.numero_factura} generada.", "factura_id": nueva_f.id}
+                except Exception as e: db_res = {"success": False, "mensaje": str(e)}
+            system_msg = f"Acción Factura: {json.dumps(db_res)}. Informa al usuario."
+
+        elif func_name == "getInvoiceStatus":
+            from models import Factura
+            f = Factura.query.get(args.get('factura_id'))
+            if not f: db_res = {"success": False, "mensaje": "Factura no encontrada."}
+            else: db_res = {"success": True, "numero": f.numero_factura, "estado": f.estado, "total": float(f.total)}
+            system_msg = f"Estado Factura: {json.dumps(db_res)}. Informa al usuario."
+
+        # 4. Respuesta Final unificada para cualquier herramienta
         if db_res:
-            final_content = final_result.get("content")
-            if not final_content:
-                final_content = f"Operación completada. Detalle: {db_res.get('mensaje', 'Éxito')}"
-            
+            final_result = qwen_service.get_response(mensaje, model=target_model, history=historial, system_instruction=system_msg)
             return jsonify({
-                "response": final_content,
+                "response": final_result.get("content"),
                 "reasoning": final_result.get("reasoning"),
                 "status": "tool_executed",
                 "db_result": db_res
             })
 
-    # Si no hubo herramientas, devolver la respuesta normal
-    print(f"DEBUG: Respuesta normal de IA: {result.get('content')[:50] if result.get('content') else 'VACIO'}...")
+    # 5. Respuesta normal si no hubo herramientas
     return jsonify({
         "response": result.get("content"),
         "reasoning": result.get("reasoning"),

@@ -119,12 +119,13 @@ def create_app(config_class=Config):
     app.logger.info('Plataforma Ecommerce - Sistema Iniciado')
 
     # Registrar blueprints (rutas)
-    from routes import auth, admin, afiliado, tienda, ai
+    from routes import auth, admin, afiliado, tienda, ai, facturacion
     app.register_blueprint(auth.bp)
     app.register_blueprint(admin.bp)
     app.register_blueprint(afiliado.bp)
     app.register_blueprint(tienda.bp)
     app.register_blueprint(ai.bp)
+    app.register_blueprint(facturacion.bp)
     
     # [Fase 1 / WHITE-LABEL] Inyectar configuración de marca globalmente
     @app.context_processor
@@ -137,9 +138,10 @@ def create_app(config_class=Config):
             # Si falla (ej: tabla no creada aún), devolvemos un diccionario vacío para evitar errores 500
             return dict(config_web=None)
 
-    # [FASE 3 / E43] Eximir el webhook de PayPal y el chat de AI de la protección CSRF
+    # [FASE 3 / E43] Eximir el webhook de PayPal, el chat de AI y Facturación de la protección CSRF
     csrf.exempt('routes.tienda.paypal_webhook')
     csrf.exempt('routes.ai.chat')
+    csrf.exempt('routes.facturacion.generar_factura')
 
     # Manejadores de errores
     @app.errorhandler(404)

@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') sendMessage();
     });
 
-    function addMessage(text, sender, reasoning = null) {
+    function addMessage(text, sender, reasoning = null, tool_calls = null) {
         const div = document.createElement('div');
         div.classList.add('message', sender);
 
@@ -126,12 +126,68 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Mostrar texto final
         if (text) {
             const textSpan = document.createElement('span');
-            // Soporte básico para saltos de línea
             textSpan.innerHTML = text.replace(/\n/g, '<br>');
             div.appendChild(textSpan);
+        }
+
+        // 3. [NUEVO] Mostrar Caja de Herramientas (Action Card)
+        if (tool_calls) {
+            tool_calls.forEach(tool => {
+                const actionDiv = document.createElement('div');
+                actionDiv.classList.add('action-box');
+                
+                let toolName = tool.function.name;
+                let args = JSON.parse(tool.function.arguments);
+
+                if (toolName === 'createInvoice') {
+                    actionDiv.innerHTML = `
+                        <div style="background: #eef2ff; border-left: 4px solid #4f46e5; padding: 10px; margin-top: 10px; border-radius: 4px;">
+                            <strong style="color: #4f46e5;">🔧 Borrador de Factura</strong><br>
+                            <small>Pedido: #${args.pedido_id}</small><br>
+                            <button class="confirm-btn" onclick="confirmarFactura(${args.pedido_id}, this)" 
+                                    style="background: #4f46e5; color: white; border: none; padding: 5px 10px; border-radius: 4px; margin-top: 5px; cursor: pointer;">
+                                Confirmar y Emitir
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    actionDiv.innerHTML = `
+                        <div style="background: #f3f4f6; border-left: 4px solid #9ca3af; padding: 8px; margin-top: 10px; border-radius: 4px; font-size: 0.85em;">
+                            <strong>🔧 Acción: ${toolName}</strong>
+                        </div>
+                    `;
+                }
+                div.appendChild(actionDiv);
+            });
         }
 
         messagesContainer.appendChild(div);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
+
+    // Función global para manejar la confirmación desde el botón de la UI
+    window.confirmarFactura = async (pedidoId, btn) => {
+        btn.disabled = true;
+        btn.innerText = "Emitiendo...";
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+            const res = await fetch(`/facturacion/generar/${pedidoId}`, { 
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+            const data = await res.json();
+            if (data.success) {
+                btn.style.background = "#059669";
+                btn.innerText = "✓ Factura Emitida";
+                addMessage(`Factura generada: <strong>${data.numero}</strong><br><a href="/facturacion/ver_documento/${data.factura_id}" target="_blank" style="color: #4f46e5; text-decoration: underline;">📄 Ver Documento de Factura</a>`, 'ai');
+            } else {
+                alert("Error: " + data.error);
+                btn.disabled = false;
+                btn.innerText = "Reintentar";
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error de conexión");
+        }
+    };
 });
