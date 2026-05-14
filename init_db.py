@@ -29,17 +29,22 @@ def init_database():
         logger.info("Creando tablas en la base de datos...")
 
         # Eliminar tablas existentes (¡CUIDADO en producción!)
+        logger.info("Eliminando tablas existentes...")
         db.drop_all()
 
-        # Crear todas las tablas
+        # Crear todas las tablas según models.py
+        logger.info("Creando todas las tablas...")
         db.create_all()
 
         logger.info("Tablas creadas exitosamente:")
         logger.info("   - admins")
         logger.info("   - afiliados")
-        logger.info("   - productos")
-        logger.info("   - pedidos")
         logger.info("   - comisiones")
+        logger.info("   - configuraciones")
+        logger.info("   - facturas")
+        logger.info("   - oportunidades")
+        logger.info("   - pedidos")
+        logger.info("   - productos")
         
         #CAMBIOS DE FASE 1 - WHITE LABEL
         logger.info("   - configuraciones (WHITE-LABEL)")
