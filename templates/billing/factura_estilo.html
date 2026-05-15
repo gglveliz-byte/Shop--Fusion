@@ -61,12 +61,12 @@
                 </tr>
             </thead>
             <tbody>
-                {% for item in factura.pedido.items %}
+                {% for item in factura.pedido.productos_json %}
                 <tr>
-                    <td>{{ item.producto.nombre }}</td>
+                    <td>{{ item.nombre }}</td>
                     <td style="text-align: center;">{{ item.cantidad }}</td>
-                    <td style="text-align: right;">${{ "{:,.2f}".format(item.precio_unitario) }}</td>
-                    <td style="text-align: right;">${{ "{:,.2f}".format(item.precio_unitario * item.cantidad) }}</td>
+                    <td style="text-align: right;">${{ "{:,.2f}".format(item.precio) }}</td>
+                    <td style="text-align: right;">${{ "{:,.2f}".format(item.precio * item.cantidad) }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

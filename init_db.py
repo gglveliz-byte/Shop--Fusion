@@ -19,7 +19,7 @@ if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8')
 
 from app import create_app
-from models import db, Admin, Afiliado, Producto, Configuracion
+from models import db, Admin, Afiliado, Producto, Configuracion, Factura
 
 def init_database():
     """Inicializar base de datos y crear admin por defecto"""
@@ -58,7 +58,8 @@ def init_database():
             color_acento='#06b6d4',
             mensaje_bienvenida='¡Bienvenido a nuestra tienda!',
             mensaje_footer='© 2024 Todos los derechos reservados.',
-            whatsapp_contacto='51900000000'
+            whatsapp_contacto='51900000000',
+            iva_porcentaje=15.00
         )
         db.session.add(nueva_config)
         db.session.commit()
