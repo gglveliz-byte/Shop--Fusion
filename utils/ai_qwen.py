@@ -120,6 +120,42 @@ class QwenAIService:
                     "required": ["factura_id"]
                 }
             }
+        },
+
+        # -- HERRAMIENTAS DE CONTABILIDAD --
+        {
+            "type": "function",
+            "function": {
+                "name": "recordTransaction",
+                "description": "Registra un ingreso o gasto manual en la contabilidad.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "type": {"type": "string", "enum": ["ingreso", "gasto"]},
+                        "amount": {"type": "number"},
+                        "category": {"type": "string", "description": "Ej: marketing, salarios, servicios, venta, otros"},
+                        "source": {"type": "string", "description": "Ej: caja, banco, paypal"},
+                        "description": {"type": "string"}
+                    },
+                    "required": ["type", "amount", "category"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "getAccountBalance",
+                "description": "Consulta el balance general (Ingresos vs Gastos).",
+                "parameters": {"type": "object", "properties": {}}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "generateMonthlyReport",
+                "description": "Genera un reporte detallado de gastos e ingresos por categoría.",
+                "parameters": {"type": "object", "properties": {}}
+            }
         }
     ]
 
@@ -132,6 +168,8 @@ class QwenAIService:
     3. RESÚMENES EJECUTIVOS (Qwen-Max): Para análisis estratégicos de alto nivel, usa 'generateExecutiveSummary'.
     
     4. FACTURACIÓN: Gestiona comprobantes con 'createInvoice' y 'getInvoiceStatus'.
+
+    5. CONTABILIDAD: Registra finanzas con 'recordTransaction', consulta saldos con 'getAccountBalance' y reportes con 'generateMonthlyReport'.
     
     Sé profesional, ejecutivo y siempre confirma las acciones realizadas."""
 

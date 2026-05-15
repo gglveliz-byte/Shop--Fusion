@@ -574,3 +574,36 @@ class Configuracion(db.Model):
 
     def __repr__(self):
         return f'<Configuracion {self.nombre_tienda}>'
+
+
+# ==================== MÓDULO DE CONTABILIDAD ====================
+
+class Transaccion(db.Model):
+    """
+    Libro contable digital para registrar todos los movimientos financieros.
+    Soporta ingresos, gastos y categorización para reportes de balance.
+    """
+    __tablename__ = 'transacciones'
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # "ingreso" o "gasto"
+    tipo = db.Column(db.String(10), nullable=False) 
+    
+    monto = db.Column(db.Numeric(12, 2), nullable=False)
+    
+    # Categorías: ventas, marketing, operativo, salarios, otros
+    categoria = db.Column(db.String(50), default='otros')
+    
+    # Fuente: caja, banco, paypal
+    fuente = db.Column(db.String(50), default='caja')
+    
+    descripcion = db.Column(db.String(255), nullable=True)
+    
+    # Enlace opcional a pedidos o facturas
+    referencia_id = db.Column(db.String(50), nullable=True)
+    
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Transaccion {self.tipo} - {self.monto} ({self.categoria})>'

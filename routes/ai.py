@@ -139,8 +139,47 @@ def chat():
             else: db_res = {"success": True, "numero": f.numero_factura, "estado": f.estado, "total": float(f.total)}
             system_msg = f"Estado Factura: {json.dumps(db_res)}. Informa al usuario."
 
+        # --- Lógica de Contabilidad ---
+        elif func_name == "recordTransaction":
+            from utils.accounting import register_transaction
+            db_res = register_transaction(
+                tipo=args.get('type'),
+                monto=args.get('amount'),
+                categoria=args.get('category'),
+                fuente=args.get('source', 'caja'),
+                descripcion=args.get('description')
+            )
+            system_msg = f"Registro contable realizado: {json.dumps(db_res)}. Confirma la operación."
+
+        elif func_name == "getAccountBalance":
+            from utils.accounting import get_account_balance
+            db_res = get_account_balance()
+            system_msg = f"BALANCE ACTUAL: {json.dumps(db_res)}. Informa los totales al usuario."
+
+        elif func_name == "generateMonthlyReport":
+            from utils.accounting import generate_monthly_report
+            db_res = generate_monthly_report()
+            system_msg = f"REPORTE CATEGORIZADO: {json.dumps(db_res)}. Analiza los gastos e ingresos y da un resumen ejecutivo."
+            target_model = "qwen-max" # Reportes complejos usan el modelo senior
+
         # 4. Respuesta Final unificada para cualquier herramienta
         if db_res:
+            # Sincronización Automática: Si se creó una factura con éxito, registrar ingreso
+            if func_name == "createInvoice" and db_res.get('success'):
+                from utils.accounting import register_transaction
+                # Obtener monto de la factura
+                from models import Factura
+                f = Factura.query.get(db_res.get('factura_id'))
+                if f:
+                    register_transaction(
+                        tipo='ingreso',
+                        monto=float(f.total),
+                        categoria='venta',
+                        fuente='caja',
+                        descripcion=f"Ingreso automático por factura {f.numero_factura}",
+                        referencia_id=f"FAC-{f.id}"
+                    )
+
             final_result = qwen_service.get_response(mensaje, model=target_model, history=historial, system_instruction=system_msg)
             return jsonify({
                 "response": final_result.get("content"),
