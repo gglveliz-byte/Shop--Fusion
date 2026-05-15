@@ -114,6 +114,17 @@ def producto_detalle(id):
                          es_tienda_vendedor=False)
 
 
+@bp.route('/api/actualizar-carrito-session', methods=['POST'])
+def actualizar_carrito_session():
+    """Sincroniza el carrito del localStorage con la sesión de Flask"""
+    try:
+        data = request.get_json()
+        carrito = data.get('carrito', [])
+        session['carrito'] = carrito
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @bp.route('/carrito')
 def carrito():
     """Ver carrito de compras"""
@@ -613,6 +624,7 @@ def paypal_capture_order():
     """Capturar pago de PayPal y crear pedido"""
     from models import Producto, Pedido, Afiliado
     from app import db
+    from utils.accounting import register_transaction
 
     try:
         data = request.get_json()
@@ -710,6 +722,49 @@ def paypal_capture_order():
         else:
             # Pedido sin vendedor (tienda principal), solo marcar como pagado
             pedido.marcar_como_pagado()
+
+        # --- SINCRONIZACIÓN CONTABLE AUTOMÁTICA ---
+        # 1. Registrar el Ingreso Bruto
+        monto_bruto = float(total_con_comision)
+        register_transaction(
+            tipo='ingreso',
+            monto=monto_bruto,
+            categoria='venta',
+            fuente='paypal',
+            descripcion=f"Venta PayPal - Pedido #{pedido.id}",
+            referencia_id=paypal_response.get('id')
+        )
+
+        # 2. Registrar el Gasto por Comisión de PayPal (Recargo)
+        monto_comision = float(total_con_comision - total)
+        if monto_comision > 0:
+            register_transaction(
+                tipo='gasto',
+                monto=monto_comision,
+                categoria='comision',
+                fuente='paypal',
+                descripcion=f"Comisión PayPal - Pedido #{pedido.id}",
+                referencia_id=f"FEE-{paypal_response.get('id')}"
+            )
+
+        # 3. Generar Factura Automática
+        from utils.billing import calculate_invoice_data
+        from models import Factura
+        try:
+            datos_fac = calculate_invoice_data(pedido)
+            nueva_f = Factura(
+                numero_factura=Factura.generar_numero_correlativo(),
+                pedido_id=pedido.id,
+                subtotal=datos_fac['subtotal'],
+                iva_porcentaje=datos_fac['iva_porcentaje'],
+                iva_monto=datos_fac['iva_monto'],
+                total=datos_fac['total']
+            )
+            db.session.add(nueva_f)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error Factura Automática: {str(e)}")
 
         # Limpiar carrito de sesión
         session['carrito'] = []

@@ -7,7 +7,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from sqlalchemy.orm import joinedload
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from models import db, Admin, Producto, Pedido, Afiliado, Comision, Configuracion
+from models import db, Admin, Producto, Pedido, Afiliado, Comision, Configuracion, Transaccion
+from utils.accounting import register_transaction
 from decimal import Decimal
 import os
 import time
@@ -88,6 +89,21 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
 
+
+@bp.route('/contabilidad')
+@admin_required
+def contabilidad():
+    """Libro Diario y Balance General"""
+    from utils.accounting import get_account_balance
+    from models import Transaccion
+    
+    balance = get_account_balance()
+    # Paginación simple para no saturar si hay miles de registros
+    transacciones = Transaccion.query.order_by(Transaccion.creado_en.desc()).limit(200).all()
+    
+    return render_template('admin/contabilidad.html', 
+                          balance=balance, 
+                          transacciones=transacciones)
 
 @bp.route('/dashboard')
 @admin_required
@@ -444,8 +460,19 @@ def marcar_pedido_pagado(id):
         flash('Este pedido ya está marcado como pagado', 'warning')
     else:
         pedido.marcar_como_pagado()
+        
+        # --- SINCRONIZACIÓN CONTABLE ---
+        register_transaction(
+            tipo='ingreso',
+            monto=float(pedido.total),
+            categoria='venta',
+            fuente='caja',
+            descripcion=f"Cobro manual - Pedido #{pedido.id}",
+            referencia_id=f"PED-{pedido.id}"
+        )
+        
         # Para pedidos sin vendedor, no hay comisión que generar
-        flash(f'Pedido #{pedido.id} marcado como pagado.', 'success')
+        flash(f"Pedido #{pedido.id} marcado como pagado y registrado en contabilidad.", "success")
 
     return redirect(url_for('admin.ver_pedido', id=id))
 
@@ -696,6 +723,16 @@ def pagar_comisiones_afiliado(id):
         comision.pagada_en = datetime.utcnow()
 
     db.session.commit()
+
+    # --- SINCRONIZACIÓN CONTABLE ---
+    register_transaction(
+        tipo='gasto',
+        monto=float(total_a_pagar),
+        categoria='comision',
+        fuente='caja',
+        descripcion=f"Pago comisiones - Vendedor: {afiliado.nombre}",
+        referencia_id=f"COM-{afiliado.id}-{int(time.time())}"
+    )
 
     flash(f'✓ Pagadas {num_comisiones} comisiones a {afiliado.nombre} por un total de ${float(total_a_pagar):.2f}', 'success')
     return redirect(url_for('admin.afiliados'))

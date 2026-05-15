@@ -243,23 +243,53 @@
                     placeholder="Calle, numero, ciudad, codigo postal"></textarea>
             </div>
 
+            <div class="metodo-pago-section mb-3">
+                <label class="d-block mb-2"><strong>Método de Pago:</strong></label>
+                <div class="metodo-opciones">
+                    <label class="metodo-opcion">
+                        <input type="radio" name="metodo_pago" value="whatsapp" checked onchange="cambiarMetodoPago(this.value)">
+                        <div class="metodo-card">
+                            <span>💬 WhatsApp</span>
+                        </div>
+                    </label>
+                    <label class="metodo-opcion">
+                        <input type="radio" name="metodo_pago" value="paypal" onchange="cambiarMetodoPago(this.value)">
+                        <div class="metodo-card">
+                            <span>💳 PayPal / Tarjeta</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
             <div class="checkout-resumen">
                 <h3>Resumen del Pedido</h3>
                 <div id="resumen-items"></div>
+                
+                <!-- Recargo PayPal (oculto por defecto) -->
+                <div id="recargo-paypal-div" class="resumen-item text-danger" style="display: none; font-size: 0.9rem;">
+                    <span>Comisión PayPal (5.4%):</span>
+                    <span id="monto-recargo">+$0.00</span>
+                </div>
+
                 <div class="resumen-total">
                     <span>Total a Pagar:</span>
                     <span id="total-checkout">$0.00</span>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-success btn-block btn-lg">
+            <!-- Botón WhatsApp -->
+            <button type="submit" id="btn-submit-whatsapp" class="btn btn-success btn-block btn-lg">
                 Enviar Pedido por WhatsApp
             </button>
+
+            <!-- Contenedor PayPal (oculto por defecto) -->
+            <div id="paypal-button-container" class="mt-3" style="display: none;"></div>
         </form>
     </div>
 </div>
 
-<!-- Overlay -->
+<!-- SDK de PayPal -->
+<script src="https://www.paypal.com/sdk/js?client-id={{ config.PAYPAL_CLIENT_ID }}&currency=USD&intent=capture&enable-funding=card"></script>
 <div id="overlay" class="overlay" onclick="cerrarTodo()"></div>
 
 <script>
@@ -717,6 +747,7 @@
 
         guardarCarrito();
         actualizarCarrito();
+        sincronizarCarritoConServidor();
         mostrarNotificacion('Producto agregado al carrito');
 
         // Animacion del boton del carrito
@@ -728,6 +759,18 @@
     // Guardar carrito en localStorage
     function guardarCarrito() {
         localStorage.setItem('carrito', JSON.stringify(carrito));
+    }
+
+    // [NUEVO] Sincronizar carrito con el servidor para que la página /carrito no salga vacía
+    function sincronizarCarritoConServidor() {
+        fetch('/api/actualizar-carrito-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            },
+            body: JSON.stringify({ carrito: carrito })
+        });
     }
 
     // Actualizar visualizacion del carrito
@@ -1080,6 +1123,68 @@
 
     // Verificar al cargar la página
     document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
+
+    // --- LÓGICA DE PAYPAL Y CHECKOUT MODAL ---
+    function cambiarMetodoPago(metodo) {
+        const btnWhatsapp = document.getElementById('btn-submit-whatsapp');
+        const paypalContainer = document.getElementById('paypal-button-container');
+        const recargoDiv = document.getElementById('recargo-paypal-div');
+        const totalTexto = document.getElementById('total-checkout');
+
+        const totalBase = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+
+        if (metodo === 'paypal') {
+            btnWhatsapp.style.display = 'none';
+            paypalContainer.style.display = 'block';
+            recargoDiv.style.display = 'flex';
+            const recargo = totalBase * 0.054;
+            const totalConRecargo = totalBase + recargo;
+            document.getElementById('monto-recargo').textContent = '+$' + recargo.toFixed(2);
+            totalTexto.textContent = '$' + totalConRecargo.toFixed(2);
+            if (paypalContainer.innerHTML === "") renderizarPaypal(totalConRecargo);
+        } else {
+            btnWhatsapp.style.display = 'block';
+            paypalContainer.style.display = 'none';
+            recargoDiv.style.display = 'none';
+            totalTexto.textContent = '$' + totalBase.toFixed(2);
+        }
+    }
+
+    function renderizarPaypal(total) {
+        if (typeof paypal === 'undefined') return;
+        paypal.Buttons({
+            style: { layout: 'vertical', color: 'blue', shape: 'rect', label: 'pay' },
+            createOrder: function(data, actions) {
+                return fetch('/api/paypal/create-order', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                    },
+                    body: JSON.stringify({ carrito: carrito.map(i => ({id: i.id, cantidad: i.cantidad})) })
+                }).then(r => r.json()).then(order => order.id);
+            },
+            onApprove: function(data, actions) {
+                return fetch('/api/paypal/capture-order', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                    },
+                    body: JSON.stringify({
+                        orderID: data.orderID,
+                        nombre: document.getElementById('cliente-nombre').value,
+                        telefono: document.getElementById('cliente-telefono').value,
+                        direccion: document.getElementById('cliente-direccion').value,
+                        carrito: carrito.map(i => ({id: i.id, cantidad: i.cantidad}))
+                    })
+                }).then(r => r.json()).then(res => {
+                    if (res.success) window.location.href = `/pedido-exitoso/${res.pedido_id}`;
+                    else alert('Error: ' + res.error);
+                });
+            }
+        }).render('#paypal-button-container');
+    }
 </script>
 
 <style>
@@ -2926,6 +3031,24 @@
         .garantia-item-text p {
             font-size: 0.8rem;
         }
+    }
+
+    /* Estilos del Selector de Pago */
+    .metodo-opciones { display: flex; gap: 10px; margin: 15px 0; }
+    .metodo-opcion { flex: 1; cursor: pointer; }
+    .metodo-opcion input { display: none; }
+    .metodo-card { 
+        padding: 10px; border: 2px solid #e2e8f0; border-radius: 10px; 
+        text-align: center; background: #f8fafc; transition: all 0.3s;
+        font-weight: bold; color: #64748b;
+    }
+    .metodo-opcion input:checked + .metodo-card { 
+        border-color: #6366f1; background: #eef2ff; color: #6366f1; 
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .resumen-item.text-danger { 
+        display: flex; justify-content: space-between; 
+        color: #ef4444 !important; font-weight: bold; margin-top: 5px;
     }
 </style>
 {% endblock %}

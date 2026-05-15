@@ -58,6 +58,7 @@
                 <a href="{{ url_for('admin.configuracion') }}">Configuración</a>
                 <a href="{{ url_for('admin.afiliados') }}">Afiliados</a>
                 <a href="{{ url_for('admin.comisiones') }}">Comisiones</a>
+                <a href="{{ url_for('admin.contabilidad') }}">Contabilidad</a>
                 <a href="{{ url_for('auth.logout') }}" class="btn-logout">Cerrar Sesión</a>
                 {% elif current_user.is_afiliado %}
                 <a href="{{ url_for('afiliado.dashboard') }}">Dashboard</a>
