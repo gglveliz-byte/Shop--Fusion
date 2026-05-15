@@ -2,7 +2,7 @@ from models import db, Oportunidad, ETAPAS_OPORTUNIDAD, Pedido
 from decimal import Decimal
 from datetime import datetime
 
-def upsert_opportunity(data):
+def create_deal(data):
     """
     Paso 2.1: Crea o actualiza una oportunidad en el CRM.
     data: {cliente_nombre, valor_estimado, etapa, probabilidad, notas, afiliado_id}
@@ -37,7 +37,7 @@ def upsert_opportunity(data):
         db.session.rollback()
         return {"success": False, "error": str(e)}
 
-def update_opportunity_stage(opportunity_id, new_stage):
+def update_deal_stage(opportunity_id, new_stage):
     """
     Paso 2.2: Cambia la etapa de un negocio y ajusta la probabilidad automáticamente.
     """
@@ -59,7 +59,7 @@ def update_opportunity_stage(opportunity_id, new_stage):
         db.session.rollback()
         return {"success": False, "error": str(e)}
 
-def get_pipeline_summary():
+def forecast_revenue():
     """
     Paso 2.3: Desarrollo de cálculos de Forecast (Proyección de ingresos).
     Extrae estadísticas para que la IA genere el reporte estratégico.
@@ -76,7 +76,7 @@ def get_pipeline_summary():
         summary["etapas"][d.etapa] = summary["etapas"].get(d.etapa, 0) + 1
     return summary
 
-def get_executive_report_data():
+def generate_executive_summary():
     """
     Backlog: Generar resúmenes ejecutivos automáticos usando Qwen-Max.
     Cruza Ventas Reales vs Proyecciones CRM.
@@ -84,7 +84,7 @@ def get_executive_report_data():
     pedidos_pagados = Pedido.query.filter_by(estado='pagado').all()
     ventas_reales = float(sum(p.total for p in pedidos_pagados))
     conteo_ventas = len(pedidos_pagados)
-    crm = get_pipeline_summary()
+    crm = forecast_revenue()
 
     return {
         "ventas_reales": {"monto": ventas_reales, "cantidad": conteo_ventas},

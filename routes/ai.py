@@ -80,8 +80,8 @@ def chat():
 
         # --- Lógica de CRM ---
         elif func_name == "createDeal":
-            from utils.crm import upsert_opportunity
-            db_res = upsert_opportunity({
+            from utils.crm import create_deal
+            db_res = create_deal({
                 'id': args.get('id'),
                 'cliente_nombre': args.get('customer_name'),
                 'valor_estimado': args.get('estimated_value'),
@@ -91,19 +91,19 @@ def chat():
             system_msg = f"Se gestionó el negocio en el CRM. Resultado: {json.dumps(db_res)}. Informa al usuario."
 
         elif func_name == "updateDealStage":
-            from utils.crm import update_opportunity_stage
-            db_res = update_opportunity_stage(args.get('deal_id'), args.get('new_stage'))
+            from utils.crm import update_deal_stage
+            db_res = update_deal_stage(args.get('deal_id'), args.get('new_stage'))
             system_msg = f"Cambio de etapa realizado. Resultado: {json.dumps(db_res)}. Informa al usuario."
 
         elif func_name == "forecastRevenue":
-            from utils.crm import get_pipeline_summary
-            db_res = get_pipeline_summary()
+            from utils.crm import forecast_revenue
+            db_res = forecast_revenue()
             system_msg = f"Estadísticas del pipeline: {json.dumps(db_res)}. Da un resumen rápido de las proyecciones."
             target_model = "qwen-plus"
 
         elif func_name == "generateExecutiveSummary":
-            from utils.crm import get_executive_report_data
-            db_res = get_executive_report_data()
+            from utils.crm import generate_executive_summary
+            db_res = generate_executive_summary()
             system_msg = (
                 f"DATOS ESTRATÉGICOS: {json.dumps(db_res)}. Analiza estos datos como consultor senior. "
                 "Genera un resumen ejecutivo sobre salud financiera y proyecciones. Sé profesional."
