@@ -31,13 +31,23 @@ def chat():
     es_admin = hasattr(current_user, 'username')
     
     herramientas_disponibles = qwen_service.TOOLS
+    system_msg = qwen_service.SYSTEM_PROMPT
+
     if not es_admin:
         # Si no es admin, solo permitimos ventas directas para evitar acceso a datos sensibles de CRM/Facturación
         herramientas_disponibles = [t for t in qwen_service.TOOLS if t['function']['name'] == 'createCustomerOrder']
         print("DEBUG: Usuario no-admin detectado. Deshabilitando herramientas de facturación.")
+        
+        # Inyección de contexto para evitar "alucinaciones" de la IA
+        system_msg += (
+            "\n\nAVISO CRÍTICO DE SEGURIDAD: El usuario actual NO es Administrador. "
+            "Para esta conversación se te han bloqueado temporalmente las herramientas de CRM, Contabilidad y Facturación. "
+            "Si el usuario te pide crear negocios, facturar o tareas financieras, no intentes procesarlo. "
+            "Simplemente responde de forma muy educada que no cuentan con los permisos necesarios para realizar esa acción."
+        )
 
     # 2. Llamada inicial a la IA para detectar intención
-    result = qwen_service.get_response(mensaje, model=modelo, history=historial, tools=herramientas_disponibles)
+    result = qwen_service.get_response(mensaje, model=modelo, history=historial, tools=herramientas_disponibles, system_instruction=system_msg)
     
     if isinstance(result, str):
         return jsonify({"error": result}), 500
