@@ -212,7 +212,7 @@ class QwenAIService:
             response_stream = self.client.chat.completions.create(
                 model=target_model,
                 messages=messages,
-                tools=final_tools if target_model == self.MODEL_LOGICA else None,
+                tools=final_tools if (target_model == self.MODEL_LOGICA and len(final_tools) > 0) else None,
                 stream=True,
                 **extra_params
             )

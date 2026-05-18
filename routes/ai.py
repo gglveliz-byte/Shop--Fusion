@@ -46,6 +46,13 @@ def chat():
             "Simplemente responde de forma muy educada que no cuentan con los permisos necesarios para realizar esa acción."
         )
 
+    # Protección anti-alucinación de parámetros en el historial
+    system_msg += (
+        "\n\nREGLA ESTRICTA PARA HERRAMIENTAS: Cada vez que uses una herramienta, DEBES extraer los parámetros "
+        "(montos, categorías, nombres, etc.) ÚNICAMENTE del último mensaje enviado por el usuario. "
+        "NUNCA reutilices ni dupliques los datos de transacciones u operaciones pasadas que estén en tu historial."
+    )
+
     # 2. Llamada inicial a la IA para detectar intención
     result = qwen_service.get_response(mensaje, model=modelo, history=historial, tools=herramientas_disponibles, system_instruction=system_msg)
     
@@ -190,7 +197,12 @@ def chat():
                         referencia_id=f"FAC-{f.id}"
                     )
 
-            final_result = qwen_service.get_response(mensaje, model=target_model, history=historial, system_instruction=system_msg)
+            # Forzamos tools=[] para que la IA NO intente llamar a otra herramienta y nos responda obligatoriamente con texto.
+            final_result = qwen_service.get_response(mensaje, model=target_model, history=historial, system_instruction=system_msg, tools=[])
+            
+            if isinstance(final_result, str):
+                return jsonify({"error": final_result}), 500
+                
             return jsonify({
                 "response": final_result.get("content"),
                 "reasoning": final_result.get("reasoning"),
