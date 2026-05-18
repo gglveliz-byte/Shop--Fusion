@@ -63,3 +63,14 @@ A continuación se detalla la lista de herramientas (Backlogs) integradas median
   > *"¿Cuánto hemos gastado en marketing este mes?"*
   > *"Registra un gasto operativo de 50 dólares."*
 
+---
+
+## 6. Notas de Arquitectura e Infraestructura (Free Tier)
+Dado que el proyecto utiliza servicios en la nube en su capa gratuita (**Free Tier** en plataformas como **Render** y **Neon**), el comportamiento de la Inteligencia Artificial está adaptado para garantizar estabilidad:
+
+1. **Un Paso a la Vez (Evita Bucles Infinitos):** 
+   * Por seguridad arquitectónica, la IA está configurada para procesar **una sola herramienta por mensaje**. Si un usuario solicita una acción doble (ej. *"Crea un negocio y actualízalo a cerrado"*), el sistema procesará únicamente la primera orden. Para completar la segunda, el usuario simplemente debe enviar la instrucción restante en el siguiente mensaje. Esto ahorra tokens y evita errores en cadena.
+2. **Caídas de Conexión y Duplicaciones (Falsos Negativos):** 
+   * Las bases de datos en Free Tier suelen "dormir" o cerrar conexiones inactivas abruptamente. Si el sistema de IA ejecuta una orden y la guarda en la base de datos, pero la base de datos corta la conexión un milisegundo antes de devolver la respuesta final al chat, el usuario no verá la confirmación en pantalla. 
+   * **Consecuencia:** El usuario podría pensar que la IA falló y pedirle que repita la acción, generando un **registro duplicado** en la base de datos.
+   * **Mitigación Recomendada:** Para entornos de producción, se recomienda configurar la opción `pool_pre_ping=True` en SQLAlchemy para forzar a la aplicación a reconectarse automáticamente antes de fallar. En entornos productivos de pago, este problema desaparece por completo.
