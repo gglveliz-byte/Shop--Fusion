@@ -53,6 +53,17 @@ class Config:
     UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif', 'ico'}
 
+    # Configuración de Web Scraping Seguro (Fase 1)
+    # Lista Blanca de dominios autorizados para la herramienta de IA (Evita SSRF y lecturas maliciosas)
+    SCRAPING_WHITELIST = [
+        'wikipedia.org',
+        'example.com',
+        'apple.com',
+        'samsung.com',
+        'mercadolibre.com.pe',
+        'amazon.com'
+    ]
+
     # Configuración de PayPal
     PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')
     PAYPAL_SECRET = os.environ.get('PAYPAL_SECRET')
