@@ -179,6 +179,22 @@ def chat():
             system_msg = f"REPORTE CATEGORIZADO: {json.dumps(db_res)}. Analiza los gastos e ingresos y da un resumen ejecutivo."
             target_model = "qwen-max" # Reportes complejos usan el modelo senior
 
+        # --- Lógica de Scraping / Soporte ---
+        elif func_name == "scrapeWebsite":
+            # Paso 3.3: Conectar la IA con el Scraper
+            from utils.scraper import scrape_webpage
+            db_res = scrape_webpage(url=args.get('url'), selector=args.get('selector'))
+            
+            if db_res.get('success'):
+                # Le pasamos el texto extraído a la IA para que lo lea y responda
+                system_msg = (
+                    f"DATOS EXTRAÍDOS DE LA WEB: {db_res['data'][:4000]}\n\n"
+                    "Por favor, lee esta información y responde a la pregunta del usuario usándola como tu ÚNICA fuente de la verdad."
+                )
+            else:
+                # Si falló (ej. no está en lista blanca o cayó), le decimos a la IA que informe del error
+                system_msg = f"ERROR AL LEER LA WEB: {db_res.get('error')}. Informa amablemente al usuario del problema."
+
         # 4. Respuesta Final unificada para cualquier herramienta
         if db_res:
             # Sincronización Automática: Si se creó una factura con éxito, registrar ingreso

@@ -156,10 +156,29 @@ class QwenAIService:
                 "description": "Genera un reporte detallado de gastos e ingresos por categoría.",
                 "parameters": {"type": "object", "properties": {}}
             }
+        },
+        {
+            # Paso 3.1: Registro de la Herramienta (Esquema JSON)
+            # Le enseñamos a la IA qué parámetros necesita para buscar en internet
+            "type": "function",
+            "function": {
+                "name": "scrapeWebsite",
+                "description": "Extrae el texto y contenido de una página web autorizada. Úsalo para buscar documentación, especificaciones técnicas o leer artículos a pedido del usuario.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "url": {"type": "string", "description": "La URL completa de la página a leer (ej. https://es.wikipedia.org/wiki/Python)"},
+                        "selector": {"type": "string", "description": "(Opcional) Un selector CSS si solo quieres extraer una parte específica (ej. '#content', '.price'). Déjalo vacío para leer todo."}
+                    },
+                    "required": ["url"]
+                }
+            }
         }
     ]
 
-    SYSTEM_PROMPT = """Eres el Director Financiero (CFO) y Contador Senior de Shop Fusion. Tu objetivo es mantener la salud financiera de la empresa con precisión quirúrgica.
+    # Paso 3.2: Modificación del "Cerebro" (System Prompt)
+    # Le indicamos a la IA su nuevo rol y capacidades
+    SYSTEM_PROMPT = """Eres el Director Financiero (CFO) y Asistente de Soporte Técnico de Shop Fusion. Tu objetivo es mantener la salud de la empresa y ayudar con búsquedas inteligentes.
     
     1. ASISTENTE DE VENTAS: Registras pedidos con 'createCustomerOrder'. Siempre valida stock y datos de contacto.
     
@@ -174,8 +193,13 @@ class QwenAIService:
        - Monitoreas la liquidez con 'getAccountBalance'.
        - Generas estados de resultados con 'generateMonthlyReport'.
        - CRÍTICO: Identifica siempre las comisiones de PayPal como gastos operativos (fees) y reporta el margen neto real.
+    
+    6. SOPORTE TÉCNICO E INVESTIGADOR (Scraping): 
+       - Si el usuario te pide investigar un tema, leer un artículo o buscar documentación técnica en las webs autorizadas (ej. Wikipedia, Amazon), USA LA HERRAMIENTA 'scrapeWebsite'.
+       - Lee la información extraída de la web, resúmela o respóndele al usuario basándote EXCLUSIVAMENTE en esos datos.
+       - Si el usuario pide un dato exacto, intenta usar el parámetro 'selector' para buscar directo en el HTML.
 
-    Tu tono es ejecutivo, profesional, analítico y enfocado en la transparencia financiera. Siempre confirma los montos y categorías registrados."""
+    Tu tono es ejecutivo, profesional, analítico, proactivo y enfocado en la transparencia financiera. Siempre confirma los montos y categorías registrados."""
 
     def __init__(self):
         # Configuración del cliente con el endpoint de Singapore (International)
