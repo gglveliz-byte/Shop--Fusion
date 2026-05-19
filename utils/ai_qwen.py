@@ -14,8 +14,59 @@ class QwenAIService:
     MODEL_LOGICA = "qwen-plus"      # Para Orquestación, Ventas y Lógica
     MODEL_VISION = "qwen-vl-max"    # Para OCR y Validación de Bouchers
 
-    # Definición de herramientas (Tools) para Function Calling
     TOOLS = [
+        {
+            "type": "function",
+            "function": {
+                "name": "listProducts",
+                "description": "Obtiene la lista completa de todos los productos disponibles y activos en el catálogo de la tienda.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "category": {"type": "string", "description": "Categoría para filtrar opcionalmente."}
+                    }
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "addProductToCart",
+                "description": "Añade un producto al carrito de compras virtual del usuario en la tienda.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "product_name": {"type": "string", "description": "Nombre o palabra clave del producto (ej: Camiseta Adidas, Zapatos Nike)."},
+                        "quantity": {"type": "integer", "description": "Cantidad de unidades. Por defecto es 1."}
+                    },
+                    "required": ["product_name"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "updateCartItem",
+                "description": "Actualiza la cantidad o elimina un producto del carrito de compras virtual del usuario.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "product_name": {"type": "string", "description": "Nombre del producto a actualizar o eliminar."},
+                        "quantity": {"type": "integer", "description": "Nueva cantidad total o unidades a sumar. Para eliminar por completo o restar a 0, usa 0 o la acción correspondiente."},
+                        "action": {"type": "string", "enum": ["add", "set", "remove"], "description": "Acción: 'add' para sumar unidades, 'set' para fijar una cantidad exacta (ej. 'mejor solo 1'), o 'remove' para quitar el producto por completo."}
+                    },
+                    "required": ["product_name", "quantity", "action"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "checkoutCart",
+                "description": "Inicia la pasarela de pago o el proceso de checkout para pagar los productos del carrito.",
+                "parameters": {"type": "object", "properties": {}}
+            }
+        },
         {
             "type": "function",
             "function": {
@@ -159,23 +210,28 @@ class QwenAIService:
         }
     ]
 
-    SYSTEM_PROMPT = """Eres el Director Financiero (CFO) y Contador Senior de Shop Fusion. Tu objetivo es mantener la salud financiera de la empresa con precisión quirúrgica.
+    SYSTEM_PROMPT = """Eres el Director Financiero (CFO) y Asistente de Ventas Inteligente de Shop Fusion. Tu objetivo es mantener la salud financiera de la empresa y ayudar a los clientes a comprar con información 100% verídica.
     
-    1. ASISTENTE DE VENTAS: Registras pedidos con 'createCustomerOrder'. Siempre valida stock y datos de contacto.
+    1. ASISTENTE DE VENTAS Y CARRITO:
+       - Si el cliente te pregunta qué productos tienes, qué vendes, o qué hay en catálogo, utiliza siempre 'listProducts' para obtener los productos reales en base de datos. NUNCA inventes nombres de productos, precios o existencias.
+       - Si el cliente te pide crear una orden directamente con sus datos, usa 'createCustomerOrder'.
+       - Si el cliente quiere añadir productos a su carrito virtual de compras, utiliza 'addProductToCart' con el nombre del producto y la cantidad.
+       - Si el cliente quiere cambiar la cantidad (ej: 'sólo 1 zapato', 'agrega 3 más', 'quita el pantalón'), utiliza 'updateCartItem' configurando el parámetro 'action' en 'set', 'add' o 'remove' según corresponda.
+       - Si el cliente desea pagar, ir a la caja, hacer el pago o generar el cobro del carrito actual, utiliza 'checkoutCart' para abrir la pantalla de checkout de inmediato.
     
     2. GESTIÓN CRM (Qwen-Plus): Administras el pipeline con 'createDeal' y 'updateDealStage'. Tu meta es convertir prospectos en ingresos reales.
     
     3. ANÁLISIS ESTRATÉGICO (Qwen-Max): Para decisiones de alto nivel, usa 'generateExecutiveSummary'. Evalúa rentabilidad y riesgos.
     
     4. FACTURACIÓN Y LEGAL: Gestionas la validez de los ingresos con 'createInvoice' y consultas estados con 'getInvoiceStatus'.
-
+ 
     5. CONTABILIDAD SENIOR: 
        - Registras movimientos con 'recordTransaction'. 
        - Monitoreas la liquidez con 'getAccountBalance'.
        - Generas estados de resultados con 'generateMonthlyReport'.
        - CRÍTICO: Identifica siempre las comisiones de PayPal como gastos operativos (fees) y reporta el margen neto real.
-
-    Tu tono es ejecutivo, profesional, analítico y enfocado en la transparencia financiera. Siempre confirma los montos y categorías registrados."""
+ 
+    Tu tono es ejecutivo, profesional, pero alegre y servicial cuando interactúas con clientes que desean comprar. Siempre confirma los montos y categorías registrados."""
 
     def __init__(self):
         # Configuración del cliente con el endpoint de Singapore (International)

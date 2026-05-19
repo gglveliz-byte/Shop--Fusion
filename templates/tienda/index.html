@@ -312,6 +312,14 @@
     document.addEventListener('DOMContentLoaded', function () {
         actualizarCarrito();
         renderizarProductos();
+
+        // Abrir checkout si se requiere por parámetro de URL (?checkout=true) desde la IA o redirección
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('checkout') === 'true') {
+            setTimeout(() => {
+                mostrarCheckout();
+            }, 300);
+        }
     });
 
     // Marcas conocidas para telefonos y computadoras

@@ -101,6 +101,11 @@
     </footer>
     {% endblock %}
 
+    <!-- Chatbot Widget de IA Qwen -->
+    {% if not request.path.startswith('/admin') %}
+    <script src="{{ url_for('static', filename='js/chatbot-widget.js') }}"></script>
+    {% endif %}
+
     {% block extra_js %}{% endblock %}
 </body>
 

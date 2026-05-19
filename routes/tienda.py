@@ -653,10 +653,13 @@ def paypal_capture_order():
             "Content-Type": "application/json"
         }
 
-        response = requests.post(url, headers=headers)
+        # Asegurarnos de enviar un cuerpo vacío (json={}) para evitar error 400/415 de PayPal
+        response = requests.post(url, headers=headers, json={})
 
         if response.status_code not in [200, 201]:
-            return jsonify({'error': 'Error capturando pago'}), 500
+            error_details = response.text
+            print(f"DEBUG PAYPAL CAPTURE ERROR: {error_details}")
+            return jsonify({'error': f'Error capturando pago con PayPal. Detalles internos: {error_details}'}), 500
 
         paypal_response = response.json()
 
