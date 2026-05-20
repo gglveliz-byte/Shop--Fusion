@@ -66,7 +66,8 @@ def chat():
         system_msgs = []
         target_model = modelo # Por defecto usar el modelo actual
 
-        for tool_call in result["tool_calls"]:
+        # Límite de Seguridad: Procesamos máximo 3 herramientas por mensaje para evitar saturación o bucles.
+        for tool_call in result["tool_calls"][:3]:
             func_name = tool_call["function"]["name"]
             args_str = tool_call["function"]["arguments"]
             
