@@ -47,11 +47,19 @@ def scrape_webpage(url, selector=None):
         for tag in soup(['script', 'style', 'noscript', 'header', 'footer', 'nav', 'svg', 'button']):
             tag.decompose()
             
-        # Si el usuario quiere buscar algo específico (ej: .price, h1, #description)
+        # Si el usuario o la IA quiere buscar algo específico mediante selector CSS
         if selector:
             elementos = soup.select(selector)
             if not elementos:
-                return {"success": False, "error": f"No se encontraron elementos con el selector '{selector}' en la página."}
+                # FALLBACK (Plan B): Si la IA inventó un selector que no existe, no rompemos todo.
+                # Le devolvemos el texto completo y le avisamos que su selector falló.
+                texto_limpio = soup.get_text(separator=' ', strip=True)
+                if len(texto_limpio) > 10000:
+                    texto_limpio = texto_limpio[:10000] + "\n... [El resto del contenido ha sido truncado por ser muy largo]"
+                return {
+                    "success": True, 
+                    "data": f"[AVISO DEL SISTEMA: El selector CSS '{selector}' no encontró nada. Aquí tienes el texto de toda la página para que busques la respuesta tú mismo]:\n\n{texto_limpio}"
+                }
             
             # Unimos el texto de todos los elementos encontrados
             texto_limpio = " ".join([el.get_text(separator=' ', strip=True) for el in elementos if el.get_text(strip=True)])
