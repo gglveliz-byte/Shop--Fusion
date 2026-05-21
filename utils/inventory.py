@@ -3,7 +3,7 @@ from flask import current_app
 from models import db, Producto
 from utils.security_logger import log_security_event
 
-# Paso 2.1: Creación del Módulo de Inventario
+# [FASE 2 - HERRAMIENTA INVENTARIO EN TIEMPO REAL] Paso 2.1: Creación del Módulo de Inventario
 def _release_stock(product_id, quantity, app):
     """
     Función interna (Callback) que se ejecuta de forma invisible cuando el cronómetro llega a cero.
@@ -18,7 +18,7 @@ def _release_stock(product_id, quantity, app):
             producto.stock_reservado -= quantity
             db.session.commit()
 
-# Paso 2.2: Función de Auditoría
+# [FASE 2 - HERRAMIENTA INVENTARIO EN TIEMPO REAL] Paso 2.2: Función de Auditoría
 def check_stock(product_id):
     """
     Devuelve la radiografía exacta del inventario de un producto.
@@ -41,7 +41,7 @@ def check_stock(product_id):
         "stock_libre": stock_libre
     }
 
-# Paso 2.3: Función de Bloqueo Temporal
+# [FASE 2 - HERRAMIENTA INVENTARIO EN TIEMPO REAL] Paso 2.3: Función de Bloqueo Temporal
 def reserve_stock(product_id, quantity, minutes=15):
     """
     Atrapa una cantidad de stock durante 'X' minutos.
@@ -73,7 +73,7 @@ def reserve_stock(product_id, quantity, minutes=15):
         "message": f"Se han bloqueado temporalmente {quantity} unidades del producto '{producto.nombre}' por {minutes} minutos."
     }
 
-# Paso 2.4: Función de Actualización y Alerta
+# [FASE 2 - HERRAMIENTA INVENTARIO EN TIEMPO REAL] Paso 2.4: Función de Actualización y Alerta
 def update_stock(product_id, delta):
     """
     Aplica una suma o resta definitiva al inventario total de un producto (ej. cuando llega un proveedor o se completa una venta).
