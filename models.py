@@ -203,6 +203,8 @@ class Producto(db.Model):
     #INICIA LOS CAMBIOS INDICADOS EN FASE 3
     # Columna stock: Mitiga el error crítico E41 (Inventarios Ciegos)
     stock = db.Column(db.Integer, default=0, nullable=False)
+    # [FASE 1 - HERRAMIENTA INVENTARIO EN TIEMPO REAL] Campo en memoria para cotizaciones y bloqueos
+    stock_reservado = db.Column(db.Integer, default=0, nullable=False)
     #FIN DE LOS CAMBIOS INDICADOS EN FASE 3
 
     activo = db.Column(db.Boolean, default=True)
@@ -229,8 +231,9 @@ class Producto(db.Model):
         return True
 
     def esta_disponible(self, cantidad=1):
-        """Verifica si hay stock suficiente y el producto está activo."""
-        return self.activo and self.stock >= cantidad
+        """Verifica si hay stock real suficiente (descontando las reservas temporales) y el producto está activo."""
+        stock_real = self.stock - self.stock_reservado
+        return self.activo and stock_real >= cantidad
     #FIN DE LOS CAMBIOS INDICADOS EN FASE 3
 
     def calcular_margen(self):
