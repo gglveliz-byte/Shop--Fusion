@@ -319,6 +319,8 @@ class Pedido(db.Model):
     validado_en = db.Column(db.DateTime, nullable=True)  # Fecha de validación
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
     pagado_en = db.Column(db.DateTime, nullable=True)
+    metodo_pago = db.Column(db.String(30), nullable=True)
+    pago_referencia = db.Column(db.String(100), nullable=True, unique=True)
 
     # [PASO 2 - SANITIZACIÓN]
     @validates('cliente_nombre', 'cliente_direccion')

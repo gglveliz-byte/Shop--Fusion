@@ -1,9 +1,52 @@
+from sqlalchemy.engine import result
 import json
 from flask import Blueprint, request, jsonify, render_template
 from flask_login import current_user
 from utils.ai_qwen import qwen_service
 from utils.rate_limit import limiter
 from utils.orders import create_order_from_json
+import re
+
+def extract_payment_data(text):
+    """Extract payment fields from free-form text using advanced regex and NLP matching.
+    Returns a dict with keys: metodo_pago, pago_referencia, monto, fecha (optional).
+    """
+    if not text:
+        return None
+        
+    data = {}
+    text_lower = text.lower()
+    
+    # 1. Determinar Método de Pago de manera flexible
+    if "paypal" in text_lower:
+        data["metodo_pago"] = "paypal"
+    elif any(word in text_lower for word in ["transferencia", "banco", "deposito", "depósito", "bancaria", "transfer", "pichincha", "guayaquil", "produbanco", "pacifico", "pacífico", "bolivariano", "cooperativa"]):
+        data["metodo_pago"] = "transferencia"
+    else:
+        # Fallback a regex
+        match_metodo = re.search(r"(?i)metodo[:\s]+(transferencia|paypal)", text)
+        if match_metodo:
+            data["metodo_pago"] = match_metodo.group(1).lower()
+
+    # 2. Extraer Referencia
+    # Busca palabras clave en español de comprobantes seguidas por un código alfanumérico
+    match_ref = re.search(r"(?i)(?:referencia|ref|comprobante|transaccion|transacción|tx|hash|codigo|código|nro|numero|número|operacion|operación)\s*(?:de)?\s*[:#\s-]*\s*([A-Za-z0-9\-]+)", text)
+    if match_ref:
+        data["pago_referencia"] = match_ref.group(1)
+    
+    # 3. Extraer Monto
+    # Captura montos precedidos por $, total, monto, valor, etc.
+    match_monto = re.search(r"(?i)(?:monto|total|valor|precio|cantidad|\$)\s*(?:de)?\s*[:$#\s]*\s*([0-9]+(?:[.,][0-9]{1,2})?)", text)
+    if match_monto:
+        monto_str = match_monto.group(1).replace(",", ".") # Reemplazar coma decimal por punto
+        data["monto"] = monto_str
+
+    # 4. Extraer Fecha (opcional)
+    match_fecha = re.search(r"(?i)fecha[:\s-]*(\d{4}[-/\s]\d{2}[-/\s]\d{2}|\d{2}[-/\s]\d{2}[-/\s]\d{4})", text)
+    if match_fecha:
+        data["fecha"] = match_fecha.group(1)
+
+    return data if data else None
 
 bp = Blueprint('ai', __name__, url_prefix='/ai')
 
@@ -19,7 +62,70 @@ def chat():
     data = request.get_json()
     if not data:
         return jsonify({"error": "No hay datos en la solicitud"}), 400
-    
+
+    # Intentar extraer datos de pago del mensaje libre
+    mensaje_raw = data.get('message')
+    payment_info = extract_payment_data(mensaje_raw) if mensaje_raw else None
+    if payment_info and all(k in payment_info for k in ["metodo_pago", "pago_referencia", "monto"]):
+        # Simular llamada a la herramienta validatePaymentReceipt
+        from models import Pedido, db
+        from datetime import datetime
+        referencia = payment_info["pago_referencia"]
+        duplicado = Pedido.query.filter_by(pago_referencia=referencia).first()
+        if duplicado:
+            return jsonify({"error": f"La referencia de pago '{referencia}' ya está registrada en el pedido #{duplicado.id}."}), 400
+        # Buscar pedido pendiente por monto
+        try:
+            monto_valor = float(payment_info["monto"])
+        except ValueError:
+            return jsonify({"error": "Monto inválido en los datos de pago."}), 400
+        pedido = (
+            Pedido.query.filter(Pedido.estado == "pendiente")
+            .filter(Pedido.total >= monto_valor - 0.01)
+            .filter(Pedido.total <= monto_valor + 0.01)
+            .first()
+        )
+        if not pedido:
+            return jsonify({"message": "No se encontró pedido pendiente que coincida con el monto. Se guardó la información del pago para revisión."}), 200
+        # Conciliar
+        pedido.metodo_pago = payment_info["metodo_pago"]
+        pedido.pago_referencia = referencia
+        pedido.pagado_en = datetime.utcnow()
+        pedido.estado = "pagado"
+        db.session.commit()
+        # Generar factura y registro contable (reuse existing logic)
+        try:
+            from utils.billing import calculate_invoice_data
+            from models import Factura
+            datos = calculate_invoice_data(pedido)
+            nueva_f = Factura(
+                numero_factura=Factura.generar_numero_correlativo(),
+                pedido_id=pedido.id,
+                subtotal=datos['subtotal'],
+                iva_porcentaje=datos['iva_porcentaje'],
+                iva_monto=datos['iva_monto'],
+                total=datos['total']
+            )
+            db.session.add(nueva_f)
+            db.session.commit()
+            from utils.accounting import register_transaction
+            register_transaction(
+                tipo='ingreso',
+                monto=float(nueva_f.total),
+                categoria='venta',
+                fuente='caja',
+                descripcion=f"Ingreso automático por factura {nueva_f.numero_factura}",
+                referencia_id=f"FAC-{nueva_f.id}"
+            )
+            return jsonify({
+                "success": True,
+                "pedido_id": pedido.id,
+                "factura_id": nueva_f.id,
+                "mensaje": f"Pedido #{pedido.id} marcado como pagado y factura {nueva_f.numero_factura} generada."
+            }), 200
+        except Exception as e:
+            return jsonify({"error": f"Error al generar factura: {str(e)}"}), 500
+    # Si no es datos de pago estructurados, continuar con flujo normal
     mensaje = data.get('message')
     modelo = data.get('model', 'qwen-plus')
     historial = data.get('history', [])
@@ -35,7 +141,7 @@ def chat():
 
     if not es_admin:
         # Si no es admin, permitimos herramientas de compra, carrito y catálogo
-        herramientas_permitidas = ['createCustomerOrder', 'addProductToCart', 'updateCartItem', 'checkoutCart', 'listProducts']
+        herramientas_permitidas = ['createCustomerOrder', 'addProductToCart', 'updateCartItem', 'checkoutCart', 'listProducts', 'validatePaymentReceipt']
         herramientas_disponibles = [t for t in qwen_service.TOOLS if t['function']['name'] in herramientas_permitidas]
         print("DEBUG: Usuario no-admin detectado. Habilitando herramientas de compra y carrito.")
         
@@ -133,6 +239,93 @@ def chat():
                     "productos": p_list
                 }
                 system_msgs.append(f"Resultado de consulta de productos: {json.dumps(db_res)}.")
+
+            # --- Lógica de Validación y Conciliación de Pago ---
+            elif func_name == "validatePaymentReceipt":
+                # args expected: metodo_pago, pago_referencia, monto, fecha (opcional)
+                referencia = args.get("pago_referencia")
+                # Verificar duplicado en la tabla pedidos
+                from models import Pedido, db
+                from datetime import datetime
+                duplicado = Pedido.query.filter_by(pago_referencia=referencia).first()
+                if duplicado:
+                    db_res = {
+                        "success": False,
+                        "action": "validatePaymentReceipt",
+                        "error": f"La referencia de pago '{referencia}' ya está registrada en el pedido #{duplicado.id}.",
+                    }
+                else:
+                    # Buscar pedido pendiente cuyo total coincida (tolerancia 0.01)
+                    monto = args.get("monto")
+                    try:
+                        monto_valor = float(monto)
+                    except (TypeError, ValueError):
+                        monto_valor = None
+                    pedido = None
+                    if monto_valor is not None:
+                        pedido = (
+                            Pedido.query.filter(Pedido.estado == "pendiente")
+                            .filter(Pedido.total >= monto_valor - 0.01)
+                            .filter(Pedido.total <= monto_valor + 0.01)
+                            .first()
+                        )
+                    if pedido:
+                        # Conciliar pago
+                        pedido.metodo_pago = args.get("metodo_pago")
+                        pedido.pago_referencia = referencia
+                        pedido.pagado_en = datetime.utcnow()
+                        pedido.estado = "pagado"
+                        db.session.commit()
+                        # Generar factura automáticamente
+                        try:
+                            from utils.billing import calculate_invoice_data
+                            from models import Factura
+                            datos = calculate_invoice_data(pedido)
+                            nueva_f = Factura(
+                                numero_factura=Factura.generar_numero_correlativo(),
+                                pedido_id=pedido.id,
+                                subtotal=datos['subtotal'],
+                                iva_porcentaje=datos['iva_porcentaje'],
+                                iva_monto=datos['iva_monto'],
+                                total=datos['total']
+                            )
+                            db.session.add(nueva_f)
+                            db.session.commit()
+                            # Registro contable automático
+                            from utils.accounting import register_transaction
+                            register_transaction(
+                                tipo='ingreso',
+                                monto=float(nueva_f.total),
+                                categoria='venta',
+                                fuente='caja',
+                                descripcion=f"Ingreso automático por factura {nueva_f.numero_factura}",
+                                referencia_id=f"FAC-{nueva_f.id}"
+                            )
+                            db_res = {
+                                "success": True,
+                                "action": "validatePaymentReceipt",
+                                "pedido_id": pedido.id,
+                                "mensaje": f"Pedido #{pedido.id} marcado como pagado, factura {nueva_f.numero_factura} generada.",
+                                "factura_id": nueva_f.id
+                            }
+                        except Exception as e:
+                            db_res = {
+                                "success": False,
+                                "action": "validatePaymentReceipt",
+                                "error": str(e)
+                            }
+
+                    else:
+                        # No se encontró pedido coincidente, se guarda solo la info
+                        db_res = {
+                            "success": True,
+                            "action": "validatePaymentReceipt",
+                            "metodo_pago": args.get("metodo_pago"),
+                            "pago_referencia": referencia,
+                            "monto": monto,
+                            "fecha": args.get("fecha"),
+                        }
+                system_msgs.append(f"Validación de comprobante: {json.dumps(db_res)}.")
 
             elif func_name == "addProductToCart":
                 from models import Producto

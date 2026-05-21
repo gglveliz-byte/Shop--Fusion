@@ -184,7 +184,26 @@ def create_app(config_class=Config):
 
     # Crear tablas en la base de datos
     with app.app_context():
-        db.create_all()
+        # ---------- MIGRACIÓN SEGURA DE CAMPOS DE PAGO ----------
+        # Si la tabla ya existe, añadimos columnas faltantes sin perder datos.
+        # Compatible con SQLite (ALTER TABLE permite ADD COLUMN) y PostgreSQL.
+        from sqlalchemy import inspect, text
+        insp = inspect(db.engine)
+        if 'pedidos' in insp.get_table_names():
+            cols = [c['name'] for c in insp.get_columns('pedidos')]
+            if 'metodo_pago' not in cols:
+                db.session.execute(text('ALTER TABLE pedidos ADD COLUMN metodo_pago VARCHAR(30)'))
+                app.logger.info('Columna metodo_pago añadida a pedidos')
+            if 'pago_referencia' not in cols:
+                db.session.execute(text('ALTER TABLE pedidos ADD COLUMN pago_referencia VARCHAR(100)'))
+                app.logger.info('Columna pago_referencia añadida a pedidos')
+                # Crear índice único si la DB lo permite (SQLite acepta UNIQUE en columna separada)
+                try:
+                    db.session.execute(text('CREATE UNIQUE INDEX ix_pedido_pago_ref ON pedidos(pago_referencia)'))
+                except Exception:
+                    pass
+        db.session.commit()
+        # -----------------------------------------------------
 
     return app
 

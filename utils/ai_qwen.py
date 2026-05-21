@@ -99,6 +99,23 @@ class QwenAIService:
         {
             "type": "function",
             "function": {
+                "name": "validatePaymentReceipt",
+                "description": "Valida un comprobante de pago pegado como texto y extrae monto, referencia, método y fecha opcional.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "metodo_pago": {"type": "string", "enum": ["transferencia", "paypal"], "description": "Método de pago utilizado."},
+                        "pago_referencia": {"type": "string", "description": "Código o referencia del comprobante de pago."},
+                        "monto": {"type": "number", "description": "Monto total del pago."},
+                        "fecha": {"type": "string", "format": "date", "description": "Fecha de la transferencia (opcional)."}
+                    },
+                    "required": ["metodo_pago", "pago_referencia", "monto"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
                 "name": "createDeal",
                 "description": "Registra una nueva oportunidad o prospecto en el CRM.",
                 "parameters": {
@@ -217,10 +234,6 @@ class QwenAIService:
                 "description": "Extrae el texto y contenido de una página web autorizada. Úsalo para buscar documentación, especificaciones técnicas o leer artículos a pedido del usuario.",
                 "parameters": {
                     "type": "object",
-                    "properties": {
-                        "url": {"type": "string", "description": "La URL completa de la página a leer (ej. https://es.wikipedia.org/wiki/Python)"},
-                        "selector": {"type": "string", "description": "(Opcional) Un selector CSS si solo quieres extraer una parte específica (ej. '#content', '.price'). Déjalo vacío para leer todo."}
-                    },
                     "required": ["url"]
                 }
             }
@@ -239,18 +252,22 @@ class QwenAIService:
        - Si el cliente desea pagar, ir a la caja, hacer el pago o generar el cobro del carrito actual, utiliza 'checkoutCart' para abrir la pantalla de checkout de inmediato.
     
     2. GESTIÓN CRM (Qwen-Plus): Administras el pipeline con 'createDeal' y 'updateDealStage'. Tu meta es convertir prospectos en ingresos reales.
+
+    3. VALIDACIÓN DE PAGOS: 
+       - Si el usuario te proporciona un texto o imagen (OCR) con un comprobante de pago, utiliza 'validatePaymentReceipt' para extraer automáticamente el monto, la referencia y el método de pago. 
+       - Verifica siempre que la información extraída sea consistente antes de confirmar el registro del pago al cliente.
     
-    3. ANÁLISIS ESTRATÉGICO (Qwen-Max): Para decisiones de alto nivel, usa 'generateExecutiveSummary'. Evalúa rentabilidad y riesgos.
+    4. ANÁLISIS ESTRATÉGICO (Qwen-Max): Para decisiones de alto nivel, usa 'generateExecutiveSummary'. Evalúa rentabilidad y riesgos.
     
-    4. FACTURACIÓN Y LEGAL: Gestionas la validez de los ingresos con 'createInvoice' y consultas estados con 'getInvoiceStatus'.
+    5. FACTURACIÓN Y LEGAL: Gestionas la validez de los ingresos con 'createInvoice' y consultas estados con 'getInvoiceStatus'.
  
-    5. CONTABILIDAD SENIOR: 
+    6. CONTABILIDAD SENIOR: 
        - Registras movimientos con 'recordTransaction'. 
        - Monitoreas la liquidez con 'getAccountBalance'.
        - Generas estados de resultados con 'generateMonthlyReport'.
        - CRÍTICO: Identifica siempre las comisiones de PayPal como gastos operativos (fees) y reporta el margen neto real.
     
-    6. SOPORTE TÉCNICO E INVESTIGADOR (Scraping): 
+    7. SOPORTE TÉCNICO E INVESTIGADOR (Scraping): 
        - Si el usuario te pide investigar un tema, leer un artículo o buscar documentación técnica en las webs autorizadas (ej. Wikipedia, Amazon), USA LA HERRAMIENTA 'scrapeWebsite'.
        - Lee la información extraída de la web, resúmela o respóndele al usuario basándote EXCLUSIVAMENTE en esos datos.
        - Si el usuario pide un dato exacto, intenta usar el parámetro 'selector' para buscar directo en el HTML.
