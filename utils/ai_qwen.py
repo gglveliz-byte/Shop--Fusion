@@ -237,12 +237,61 @@ class QwenAIService:
                     "required": ["url"]
                 }
             }
+        },
+        # -- HERRAMIENTAS DE GESTIÓN DE STOCK (FASE 3 - INVENTARIOS) --
+        {
+            # Paso 3.1: Registro de la Herramienta checkStock
+            "type": "function",
+            "function": {
+                "name": "checkStock",
+                "description": "Consulta el estado detallado del inventario de un producto (stock total, stock reservado para cotizaciones y stock libre disponible).",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "product_id": {"type": "integer", "description": "El ID único del producto a consultar."}
+                    },
+                    "required": ["product_id"]
+                }
+            }
+        },
+        {
+            # Paso 3.1: Registro de la Herramienta reserveStock
+            "type": "function",
+            "function": {
+                "name": "reserveStock",
+                "description": "Bloquea temporalmente una cantidad de stock de un producto para una cotización en curso. Libera el stock automáticamente después de un tiempo si no se concreta.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "product_id": {"type": "integer", "description": "El ID único del producto a reservar."},
+                        "quantity": {"type": "integer", "description": "La cantidad de unidades a bloquear temporalmente."},
+                        "minutes": {"type": "integer", "description": "Tiempo de duración de la reserva en minutos (por defecto 15)."}
+                    },
+                    "required": ["product_id", "quantity"]
+                }
+            }
+        },
+        {
+            # Paso 3.1: Registro de la Herramienta updateStock
+            "type": "function",
+            "function": {
+                "name": "updateStock",
+                "description": "Actualiza permanentemente el stock total de un producto, sumando por ingresos de proveedor o restando por ventas confirmadas. Si el stock final baja de 5 unidades, disparará una alerta automática.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "product_id": {"type": "integer", "description": "El ID único del producto a actualizar."},
+                        "delta": {"type": "integer", "description": "El cambio en el inventario. Puede ser positivo (ej: 10 para sumar stock) o negativo (ej: -3 para restar stock)."}
+                    },
+                    "required": ["product_id", "delta"]
+                }
+            }
         }
     ]
 
     # Paso 3.2: Modificación del "Cerebro" (System Prompt)
-    # Le indicamos a la IA su nuevo rol y capacidades
-    SYSTEM_PROMPT = """Eres el Director Financiero (CFO), Asistente de Ventas Inteligente y Asistente de Soporte Técnico de Shop Fusion. Tu objetivo es mantener la salud financiera de la empresa, ayudar con búsquedas inteligentes y asistir a los clientes a comprar con información 100% verídica.
+    # Le indicamos a la IA su nuevo rol y capacidades de Gestión de Inventarios
+    SYSTEM_PROMPT = """Eres el Director Financiero (CFO), Asistente de Ventas Inteligente, Asistente de Soporte Técnico y Gestor de Inventario de Shop Fusion. Tu objetivo es mantener la salud financiera de la empresa, ayudar con búsquedas inteligentes, asistir a los clientes a comprar con información 100% verídica y monitorear existencias físicas y reservas de forma estricta.
     
     1. ASISTENTE DE VENTAS Y CARRITO:
        - Si el cliente te pregunta qué productos tienes, qué vendes, o qué hay en catálogo, utiliza siempre 'listProducts' para obtener los productos reales en base de datos. NUNCA inventes nombres de productos, precios o existencias.
@@ -271,6 +320,12 @@ class QwenAIService:
        - Si el usuario te pide investigar un tema, leer un artículo o buscar documentación técnica en las webs autorizadas (ej. Wikipedia, Amazon), USA LA HERRAMIENTA 'scrapeWebsite'.
        - Lee la información extraída de la web, resúmela o respóndele al usuario basándote EXCLUSIVAMENTE en esos datos.
        - Si el usuario pide un dato exacto, intenta usar el parámetro 'selector' para buscar directo en el HTML.
+
+    8. GESTIÓN DE INVENTARIOS EN TIEMPO REAL:
+       - Si el usuario te pregunta por el inventario o la existencia de un producto específico, utiliza 'checkStock' para obtener las existencias físicas y el stock libre neto disponible. Informa detalladamente de los tres estados si el usuario te lo pide.
+       - Si estás cotizando, negociando con un cliente o creando un trato de CRM y el usuario solicita apartar o resguardar mercadería mientras realiza la transacción, utiliza 'reserveStock'. Explícale de forma amigable que su reserva será temporal (por defecto 15 minutos).
+       - Si entra nuevo inventario al almacén (proveedor) o si se realiza un reabastecimiento o retiro definitivo de stock (por mermas o inventario físico), utiliza 'updateStock' con el delta correspondiente (positivo para sumar, negativo para restar).
+       - NUNCA inventes números de stock. Si un producto no tiene stock libre para la venta, avísale con amabilidad y ofrece opciones similares de nuestro catálogo.
 
     Tu tono es ejecutivo, profesional, pero alegre y servicial cuando interactúas con clientes que desean comprar. Siempre confirma los montos y categorías registrados."""
 

@@ -547,6 +547,26 @@ def chat():
                 system_msgs.append(f"REPORTE CATEGORIZADO: {json.dumps(db_res)}.")
                 target_model = "qwen-max"
 
+            # --- Lógica de Inventario (FASE 3) ---
+            elif func_name == "checkStock":
+                # Paso 3.3: Conectar checkStock con la función utils.inventory.check_stock
+                from utils.inventory import check_stock
+                db_res = check_stock(product_id=args.get('product_id'))
+                system_msgs.append(f"Consulta de inventario completada: {json.dumps(db_res)}.")
+
+            elif func_name == "reserveStock":
+                # Paso 3.3: Conectar reserveStock con la función utils.inventory.reserve_stock
+                from utils.inventory import reserve_stock
+                minutos = args.get('minutes', 15) or 15
+                db_res = reserve_stock(product_id=args.get('product_id'), quantity=args.get('quantity'), minutes=minutos)
+                system_msgs.append(f"Reserva de inventario completada: {json.dumps(db_res)}.")
+
+            elif func_name == "updateStock":
+                # Paso 3.3: Conectar updateStock con la función utils.inventory.update_stock
+                from utils.inventory import update_stock
+                db_res = update_stock(product_id=args.get('product_id'), delta=args.get('delta'))
+                system_msgs.append(f"Actualización física de inventario completada: {json.dumps(db_res)}.")
+
             if db_res:
                 db_results.append(db_res)
 
