@@ -371,6 +371,13 @@ def chat():
                         "action": "addProductToCart",
                         "error": f"Producto '{p_name}' no encontrado o agotado."
                     }
+                elif not producto.esta_disponible(qty):
+                    stock_libre = producto.stock - producto.stock_reservado
+                    db_res = {
+                        "success": False,
+                        "action": "addProductToCart",
+                        "error": f"Stock insuficiente para '{producto.nombre}'. Solicitado: {qty}, Disponible real: {stock_libre}."
+                    }
                 else:
                     imagenes = producto.obtener_todas_imagenes()
                     imagen = imagenes[0] if imagenes else (producto.imagen or "")
@@ -432,19 +439,40 @@ def chat():
                         "error": f"Producto '{p_name}' no encontrado o agotado."
                     }
                 else:
-                    imagenes = producto.obtener_todas_imagenes()
-                    imagen = imagenes[0] if imagenes else (producto.imagen or "")
-                    db_res = {
-                        "success": True,
-                        "action": "updateCartItem",
-                        "action_type": action_type,
-                        "id": producto.id,
-                        "nombre": producto.nombre,
-                        "precio": float(producto.precio_venta()),
-                        "imagen": imagen,
-                        "cantidad": qty,
-                        "mensaje": f"Carrito actualizado: {action_type} para '{producto.nombre}' con cantidad {qty}."
-                    }
+                    # Calcular la cantidad total acumulada para validar contra el stock
+                    cant_a_validar = qty
+                    if action_type == 'add':
+                        from flask import session
+                        carrito = session.get('carrito', [])
+                        cant_actual = 0
+                        for item in carrito:
+                            if item.get('id') == producto.id:
+                                cant_actual = item.get('cantidad', 0)
+                                break
+                        cant_a_validar = cant_actual + qty
+                    
+                    # Validar disponibilidad si la acción es sumar o establecer cantidad
+                    if action_type in ['add', 'set'] and not producto.esta_disponible(cant_a_validar):
+                        stock_libre = producto.stock - producto.stock_reservado
+                        db_res = {
+                            "success": False,
+                            "action": "updateCartItem",
+                            "error": f"Stock insuficiente para '{producto.nombre}'. Solicitado total: {cant_a_validar}, Disponible real: {stock_libre}."
+                        }
+                    else:
+                        imagenes = producto.obtener_todas_imagenes()
+                        imagen = imagenes[0] if imagenes else (producto.imagen or "")
+                        db_res = {
+                            "success": True,
+                            "action": "updateCartItem",
+                            "action_type": action_type,
+                            "id": producto.id,
+                            "nombre": producto.nombre,
+                            "precio": float(producto.precio_venta()),
+                            "imagen": imagen,
+                            "cantidad": qty,
+                            "mensaje": f"Carrito actualizado: {action_type} para '{producto.nombre}' con cantidad {qty}."
+                        }
                 system_msgs.append(f"Resultado de actualizar carrito: {json.dumps(db_res)}.")
 
             elif func_name == "checkoutCart":
