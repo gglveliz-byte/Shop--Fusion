@@ -160,19 +160,154 @@ def chat():
         "NUNCA reutilices ni dupliques los datos de transacciones u operaciones pasadas que estén en tu historial."
     )
 
-    # 2. Llamada inicial a la IA para detectar intención
-    result = qwen_service.get_response(mensaje, model=modelo, history=historial, tools=herramientas_disponibles, system_instruction=system_msg)
+    # 2. Bucle de Razonamiento (ReAct) Multistep
+    max_iteraciones = 3
+    iteracion_actual = 0
+    prompt_actual = mensaje
+    historial_bucle = list(historial) if historial else []
     
-    if isinstance(result, str):
-        return jsonify({"error": result}), 500
+    db_results_totales = []
+    respuesta_final = ""
+    reasoning_final = ""
+    modelo_actual = modelo
+    ejecucion_directa = False  # Bandera: True cuando se ejecutan herramientas confirmadas
+    
+    while iteracion_actual < max_iteraciones:
+        iteracion_actual += 1
 
-    # 3. Procesar llamadas a herramientas (Tool Calls)
-    if result.get("tool_calls"):
-        db_results = []
+        # --- ATAJO: Si el mensaje es una confirmación de acción crítica, ejecutar directamente ---
+        if prompt_actual.startswith("[SISTEMA_CONFIRMA]"):
+            token = prompt_actual.replace("[SISTEMA_CONFIRMA]", "").strip()
+            pending_calls = None
+            try:
+                from itsdangerous import URLSafeSerializer, BadSignature
+                from flask import current_app
+                if current_app.config.get('SECRET_KEY'):
+                    s = URLSafeSerializer(current_app.config['SECRET_KEY'])
+                    decoded = s.loads(token)
+                    pending_calls = decoded.get("tool_calls")
+                else:
+                    decoded = json.loads(token)
+                    pending_calls = decoded.get("tool_calls")
+            except Exception:
+                pending_calls = None
+
+            if pending_calls:
+                # Construir un resultado simulado con las tool_calls pendientes y saltarse la IA
+                result = {
+                    "content": "",
+                    "reasoning": "",
+                    "tool_calls": pending_calls
+                }
+                prompt_actual = ""  # Limpiar el prompt de confirmación
+                ejecucion_directa = True  # Marcar: el lote está pre-autorizado, no re-bloquear
+                if True:  # bloque de ejecución directa
+                    pass  # La lógica de herramientas sigue debajo normalmente
+            else:
+                # Token inválido o sin tool_calls, dejar que la IA responda
+                prompt_actual = "El usuario aprobó la acción crítica. Continúa con el flujo."
+                result = qwen_service.get_response(
+                    prompt_actual,
+                    model=modelo_actual,
+                    history=historial_bucle,
+                    tools=herramientas_disponibles,
+                    system_instruction=system_msg
+                )
+                if isinstance(result, str):
+                    return jsonify({"error": result}), 500
+        else:
+            # Llamada normal a la IA
+            result = qwen_service.get_response(
+                prompt_actual,
+                model=modelo_actual,
+                history=historial_bucle,
+                tools=herramientas_disponibles,
+                system_instruction=system_msg
+            )
+            if isinstance(result, str):
+                return jsonify({"error": result}), 500
+        
+        # Acumular respuesta de texto si existe
+        if result.get("content"):
+            respuesta_final += result.get("content") + "\n"
+        if result.get("reasoning"):
+            reasoning_final += result.get("reasoning") + "\n"
+
+        # Si NO hay llamadas a herramientas, la IA ha completado la tarea
+        if not result.get("tool_calls"):
+            break
+
+        # 3. Procesar llamadas a herramientas (Tool Calls)
         system_msgs = []
-        target_model = modelo # Por defecto usar el modelo actual
+        target_model = modelo_actual
 
-        # Límite de Seguridad: Procesamos máximo 3 herramientas por mensaje para evitar saturación o bucles.
+        # --- PRE-VALIDACIÓN (FASE 3) ---
+        # Primero revisamos si hay alguna acción crítica bloqueante en todo el batch
+        ACCIONES_CRITICAS = ["updateStock", "recordTransaction", "createInvoice"]
+        
+        for tool_call in result["tool_calls"][:3]:
+            func_name = tool_call["function"]["name"]
+            args_str = tool_call["function"]["arguments"]
+            try:
+                args = json.loads(args_str)
+            except:
+                if not args_str.strip().endswith("}"): args_str += "}"
+                try: args = json.loads(args_str)
+                except: continue
+
+            es_confirmada = False
+            if prompt_actual.startswith("[SISTEMA_CONFIRMA]"):
+                token = prompt_actual.replace("[SISTEMA_CONFIRMA]", "").strip()
+                from itsdangerous import URLSafeSerializer, BadSignature
+                from flask import current_app
+                if current_app.config.get('SECRET_KEY'):
+                    s = URLSafeSerializer(current_app.config['SECRET_KEY'])
+                    try:
+                        conf_data = s.loads(token)
+                        if conf_data.get("func_name") == func_name and conf_data.get("args") == args:
+                            es_confirmada = True
+                    except BadSignature:
+                        pass
+                else:
+                    try:
+                        conf_data = json.loads(token)
+                        if conf_data.get("func_name") == func_name: es_confirmada = True
+                    except: pass
+
+            if func_name in ACCIONES_CRITICAS and not es_confirmada and not ejecucion_directa:
+                # Se detiene la ejecución y firma el token con TODAS las tool_calls pendientes del turno
+                from itsdangerous import URLSafeSerializer
+                from flask import current_app
+                token_str = ""
+                all_pending = []
+                for tc in result["tool_calls"][:3]:
+                    all_pending.append({
+                        "id": tc.get("id"),
+                        "function": {
+                            "name": tc["function"]["name"],
+                            "arguments": tc["function"]["arguments"]
+                        }
+                    })
+                payload = {"func_name": func_name, "args": args, "tool_calls": all_pending}
+                if current_app.config.get('SECRET_KEY'):
+                    s = URLSafeSerializer(current_app.config['SECRET_KEY'])
+                    token_str = s.dumps(payload)
+                else:
+                    token_str = json.dumps(payload)
+
+                # Abortamos de inmediato y pedimos confirmación antes de ejecutar CUALQUIER herramienta
+                return jsonify({
+                    "status": "requires_confirmation",
+                    "response": f"⚠️ **Acción de Seguridad Requerida**\nEl asistente intentó ejecutar una operación crítica:\n- Acción: `{func_name}`\n\nPor seguridad, por favor confirma si deseas proceder.",
+                    "pending_action": {
+                        "func_name": func_name,
+                        "args": args,
+                        "token": token_str
+                    },
+                    "model": modelo_actual
+                })
+
+        # --- EJECUCIÓN (Si no hay acciones críticas o ya están confirmadas) ---
         for tool_call in result["tool_calls"][:3]:
             func_name = tool_call["function"]["name"]
             args_str = tool_call["function"]["arguments"]
@@ -517,9 +652,11 @@ def chat():
                 from models import db, Pedido, Factura
                 from utils.billing import calculate_invoice_data
                 pedido_id = args.get('pedido_id')
-                pedido = Pedido.query.get(pedido_id)
-                if not pedido: db_res = {"success": False, "mensaje": "Pedido no encontrado."}
-                elif pedido.estado != 'pagado': db_res = {"success": False, "mensaje": "Pedido no pagado."}
+                pedido = Pedido.query.get(pedido_id) if pedido_id else None
+                if not pedido:
+                    db_res = {"success": False, "mensaje": f"Pedido #{pedido_id} no encontrado."}
+                elif pedido.estado not in ('pendiente', 'pagado', 'procesando'):
+                    db_res = {"success": False, "mensaje": f"No se puede facturar un pedido en estado '{pedido.estado}'."}
                 else:
                     try:
                         datos = calculate_invoice_data(pedido)
@@ -530,21 +667,25 @@ def chat():
                         )
                         db.session.add(nueva_f)
                         db.session.commit()
-                        db_res = {"success": True, "mensaje": f"Factura {nueva_f.numero_factura} generada.", "factura_id": nueva_f.id}
-                        
-                        # Registro contable automático
-                        from utils.accounting import register_transaction
-                        register_transaction(
-                            tipo='ingreso',
-                            monto=float(nueva_f.total),
-                            categoria='venta',
-                            fuente='caja',
-                            descripcion=f"Ingreso automático por factura {nueva_f.numero_factura}",
-                            referencia_id=f"FAC-{nueva_f.id}"
-                        )
-                    except Exception as e: db_res = {"success": False, "mensaje": str(e)}
+                        db_res = {
+                            "success": True,
+                            "mensaje": f"Factura {nueva_f.numero_factura} generada para pedido #{pedido.id} (estado: {pedido.estado}).",
+                            "factura_id": nueva_f.id,
+                            "numero_factura": nueva_f.numero_factura,
+                            "total": float(nueva_f.total)
+                        }
+                        # Solo registrar movimiento contable si el pedido ya está pagado
+                        if pedido.estado == 'pagado':
+                            from utils.accounting import register_transaction
+                            register_transaction(
+                                tipo='ingreso', monto=float(nueva_f.total),
+                                categoria='venta', fuente='caja',
+                                descripcion=f"Ingreso por factura {nueva_f.numero_factura}",
+                                referencia_id=f"FAC-{nueva_f.id}"
+                            )
+                    except Exception as e:
+                        db_res = {"success": False, "mensaje": str(e)}
                 system_msgs.append(f"Acción Factura: {json.dumps(db_res)}.")
-
             elif func_name == "getInvoiceStatus":
                 from models import Factura
                 f = Factura.query.get(args.get('factura_id'))
@@ -596,27 +737,40 @@ def chat():
                 system_msgs.append(f"Actualización física de inventario completada: {json.dumps(db_res)}.")
 
             if db_res:
-                db_results.append(db_res)
+                db_results_totales.append(db_res)
 
-        unified_system_msg = " \n".join(system_msgs)
-        unified_system_msg += " \nResponde al usuario confirmando de forma amigable todas las acciones ejecutadas con éxito."
-
-        final_result = qwen_service.get_response(mensaje, model=target_model, history=historial, system_instruction=unified_system_msg, tools=[])
+        # 4. Feedback a la IA (Observaciones nativas)
         
-        if isinstance(final_result, str):
-            return jsonify({"error": final_result}), 500
-            
-        return jsonify({
-            "response": final_result.get("content"),
-            "reasoning": final_result.get("reasoning"),
-            "status": "tool_executed",
-            "db_results": db_results,
-            "db_result": db_results[0] if db_results else None
+        # Guardamos el mensaje actual del usuario (o system prompt) si existe
+        if prompt_actual:
+            historial_bucle.append({"role": "user", "content": prompt_actual})
+        
+        # Añadimos la respuesta nativa del asistente pidiendo las herramientas
+        historial_bucle.append({
+            "role": "assistant",
+            "content": result.get("content") or "",
+            "tool_calls": result.get("tool_calls")
         })
+        
+        # Añadimos los resultados de cada herramienta con el rol 'tool'
+        for i, tool_call in enumerate(result["tool_calls"][:3]):
+            historial_bucle.append({
+                "role": "tool",
+                "tool_call_id": tool_call.get("id"),
+                "content": system_msgs[i] if i < len(system_msgs) else '{"success": false}'
+            })
+        
+        ejecucion_directa = False  # Resetear la bandera para la siguiente iteración del bucle
+        # El próximo prompt será vacío; el modelo reaccionará a los mensajes 'tool'
+        prompt_actual = ""
+        modelo_actual = target_model
 
-    # 5. Respuesta normal si no hubo herramientas
+    # 5. Respuesta final al usuario
     return jsonify({
-        "response": result.get("content"),
-        "reasoning": result.get("reasoning"),
-        "model": modelo
+        "response": respuesta_final.strip() if respuesta_final.strip() else result.get("content", "Acción completada con éxito."),
+        "reasoning": reasoning_final.strip() if reasoning_final.strip() else result.get("reasoning"),
+        "status": "tool_executed" if db_results_totales else "success",
+        "db_results": db_results_totales,
+        "db_result": db_results_totales[0] if db_results_totales else None,
+        "model": modelo_actual
     })

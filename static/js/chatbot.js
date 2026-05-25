@@ -49,13 +49,20 @@ document.addEventListener('DOMContentLoaded', () => {
     setupClearButton();
 
     // Send message
-    const sendMessage = async () => {
-        const text = input.value.trim();
+    const sendMessage = async (hiddenText = null) => {
+        const text = hiddenText !== null ? hiddenText : input.value.trim();
         if (!text) return;
 
         // Add user message to UI
-        addMessage(text, 'user');
-        input.value = '';
+        if (!text.startsWith('[SISTEMA_CONFIRMA]')) {
+            addMessage(text, 'user');
+        } else {
+            addMessage("✔️ Acción aprobada por el usuario.", 'user');
+        }
+        
+        if (hiddenText === null) {
+            input.value = '';
+        }
 
         // Show typing
         typingIndicator.style.display = 'block';
@@ -83,6 +90,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (data.error) {
                 addMessage("Error: " + data.error, 'ai');
+            } else if (data.status === "requires_confirmation") {
+                // Generar UI de confirmación dinámica y premium
+                let confMsg = `
+                    <div style="background: rgba(255, 255, 255, 0.05); border-left: 4px solid #f59e0b; padding: 12px; border-radius: 8px; margin-top: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                        <div style="font-weight: 600; color: #f59e0b; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                            Autorización Requerida
+                        </div>
+                        <div style="font-size: 0.9em; margin-bottom: 12px; color: #4b5563;">
+                            El sistema intentó ejecutar una operación crítica: <strong style="color: #111827; background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">${data.pending_action.func_name}</strong>. Por tu seguridad, necesitamos tu confirmación.
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button id="btn-approve-action" style="flex: 1; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.9em; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">
+                                ✓ Aprobar
+                            </button>
+                            <button id="btn-reject-action" style="flex: 1; background: #fff; color: #ef4444; border: 1px solid #ef4444; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 0.9em; transition: all 0.2s ease;">
+                                ✕ Rechazar
+                            </button>
+                        </div>
+                    </div>
+                `;
+                addMessage(confMsg, 'ai');
+                
+                setTimeout(() => {
+                    const btnApprove = document.getElementById('btn-approve-action');
+                    const btnReject = document.getElementById('btn-reject-action');
+
+                    if (btnApprove) {
+                        btnApprove.onclick = function() {
+                            // Deshabilitar ambos botones para evitar doble clic
+                            btnApprove.disabled = true;
+                            btnApprove.innerHTML = '&#9203; Procesando...';
+                            btnApprove.style.opacity = '0.7';
+                            if (btnReject) btnReject.disabled = true;
+
+                            // Preservar el contexto de lo que el asistente intentó hacer
+                            chatHistory.push({
+                                "role": "assistant",
+                                "content": data.response || ""
+                            });
+
+                            // Enviar token como hiddenText (no se pinta en el chat)
+                            let confirmPayload = `[SISTEMA_CONFIRMA] ${data.pending_action.token}`;
+                            sendMessage(confirmPayload);
+                        };
+                        btnApprove.onmouseover = () => btnApprove.style.transform = 'translateY(-1px)';
+                        btnApprove.onmouseout = () => btnApprove.style.transform = 'translateY(0)';
+                    }
+
+                    if (btnReject) {
+                        btnReject.onclick = function() {
+                            btnReject.disabled = true;
+                            if (btnApprove) btnApprove.disabled = true;
+                            sendMessage('He rechazado la acción. Cancela la operación y dime en qué más puedo ayudarte.');
+                        };
+                        btnReject.onmouseover = () => { btnReject.style.background = '#fef2f2'; btnReject.style.transform = 'translateY(-1px)'; };
+                        btnReject.onmouseout = () => { btnReject.style.background = '#fff'; btnReject.style.transform = 'translateY(0)'; };
+                    }
+                }, 100);
             } else {
                 addMessage(data.response, 'ai', data.reasoning, data.tool_calls);
                 
