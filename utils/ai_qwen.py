@@ -286,6 +286,64 @@ class QwenAIService:
                     "required": ["product_id", "delta"]
                 }
             }
+        },
+        # -- HERRAMIENTAS DE REPORTES Y ANALÍTICA (HERRAMIENTA 12 - BI) --
+        {
+            "type": "function",
+            "function": {
+                "name": "getSalesReport",
+                "description": "Genera un reporte financiero detallado de ventas, costos de proveedor, margen neto de ganancia y balance de caja de transacciones para un periodo determinado.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "period": {
+                            "type": "string",
+                            "enum": ["today", "this_week", "this_month", "last_month", "this_year"],
+                            "description": "Periodo de tiempo para el análisis financiero."
+                        }
+                    },
+                    "required": ["period"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "comparePeriods",
+                "description": "Compara el rendimiento financiero y el margen de ganancia neto entre dos periodos diferentes para calcular variaciones porcentuales exactas.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "period1": {
+                            "type": "string",
+                            "enum": ["today", "this_week", "this_month", "last_month", "this_year"],
+                            "description": "Primer periodo (usualmente el más reciente)."
+                        },
+                        "period2": {
+                            "type": "string",
+                            "enum": ["today", "this_week", "this_month", "last_month", "this_year"],
+                            "description": "Segundo periodo a comparar (usualmente el anterior)."
+                        }
+                    },
+                    "required": ["period1", "period2"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "getTopProducts",
+                "description": "Lista los productos más vendidos del catálogo, indicando las unidades vendidas, ingresos brutos, margen neto aportado y stock actual restante.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "limit": {
+                            "type": "integer",
+                            "description": "Límite de productos a retornar en el ranking. Por defecto es 5."
+                        }
+                    }
+                }
+            }
         }
     ]
 
