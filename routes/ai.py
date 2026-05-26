@@ -618,7 +618,7 @@ def chat():
                 }
                 system_msgs.append("El sistema abrió la pantalla de pago.")
 
-            # --- Lógica de CRM ---
+            # --- Lógica de CRM  - HERRAMIENTA 3 ---
             elif func_name == "createDeal":
                 from utils.crm import create_deal
                 db_res = create_deal({
@@ -693,7 +693,7 @@ def chat():
                 else: db_res = {"success": True, "numero": f.numero_factura, "estado": f.estado, "total": float(f.total)}
                 system_msgs.append(f"Estado Factura: {json.dumps(db_res)}.")
 
-            # --- Lógica de Contabilidad ---
+            # --- Lógica de Contabilidad - HERRAMIENTA 5 ---
             elif func_name == "recordTransaction":
                 from utils.accounting import register_transaction
                 db_res = register_transaction(
@@ -716,7 +716,7 @@ def chat():
                 system_msgs.append(f"REPORTE CATEGORIZADO: {json.dumps(db_res)}.")
                 target_model = "qwen-max"
 
-            # --- Lógica de Inventario (FASE 3) ---
+            # --- Lógica de Inventario (FASE 3 -  HERRAMIENTA 8) ---
             elif func_name == "checkStock":
                 # Paso 3.3: Conectar checkStock con la función utils.inventory.check_stock
                 from utils.inventory import check_stock
@@ -735,6 +735,26 @@ def chat():
                 from utils.inventory import update_stock
                 db_res = update_stock(product_id=args.get('product_id'), delta=args.get('delta'))
                 system_msgs.append(f"Actualización física de inventario completada: {json.dumps(db_res)}.")
+
+            # --- Lógica de Analítica y BI (FASE 3 - HERRAMIENTA 10) ---
+            elif func_name == "getSalesReport":
+                from utils.analytics import get_sales_report
+                periodo = args.get('period', 'this_month') or 'this_month'
+                db_res = get_sales_report(period=periodo)
+                system_msgs.append(f"Reporte de ventas completado: {json.dumps(db_res)}.")
+
+            elif func_name == "comparePeriods":
+                from utils.analytics import compare_periods
+                p1 = args.get('period1')
+                p2 = args.get('period2')
+                db_res = compare_periods(period1=p1, period2=p2)
+                system_msgs.append(f"Comparación de periodos completada: {json.dumps(db_res)}.")
+
+            elif func_name == "getTopProducts":
+                from utils.analytics import get_top_products
+                lim = args.get('limit', 5) or 5
+                db_res = get_top_products(limit=lim)
+                system_msgs.append(f"Ranking de productos estrella completado: {json.dumps(db_res)}.")
 
             if db_res:
                 db_results_totales.append(db_res)
