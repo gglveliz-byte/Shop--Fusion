@@ -287,7 +287,7 @@ class QwenAIService:
                 }
             }
         },
-        # -- HERRAMIENTAS DE REPORTES Y ANALÍTICA (HERRAMIENTA 12 - BI) --
+        # -- HERRAMIENTAS DE REPORTES Y ANALÍTICA (HERRAMIENTA 10) --
         {
             "type": "function",
             "function": {
