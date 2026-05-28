@@ -239,6 +239,26 @@ class QwenAIService:
             }
         },
         # -- HERRAMIENTAS DE GESTIÓN DE STOCK (FASE 3 - INVENTARIOS) --
+        
+        # CORRECCIÓN PARA LA HERRAMIENTA DE INVENTARIO INTELIGENTE
+        {
+            # Paso 3.1: Registro de la Herramienta searchProduct
+            "type": "function",
+            "function": {
+                "name": "searchProduct",
+                "description": "Busca productos por nombre o palabra clave y devuelve coincidencias reales con sus IDs exactos. Debe usarse antes de consultar o actualizar inventario.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Nombre o palabra clave del producto a buscar."
+                        }
+                    },
+                    "required": ["query"]
+                }
+            }
+        },
         {
             # Paso 3.1: Registro de la Herramienta checkStock
             "type": "function",
@@ -356,6 +376,17 @@ class QwenAIService:
 2. AUTONOMÍA DE HERRAMIENTAS: Tienes un catálogo de herramientas con descripciones claras. Decide inteligentemente cuál usar según la petición. Puedes ejecutar herramientas de forma secuencial (ej. buscar un producto en catálogo -> luego reservar su stock -> luego crear la orden).
 3. REPORTES BI Y ANALÍTICA: Cuando generes análisis o reportes financieros, formatea la información SIEMPRE en tablas Markdown profesionales, usa emojis (📈, 💰) y proporciona 2 o 3 recomendaciones estratégicas basadas en los datos reales devueltos por el servidor.
 4. SOPORTE E INVESTIGACIÓN: Si debes investigar documentación externa, limítate a resumir los datos reales extraídos de las webs autorizadas.
+
+=== 📦 REGLAS CRÍTICAS DE INVENTARIO ===
+1. NUNCA inventes IDs de productos.
+2. Antes de usar herramientas de inventario debes buscar productos reales en la base de datos.
+3. Usa únicamente IDs devueltos explícitamente por las herramientas del sistema.
+4. Si existen múltiples coincidencias de productos, debes pedir aclaración al usuario antes de actualizar stock o reservar inventario.
+5. Nunca asumas que un producto existe si no fue encontrado previamente.
+6. Después de ejecutar una herramienta de inventario, verifica siempre la respuesta devuelta por el sistema antes de informar éxito al usuario.
+7. Si una herramienta devuelve success=false o un error, informa el problema claramente y no asumas que la operación fue completada.
+8. Si varios productos tienen nombres similares, muestra las coincidencias encontradas con sus IDs y nombres exactos antes de continuar.
+9. Antes de realizar una actualización permanente de stock mediante updateStock, confirma claramente el producto identificado y la cantidad que será modificada.
 
 === ⚠️ SEGURIDAD Y CONTROL DE AUTORIZACIÓN ===
 1. LÍMITES DE PERMISOS Y PRIVACIDAD: Si el usuario te pide una acción administrativa (ej. reportes financieros, métricas) y no posees la herramienta en tu catálogo, explícale de forma natural que no tienes acceso a esa información. IMPORTANTE: NUNCA menciones nombres de herramientas (ej. `listProducts`, `getSalesReport`), ni digas que "están bloqueadas", ni hables de "niveles de usuario" o "permisos". Simplemente discúlpate, dile que como asistente de ventas solo puedes ayudarle con sus compras, y ofrécele ayuda con el catálogo.

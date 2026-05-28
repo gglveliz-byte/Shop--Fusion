@@ -717,6 +717,11 @@ def chat():
                 target_model = "qwen-max"
 
             # --- Lógica de Inventario (FASE 3 -  HERRAMIENTA 8) ---
+            elif func_name == "searchProduct":
+                from utils.inventory import search_product
+                db_res = search_product(query=args.get('query'))
+                system_msgs.append(f"Búsqueda de producto completada: {json.dumps(db_res)}.")
+            
             elif func_name == "checkStock":
                 # Paso 3.3: Conectar checkStock con la función utils.inventory.check_stock
                 from utils.inventory import check_stock
