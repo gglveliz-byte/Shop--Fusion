@@ -1,6 +1,6 @@
 from sqlalchemy.engine import result
 import json
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template, current_app, redirect, url_for, flash, session
 from flask_login import current_user
 from utils.ai_qwen import qwen_service
 from utils.rate_limit import limiter
@@ -52,8 +52,70 @@ bp = Blueprint('ai', __name__, url_prefix='/ai')
 
 @bp.route('/interfaz')
 def interface():
-    """Renderiza la página dedicada del chatbot."""
+    """Renderiza la página dedicada del chatbot (original)."""
     return render_template('ai/chat_page.html')
+
+@bp.route('/interfaz2')
+def ai_interfaz():
+    """Renderiza la página independiente del chatbot con panel de login integrado."""
+    return render_template('ai/ai_interfaz.html')
+
+@bp.route('/login-admin', methods=['GET', 'POST'])
+def login_admin():
+    """Login de Administrador exclusivo para la interfaz AI. Siempre redirige a /ai/interfaz."""
+    from models import db, Admin
+    from flask_login import login_user
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
+        admin_user = current_app.config.get('ADMIN_USER')
+        admin_pass = current_app.config.get('ADMIN_PASS')
+        if username == admin_user and password == admin_pass:
+            admin = Admin.query.first()
+            if not admin:
+                admin = Admin(username=username)
+                db.session.add(admin)
+            admin.set_password(password)
+            db.session.commit()
+            login_user(admin)
+            session['user_type'] = 'admin'
+            session['user_id'] = f'admin_{admin.id}'
+            flash('Bienvenido Admin. Sesión iniciada con permisos completos.', 'success')
+            return redirect(url_for('ai.interface'))
+        else:
+            error = 'Usuario o contraseña incorrectos.'
+    return render_template('ai/ai_login.html', error=error, login_type='admin')
+
+@bp.route('/login-afiliado', methods=['GET', 'POST'])
+def login_afiliado():
+    """Login de Afiliado exclusivo para la interfaz AI. Siempre redirige a /ai/interfaz."""
+    from models import Afiliado
+    from flask_login import login_user
+    error = None
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '').strip()
+        afiliado = Afiliado.query.filter_by(email=email).first()
+        if afiliado and afiliado.check_password(password) and afiliado.activo:
+            login_user(afiliado)
+            session['user_type'] = 'afiliado'
+            session['user_id'] = f'afiliado_{afiliado.id}'
+            flash(f'Bienvenido {afiliado.nombre}. Sesión iniciada.', 'success')
+            return redirect(url_for('ai.interface'))
+        else:
+            error = 'Email, contraseña incorrectos o cuenta inactiva.'
+    return render_template('ai/ai_login.html', error=error, login_type='afiliado')
+
+@bp.route('/logout')
+def ai_logout():
+    """Cierra sesión y regresa a /ai/interfaz."""
+    from flask_login import logout_user
+    logout_user()
+    session.pop('user_type', None)
+    session.pop('user_id', None)
+    flash('Sesión cerrada correctamente.', 'success')
+    return redirect(url_for('ai.interface'))
 
 @bp.route('/chat', methods=['POST'])
 @limiter.limit("10 per minute")

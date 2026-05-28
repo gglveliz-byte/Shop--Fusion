@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente AI Qwen | Shop Fusion</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f0f1a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* ─── LAYOUT PRINCIPAL ─── */
+        .ai-wrapper {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1100px;
+            height: 88vh;
+            align-items: stretch;
+        }
+
+        /* ─── PANEL LATERAL (LOGIN) ─── */
+        .side-panel {
+            width: 260px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .session-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 14px;
+            padding: 20px;
+            color: #e5e7eb;
+        }
+
+        .session-card h4 {
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+
+        /* Estado de sesión */
+        .session-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.04);
+            margin-bottom: 14px;
+            font-size: 0.85rem;
+        }
+        .status-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .status-dot.admin  { background: #10b981; box-shadow: 0 0 8px #10b981; }
+        .status-dot.afiliado { background: #3b82f6; box-shadow: 0 0 8px #3b82f6; }
+        .status-dot.guest  { background: #6b7280; }
+
+        /* Formulario login embebido */
+        .login-form { display: flex; flex-direction: column; gap: 10px; }
+        .login-form label { font-size: 0.78rem; color: #9ca3af; }
+        .login-form input {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 8px;
+            color: #f3f4f6;
+            font-size: 0.88rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .login-form input:focus { border-color: #6366f1; }
+
+        .btn-login-admin {
+            padding: 9px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-top: 4px;
+        }
+        .btn-login-admin:hover { opacity: 0.85; }
+
+        .btn-login-afiliado {
+            padding: 9px;
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-top: 4px;
+        }
+        .btn-login-afiliado:hover { opacity: 0.85; }
+
+        .btn-logout {
+            width: 100%;
+            padding: 8px;
+            background: transparent;
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-logout:hover { background: #ef4444; color: white; }
+
+        .login-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .login-tab {
+            flex: 1;
+            padding: 6px;
+            text-align: center;
+            border-radius: 7px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #6b7280;
+            background: transparent;
+            transition: all 0.2s;
+        }
+        .login-tab.active-admin { background: rgba(99,102,241,0.2); color: #a5b4fc; border-color: #6366f1; }
+        .login-tab.active-afiliado { background: rgba(37,99,235,0.2); color: #93c5fd; border-color: #2563eb; }
+
+        .flash-msg {
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            margin-bottom: 10px;
+        }
+        .flash-msg.success { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid #10b981; }
+        .flash-msg.error   { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid #ef4444; }
+
+        /* ─── VENTANA DE CHAT ─── */
+        .chat-card {
+            flex: 1;
+            background: white;
+            border-radius: 18px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .chat-header h3 { font-size: 1rem; font-weight: 600; margin: 0; }
+        .chat-header .role-badge {
+            margin-left: auto;
+            font-size: 0.75rem;
+            background: rgba(255,255,255,0.2);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .model-select {
+            padding: 10px 14px;
+            background: #f9fafb;
+            border-bottom: 1px solid #eee;
+        }
+        .model-select select {
+            width: 100%;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: 0.88rem;
+            font-family: 'Inter', sans-serif;
+            background: white;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #f5f7f9;
+        }
+
+        .message {
+            max-width: 82%;
+            padding: 10px 15px;
+            border-radius: 16px;
+            font-size: 0.93rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .message.ai {
+            align-self: flex-start;
+            background: white;
+            color: #1f2937;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .typing {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            display: none;
+        }
+        .reasoning {
+            font-size: 0.8rem;
+            color: #666;
+            background: #fffbe6;
+            padding: 8px;
+            border-left: 3px solid #ffe58f;
+            margin-bottom: 5px;
+            font-style: italic;
+            border-radius: 4px;
+        }
+
+        .chat-input {
+            padding: 14px;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #e5e7eb;
+            background: white;
+        }
+        .chat-input input {
+            flex: 1;
+            padding: 10px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 24px;
+            font-size: 0.92rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .chat-input input:focus { border-color: #6366f1; }
+        .chat-input button {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border: none;
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+        .chat-input button:hover { opacity: 0.85; }
+    </style>
+</head>
+<body>
+
+<div class="ai-wrapper">
+
+    <!-- ─── PANEL LATERAL ─── -->
+    <div class="side-panel">
+        <div class="session-card">
+            <h4>🔐 Sesión Activa</h4>
+
+            <!-- Estado de sesión actual -->
+            <div class="session-status">
+                {% if current_user.is_authenticated %}
+                    {% if session.get('user_type') == 'admin' %}
+                        <span class="status-dot admin"></span>
+                        <span>Admin: <strong>{{ current_user.username }}</strong></span>
+                    {% else %}
+                        <span class="status-dot afiliado"></span>
+                        <span>Afiliado: <strong>{{ current_user.nombre }}</strong></span>
+                    {% endif %}
+                {% else %}
+                    <span class="status-dot guest"></span>
+                    <span>Sin sesión (cliente)</span>
+                {% endif %}
+            </div>
+
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, msg in messages %}
+                    <div class="flash-msg {{ category }}">{{ msg }}</div>
+                {% endfor %}
+            {% endwith %}
+
+            {% if current_user.is_authenticated %}
+                <!-- Ya logueado: solo mostrar botón de salir -->
+                <a href="{{ url_for('auth.logout') }}?next={{ url_for('ai.ai_interfaz') }}">
+                    <button class="btn-logout">↩ Cerrar Sesión</button>
+                </a>
+            {% else %}
+                <!-- No logueado: mostrar pestañas de login -->
+                <div class="login-tabs">
+                    <button class="login-tab active-admin" id="tab-admin" onclick="switchTab('admin')">Admin</button>
+                    <button class="login-tab" id="tab-afiliado" onclick="switchTab('afiliado')">Afiliado</button>
+                </div>
+
+                <!-- Formulario Admin -->
+                <form id="form-admin" class="login-form"
+                      method="POST"
+                      action="{{ url_for('auth.admin_login') }}?next={{ url_for('ai.ai_interfaz') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label>Usuario</label>
+                    <input type="text" name="username" placeholder="admin" required>
+                    <label>Contraseña</label>
+                    <input type="password" name="password" placeholder="••••••••" required>
+                    <button type="submit" class="btn-login-admin">🔑 Entrar como Admin</button>
+                </form>
+
+                <!-- Formulario Afiliado -->
+                <form id="form-afiliado" class="login-form" style="display:none;"
+                      method="POST"
+                      action="{{ url_for('auth.afiliado_login') }}?next={{ url_for('ai.ai_interfaz') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="correo@ejemplo.com" required>
+                    <label>Contraseña</label>
+                    <input type="password" name="password" placeholder="••••••••" required>
+                    <button type="submit" class="btn-login-afiliado">🔑 Entrar como Afiliado</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ─── VENTANA DE CHAT ─── -->
+    <div class="chat-card">
+        <div class="chat-header">
+            <span style="font-size:1.4rem;">🤖</span>
+            <h3>Asistente AI Qwen — Shop Fusion</h3>
+            <span class="role-badge">
+                {% if session.get('user_type') == 'admin' %}⚙️ Admin
+                {% elif session.get('user_type') == 'afiliado' %}👥 Afiliado
+                {% else %}🛍️ Cliente
+                {% endif %}
+            </span>
+        </div>
+
+        <div class="model-select">
+            <select id="chatbot-model">
+                <option value="qwen-plus">Qwen Plus (Lógica y Ventas)</option>
+                <option value="qwen-vl-max">Qwen VL Max (Visión y OCR)</option>
+            </select>
+        </div>
+
+        <div id="chatbot-messages" class="chat-messages">
+            <div class="message ai">¡Bienvenido al asistente inteligente de Shop Fusion! ¿En qué puedo ayudarte hoy?</div>
+            <div id="chatbot-typing" class="typing">Escribiendo...</div>
+        </div>
+
+        <div class="chat-input">
+            <input type="text" id="chatbot-input-field" placeholder="Escribe tu consulta aquí..." autofocus>
+            <button id="chatbot-send">➤</button>
+        </div>
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+<script>
+    // Asegurar que el chat esté activo en esta página
+    document.getElementById('chatbot-window') && (document.getElementById('chatbot-window').style.display = 'flex');
+
+    // Reemplazar referencias del chatbot.js a los IDs de la ventana flotante con los de esta página
+    // chatbot.js ya usa: chatbot-messages, chatbot-input-field, chatbot-send, chatbot-typing, chatbot-model
+    // Esta página usa exactamente los mismos IDs — total compatibilidad sin cambios.
+
+    function switchTab(tipo) {
+        const tabAdmin     = document.getElementById('tab-admin');
+        const tabAfiliado  = document.getElementById('tab-afiliado');
+        const formAdmin    = document.getElementById('form-admin');
+        const formAfiliado = document.getElementById('form-afiliado');
+
+        if (tipo === 'admin') {
+            tabAdmin.className    = 'login-tab active-admin';
+            tabAfiliado.className = 'login-tab';
+            formAdmin.style.display    = 'flex';
+            formAfiliado.style.display = 'none';
+        } else {
+            tabAfiliado.className = 'login-tab active-afiliado';
+            tabAdmin.className    = 'login-tab';
+            formAfiliado.style.display = 'flex';
+            formAdmin.style.display    = 'none';
+        }
+    }
+</script>
+</body>
+</html>
