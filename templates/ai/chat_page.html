@@ -9,21 +9,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
     <style>
         :root {
-            --primary-color: {
-                    {
-                    config_web.color_primario if config_web else '#6366f1'
-                }
-            }
-
-            ;
-
-            --primary-dark: {
-                    {
-                    config_web.color_primario if config_web else '#4f46e5'
-                }
-            }
-
-            ;
+            --primary-color: {{ config_web.color_primario if config_web else '#6366f1' }};
+            --primary-dark: {{ config_web.color_primario if config_web else '#4f46e5' }};
         }
 
         body,
@@ -75,17 +62,8 @@
 <body>
     <div id="chatbot-window">
         <div class="chat-container-full">
-            <div class="chatbot-header"
-                style="display: flex; justify-content: space-between; align-items: center; padding-right: 15px;">
+            <div class="chatbot-header">
                 <h3>🤖 Asistente AI Qwen</h3>
-                <div style="display: flex; gap: 10px;">
-                    <a href="{{ url_for('ai.login_admin') }}"
-                        style="background: #111827; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none; font-size: 0.8em; font-weight: bold;">Login Admin</a>
-                    <a href="{{ url_for('ai.login_afiliado') }}"
-                        style="background: #2563eb; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none; font-size: 0.8em; font-weight: bold;">Login Afiliado</a>
-                    <a href="{{ url_for('ai.ai_logout') }}"
-                        style="background: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none; font-size: 0.8em; font-weight: bold;">Salir</a>
-                </div>
             </div>
             <div class="chatbot-model-select">
                 <select id="chatbot-model">
