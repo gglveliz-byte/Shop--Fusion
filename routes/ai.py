@@ -731,8 +731,7 @@ def chat():
             elif func_name == "reserveStock":
                 # Paso 3.3: Conectar reserveStock con la función utils.inventory.reserve_stock
                 from utils.inventory import reserve_stock
-                minutos = args.get('minutes', 15) or 15
-                db_res = reserve_stock(product_id=args.get('product_id'), quantity=args.get('quantity'), minutes=minutos)
+                db_res = reserve_stock(product_id=args.get('product_id'), quantity=args.get('quantity'), minutes=args.get('minutes'))
                 system_msgs.append(f"Reserva de inventario completada: {json.dumps(db_res)}.")
 
             elif func_name == "updateStock":

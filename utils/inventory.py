@@ -128,7 +128,15 @@ def reserve_stock(product_id, quantity, minutes=2):
     
     return {
         "success": True,
-        "message": f"Se han bloqueado temporalmente {quantity} unidades del producto '{producto.nombre}' por {minutes} minutos."
+        "product_id": producto.id,
+        "product_name": producto.nombre,
+        "reserved_quantity": quantity,
+        "reservation_minutes": minutes,
+        "message": (
+            f"Se han bloqueado temporalmente "
+            f"{quantity} unidades del producto "
+            f"'{producto.nombre}' por {minutes} minutos."
+        )
     }
 
 # [FASE 2 - HERRAMIENTA INVENTARIO EN TIEMPO REAL] Paso 2.4: Función de Actualización y Alerta
