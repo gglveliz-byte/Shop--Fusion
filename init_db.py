@@ -107,6 +107,7 @@ def init_database():
                 'precio_final': 50.00,
                 'precio_proveedor': 25.00,
                 'precio_oferta': None,
+                'stock': 10,
                 'imagen': 'zapatos-nike.jpg',
                 'activo': True
             },
@@ -116,6 +117,7 @@ def init_database():
                 'precio_final': 30.00,
                 'precio_proveedor': 15.00,
                 'precio_oferta': 25.00,
+                'stock': 15,
                 'imagen': 'camiseta-adidas.jpg',
                 'activo': True
             },
@@ -125,6 +127,7 @@ def init_database():
                 'precio_final': 40.00,
                 'precio_proveedor': 20.00,
                 'precio_oferta': None,
+                'stock': 20,
                 'imagen': 'pantalon-puma.jpg',
                 'activo': True
             }
