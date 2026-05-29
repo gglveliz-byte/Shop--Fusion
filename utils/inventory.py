@@ -86,7 +86,7 @@ def check_stock(product_id):
     }
 
 # [FASE 2 - HERRAMIENTA INVENTARIO EN TIEMPO REAL] Paso 2.3: Función de Bloqueo Temporal
-def reserve_stock(product_id, quantity, minutes=15):
+def reserve_stock(product_id, quantity, minutes=2):
     """
     Atrapa una cantidad de stock durante 'X' minutos.
     Si el cliente no paga en ese tiempo, un cronómetro liberará el stock automáticamente.
