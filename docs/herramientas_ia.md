@@ -1,6 +1,6 @@
-# Herramientas de IA en Shop Fusion
+# Herramientas de IA en Shop Fusion (Backlog Completo)
 
-A continuación se detalla la lista de herramientas (Backlogs) integradas mediante function calling con los modelos Qwen. Cada módulo tiene un rol principal, archivos clave asociados y ejemplos de uso conversacional.
+A continuación se detalla la lista oficial de los **10 Módulos de Herramientas** integrados mediante *function calling* con los modelos Qwen. Cada módulo tiene su rol principal asignado, los archivos clave donde se ejecuta la lógica y su correspondencia con el Backlog.
 
 ---
 
@@ -8,11 +8,9 @@ A continuación se detalla la lista de herramientas (Backlogs) integradas median
 **Descripción:** Permite a la IA crear, modificar y consultar órdenes de compra a partir de conversaciones con clientes o instrucciones del administrador.
 **Rol principal:** Ventas / Admin
 * **Archivos Clave:**
-  * `routes/ai.py`: Orquesta la herramienta y llama a la función de creación (ej. `createCustomerOrder`).
-  * `utils/ai_qwen.py`: Define el esquema de datos de la orden para la IA (cliente, productos, cantidades).
-  * `models.py`: Contiene la estructura de datos (`Pedido`).
-* **Ejemplo de Uso:**
-  > *"Quiero hacer un pedido a nombre de Juan Pérez. Mi dirección es Calle Falsa 123. Deseo comprar 2 unidades del producto XYZ."*
+  * `routes/ai.py`: Orquesta y llama a la función `createCustomerOrder`.
+  * `utils/ai_qwen.py`: Define el esquema de datos de la orden (cliente, productos, cantidades).
+  * `models.py`: Estructura de datos (`Pedido` y `DetallePedido`).
 
 ---
 
@@ -20,11 +18,9 @@ A continuación se detalla la lista de herramientas (Backlogs) integradas median
 **Descripción:** Genera facturas a partir de órdenes completadas o manualmente, asigna números de factura y calcula impuestos automáticamente.
 **Rol principal:** Ventas / Admin
 * **Archivos Clave:**
-  * `utils/billing.py`: Contiene la lógica para el cálculo de impuestos (IVA configurable).
-  * `routes/ai.py`: Integra las funciones de IA `createInvoice` y `getInvoiceStatus`.
-  * `models.py`: Modelo de datos de `Factura` e impuestos en `Configuracion`.
-* **Ejemplo de Uso:**
-  > *"Genera la factura para el pedido número 5 que acaba de ser pagado."*
+  * `utils/billing.py`: Contiene la lógica para el cálculo de impuestos.
+  * `routes/ai.py`: Mapea las funciones de IA `createInvoice` y `getInvoiceStatus`.
+  * `models.py`: Modelo de datos de `Factura` e impuestos.
 
 ---
 
@@ -33,22 +29,18 @@ A continuación se detalla la lista de herramientas (Backlogs) integradas median
 **Rol principal:** Ventas
 * **Archivos Clave:**
   * `utils/crm.py`: Contiene las funciones core `create_deal`, `update_deal_stage`, `forecast_revenue` y `generate_executive_summary`.
-  * `routes/ai.py`: Conecta la IA (Qwen-Plus para ventas y Qwen-Max para resúmenes).
+  * `routes/ai.py`: Conecta la IA con el CRM de la base de datos.
   * `models.py`: Modelo de datos `Oportunidad`.
-* **Ejemplo de Uso:**
-  > *"Registra una oportunidad de negocio para 'Inversiones Tech' por 2500 dólares en etapa de prospección."*
-  > *"Genera un reporte ejecutivo analizando el pipeline y las ventas actuales."*
 
 ---
 
-## 4. 💳 Herramienta de cobros (PayPal API)
-**Descripción:** Permite al agente generar enlaces de pago, verificar transacciones y solicitar reembolsos utilizando la API de PayPal. *(En desarrollo / Integración futura)*
+## 4. 💳 Herramienta de cobros (Carrito y Pagos)
+**Descripción:** Permite al agente manejar el carrito de compras, iniciar el proceso de checkout y generar comprobaciones de pago. *(Integrado a la lógica de e-commerce).*
 **Rol principal:** Ventas / Admin
-* **Archivos Clave (Ganchos / Hooks actuales):**
-  * `utils/accounting.py`: Preparado para registrar la entrada de dinero en la cuenta "Banco/PayPal" cuando se confirme un pago.
-  * `models.py`: La fuente `paypal` ya está soportada en el modelo de transacciones.
-* **Ejemplo de Uso:**
-  > *"Cobra 150 USD al cliente por el servicio X."*
+* **Archivos Clave:**
+  * `utils/ai_qwen.py`: Herramientas de manejo como `addProductToCart`, `updateCartItem` y `checkoutCart`.
+  * `routes/ai.py`: Intercepta comandos de checkout.
+  * `utils/accounting.py`: Función `register_transaction` llamada cuando se confirma un cobro.
 
 ---
 
@@ -56,21 +48,64 @@ A continuación se detalla la lista de herramientas (Backlogs) integradas median
 **Descripción:** Registra ingresos, gastos, categoriza transacciones y genera reportes básicos (balance, pérdidas/ganancias). Se sincroniza automáticamente con cobros y facturación.
 **Rol principal:** Admin / Asistente personal
 * **Archivos Clave:**
-  * `utils/accounting.py`: Define el catálogo de cuentas y las funciones `register_transaction`, `get_account_balance`, `generate_monthly_report`.
-  * `routes/ai.py`: Mapea `recordTransaction`, `getAccountBalance`, `generateMonthlyReport`. Aquí ocurre la sincronización automática con facturación.
+  * `utils/accounting.py`: Catálogo de cuentas y funciones `register_transaction`, `get_account_balance`, `generate_monthly_report`.
+  * `routes/ai.py`: Mapea y conecta estas herramientas para la IA.
   * `models.py`: Modelo de datos `Transaccion`.
-* **Ejemplo de Uso:**
-  > *"¿Cuánto hemos gastado en marketing este mes?"*
-  > *"Registra un gasto operativo de 50 dólares."*
 
 ---
 
-## 6. Notas de Arquitectura e Infraestructura (Free Tier)
-Dado que el proyecto utiliza servicios en la nube en su capa gratuita (**Free Tier** en plataformas como **Render** y **Neon**), el comportamiento de la Inteligencia Artificial está adaptado para garantizar estabilidad:
+## 6. 🔍 Validación de boucher (comprobante) de pagos
+**Descripción:** Permite al agente (o al admin) validar textos o datos de transferencias y comprobantes, extrayendo monto, fecha y referencia.
+**Rol principal:** Admin / Soporte
+* **Archivos Clave:**
+  * `utils/ai_qwen.py`: Esquema de la herramienta `validatePaymentReceipt`.
+  * `routes/ai.py`: Parsea y aprueba el boucher validando la referencia del comprobante.
+
+---
+
+## 7. 🕸️ Web scraping
+**Descripción:** Herramienta genérica para que la IA pueda extraer información de sitios web autorizados bajo demanda (competidores, listas de precios, documentación técnica).
+**Rol principal:** Soporte técnico / Admin / Ventas
+* **Archivos Clave:**
+  * `utils/scraper.py`: Encapsula el servicio de extracción de HTML a texto limpio.
+  * `utils/ai_qwen.py`: Define el esquema para la función `scrapeWebsite`.
+  * `routes/ai.py`: Intercepta la llamada y le pasa el texto a la IA para su análisis.
+
+---
+
+## 8. 📦 Manejo de inventario en tiempo real
+**Descripción:** Consulta y actualiza el stock de productos físicos. La IA puede informar disponibilidad, reservar artículos de forma temporal durante una venta, y alterar el stock general disparando alertas.
+**Rol principal:** Ventas / Admin
+* **Archivos Clave:**
+  * `utils/inventory.py`: Funciones complejas como `search_product`, `check_stock`, `reserve_stock`, `update_stock`.
+  * `routes/ai.py`: Mapea y asegura la ejecución en la base de datos.
+  * `models.py`: Atributos `stock` y `stock_reservado`.
+
+---
+
+## 9. 🤖 Agente control total (Orquestador)
+**Descripción:** Es el "cerebro" central que decide qué herramienta usar según la intención del usuario. Mantiene el contexto y ejecuta flujos de razonamiento continuos (ReAct).
+**Rol principal:** Todos
+* **Archivos Clave:**
+  * `utils/ai_qwen.py`: Contiene el `SYSTEM_PROMPT` con las Reglas de Oro y toda la asignación dinámica de roles.
+  * `routes/ai.py`: Bucle *While* principal que permite la encadenación multi-paso de herramientas antes de responder al usuario.
+
+---
+
+## 10. 📈 Reportes y analítica (Admin BI)
+**Descripción:** Motor de Inteligencia de Negocios (BI) que genera comparativas financieras de crecimiento, márgenes netos reales y el ranking del rendimiento de los productos a lo largo del tiempo.
+**Rol principal:** Admin / Analista BI Senior
+* **Archivos Clave:**
+  * `utils/analytics.py`: Motor matemático y de extracción de datos (`get_sales_report`, `compare_periods`, `get_top_products`).
+  * `routes/ai.py`: Blinda y ejecuta las funciones como herramientas de acceso restringido para los administradores.
+
+---
+
+## ⚙️ Notas de Arquitectura e Infraestructura (Free Tier)
+Dado que el proyecto utiliza servicios en la nube en su capa gratuita (**Free Tier**), la Inteligencia Artificial está adaptada para garantizar estabilidad:
 
 1. **Un Paso a la Vez (Evita Bucles Infinitos):** 
-   * Por seguridad arquitectónica, la IA está configurada para procesar **una sola herramienta por mensaje**. Si un usuario solicita una acción doble (ej. *"Crea un negocio y actualízalo a cerrado"*), el sistema procesará únicamente la primera orden. Para completar la segunda, el usuario simplemente debe enviar la instrucción restante en el siguiente mensaje. Esto ahorra tokens y evita errores en cadena.
-2. **Caídas de Conexión y Duplicaciones (Falsos Negativos):** 
-   * Las bases de datos en Free Tier suelen "dormir" o cerrar conexiones inactivas abruptamente. Si el sistema de IA ejecuta una orden y la guarda en la base de datos, pero la base de datos corta la conexión un milisegundo antes de devolver la respuesta final al chat, el usuario no verá la confirmación en pantalla. 
-   * **Consecuencia:** El usuario podría pensar que la IA falló y pedirle que repita la acción, generando un **registro duplicado** en la base de datos.
-   * **Mitigación Recomendada:** Para entornos de producción, se recomienda configurar la opción `pool_pre_ping=True` en SQLAlchemy para forzar a la aplicación a reconectarse automáticamente antes de fallar. En entornos productivos de pago, este problema desaparece por completo.
+   * Por seguridad, la IA procesa un máximo 3 herramientas de forma consecutiva.
+
+2. **Falsos Negativos por Timeouts:** 
+   * Si la BD entra en estado de suspensión temporal y la IA registra algo justo en ese segundo, puede que se guarde en la BD pero no llegue el mensaje visual de éxito al chat. En producción (con servidores de pago o SQLAlchemy `pool_pre_ping=True`), este comportamiento desaparece. Con ello si puede haber errores en algunos registros que requieren más tiempo en completarse.
