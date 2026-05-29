@@ -279,13 +279,13 @@ class QwenAIService:
             "type": "function",
             "function": {
                 "name": "reserveStock",
-                "description": "Bloquea temporalmente una cantidad de stock de un producto para una cotización en curso. Libera el stock automáticamente después de un tiempo si no se concreta.",
+                "description": "Bloquea temporalmente stock por el tiempo exacto configurado por el servidor. La IA NO debe inventar ni asumir minutos. Solo debe usar el tiempo devuelto por la herramienta en la respuesta.",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "product_id": {"type": "integer", "description": "El ID único del producto a reservar."},
                         "quantity": {"type": "integer", "description": "La cantidad de unidades a bloquear temporalmente."},
-                        "minutes": {"type": "integer", "description": "Tiempo de duración de la reserva en minutos. Siempre verifica el tiempo máximo permitido e indicarle al usuario ese tiempo"}
+                        "minutes": {"type": "integer", "description": "Tiempo opcional solicitado. El servidor puede ignorarlo y usar el valor configurado internamente."}
                     },
                     "required": ["product_id", "quantity"]
                 }
@@ -378,14 +378,15 @@ class QwenAIService:
 4. SOPORTE E INVESTIGACIÓN: Si debes investigar documentación externa, limítate a resumir los datos reales extraídos de las webs autorizadas.
 
 === 📦 REGLAS CRÍTICAS DE INVENTARIO ===
-1. Nunca inventes IDs de productos.
-2. Usa únicamente IDs obtenidos desde herramientas del sistema.
-3. Si hay múltiples coincidencias, pide aclaración antes de modificar stock.
-4. Verifica siempre la respuesta de la herramienta antes de informar éxito.
-5. Si success=false, informa el error y no asumas éxito.
-6. No ejecutes reserveStock o updateStock si el usuario solo está consultando información.
-7. Nunca repitas una reserva o actualización ya realizada en la conversación salvo que el usuario lo solicite explícitamente.
-8. Diferencia siempre entre CONSULTAR y EJECUTAR acciones.
+1. Nunca inventes IDs, stock, tiempos ni configuraciones del sistema.
+2. Usa únicamente datos reales devueltos por herramientas.
+3. Diferencia entre CONSULTAR información y EJECUTAR acciones.
+4. No ejecutes reserveStock ni updateStock salvo solicitud explícita del usuario.
+5. Nunca repitas acciones ya ejecutadas en la conversación sin confirmación del usuario.
+6. Si existen múltiples coincidencias de productos, solicita aclaración antes de continuar.
+7. Verifica siempre la respuesta de las herramientas antes de informar éxito.
+8. Si una herramienta devuelve error o success=false, informa el problema y detén la operación.
+9. Nunca ejecutes herramientas de modificación solo para consultar información adicional.
 
 === ⚠️ SEGURIDAD Y CONTROL DE AUTORIZACIÓN ===
 1. LÍMITES DE PERMISOS Y PRIVACIDAD: Si el usuario te pide una acción administrativa (ej. reportes financieros, métricas) y no posees la herramienta en tu catálogo, explícale de forma natural que no tienes acceso a esa información. IMPORTANTE: NUNCA menciones nombres de herramientas (ej. `listProducts`, `getSalesReport`), ni digas que "están bloqueadas", ni hables de "niveles de usuario" o "permisos". Simplemente discúlpate, dile que como asistente de ventas solo puedes ayudarle con sus compras, y ofrécele ayuda con el catálogo.
