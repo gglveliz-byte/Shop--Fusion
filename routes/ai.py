@@ -464,47 +464,16 @@ def chat():
 
             elif func_name == "addProductToCart":
                 from models import Producto
-                p_name = args.get('product_name')
+                p_id = args.get('product_id')
                 qty = args.get('quantity', 1) or 1
                 
-                # Normalizar sinónimos comunes en español
-                synonyms = {
-                    "zapatilla": "zapato",
-                    "zapatillas": "zapato",
-                    "tenis": "zapato",
-                    "calzado": "zapato",
-                    "playera": "camiseta",
-                    "remera": "camiseta",
-                    "polo": "camiseta",
-                    "pantalon": "pantalón",
-                    "licra": "pantalón",
-                    "pantaloneta": "pantalón",
-                    "buzo": "pantalón"
-                }
+                producto = Producto.query.filter_by(id=p_id, activo=True).first() if p_id else None
                 
-                clean_name = p_name.lower().strip() if p_name else ""
-                for syn, replacement in synonyms.items():
-                    clean_name = clean_name.replace(syn, replacement)
-                
-                # Búsqueda de coincidencia directa
-                producto = Producto.query.filter(Producto.nombre.ilike(f"%{clean_name}%"), Producto.activo == True).first()
-                
-                # Búsqueda tolerante a fallos si no se encuentra
-                if not producto and clean_name:
-                    palabras = [p.strip() for p in clean_name.split() if len(p.strip()) > 2]
-                    for pal in palabras:
-                        normalized_word = pal
-                        for syn, replacement in synonyms.items():
-                            normalized_word = normalized_word.replace(syn, replacement)
-                        producto = Producto.query.filter(Producto.nombre.ilike(f"%{normalized_word}%"), Producto.activo == True).first()
-                        if producto:
-                            break
-                            
                 if not producto:
                     db_res = {
                         "success": False,
                         "action": "addProductToCart",
-                        "error": f"Producto '{p_name}' no encontrado o agotado."
+                        "error": f"Producto con ID '{p_id}' no encontrado o no disponible. Usa searchProduct primero."
                     }
                 elif not producto.esta_disponible(qty):
                     stock_libre = producto.stock - producto.stock_reservado
@@ -530,48 +499,17 @@ def chat():
 
             elif func_name == "updateCartItem":
                 from models import Producto
-                p_name = args.get('product_name')
+                p_id = args.get('product_id')
                 qty = args.get('quantity', 1) or 0
                 action_type = args.get('action', 'add')
                 
-                # Normalizar sinónimos comunes en español
-                synonyms = {
-                    "zapatilla": "zapato",
-                    "zapatillas": "zapato",
-                    "tenis": "zapato",
-                    "calzado": "zapato",
-                    "playera": "camiseta",
-                    "remera": "camiseta",
-                    "polo": "camiseta",
-                    "pantalon": "pantalón",
-                    "licra": "pantalón",
-                    "pantaloneta": "pantalón",
-                    "buzo": "pantalón"
-                }
+                producto = Producto.query.filter_by(id=p_id, activo=True).first() if p_id else None
                 
-                clean_name = p_name.lower().strip() if p_name else ""
-                for syn, replacement in synonyms.items():
-                    clean_name = clean_name.replace(syn, replacement)
-                
-                # Búsqueda de coincidencia directa
-                producto = Producto.query.filter(Producto.nombre.ilike(f"%{clean_name}%"), Producto.activo == True).first()
-                
-                # Búsqueda tolerante a fallos si no se encuentra
-                if not producto and clean_name:
-                    palabras = [p.strip() for p in clean_name.split() if len(p.strip()) > 2]
-                    for pal in palabras:
-                        normalized_word = pal
-                        for syn, replacement in synonyms.items():
-                            normalized_word = normalized_word.replace(syn, replacement)
-                        producto = Producto.query.filter(Producto.nombre.ilike(f"%{normalized_word}%"), Producto.activo == True).first()
-                        if producto:
-                            break
-                            
                 if not producto:
                     db_res = {
                         "success": False,
                         "action": "updateCartItem",
-                        "error": f"Producto '{p_name}' no encontrado o agotado."
+                        "error": f"Producto con ID '{p_id}' no encontrado o no disponible. Usa searchProduct primero."
                     }
                 else:
                     # Calcular la cantidad total acumulada para validar contra el stock

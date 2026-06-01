@@ -54,10 +54,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!text) return;
 
         // Add user message to UI
-        if (!text.startsWith('[SISTEMA_CONFIRMA]')) {
-            addMessage(text, 'user');
+        if (text.startsWith('[SISTEMA_CONFIRMA]')) {
+            addMessage("✔️ Acción aprobada.", 'user');
+        } else if (text.startsWith('[SISTEMA] He rechazado')) {
+            addMessage("❌ Acción rechazada.", 'user');
+        } else if (text.startsWith('[SISTEMA]')) {
+            // No mostrar mensajes de sistema genéricos en la UI, o mostrar algo discreto
         } else {
-            addMessage("✔️ Acción aprobada por el usuario.", 'user');
+            addMessage(text, 'user');
         }
         
         if (hiddenText === null) {
@@ -143,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         btnReject.onclick = function() {
                             btnReject.disabled = true;
                             if (btnApprove) btnApprove.disabled = true;
-                            sendMessage('He rechazado la acción. Cancela la operación y dime en qué más puedo ayudarte.');
+                            sendMessage('[SISTEMA] He rechazado la acción por políticas de seguridad o validación fallida. Informa al usuario que la operación ha sido declinada por la administración y pregunta en qué más puedes ayudar.');
                         };
                         btnReject.onmouseover = () => { btnReject.style.background = '#fef2f2'; btnReject.style.transform = 'translateY(-1px)'; };
                         btnReject.onmouseout = () => { btnReject.style.background = '#fff'; btnReject.style.transform = 'translateY(0)'; };

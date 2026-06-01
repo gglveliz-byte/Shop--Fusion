@@ -36,10 +36,10 @@ class QwenAIService:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "product_name": {"type": "string", "description": "Nombre o palabra clave del producto (ej: Camiseta Adidas, Zapatos Nike)."},
+                        "product_id": {"type": "integer", "description": "ID numérico exacto del producto a añadir."},
                         "quantity": {"type": "integer", "description": "Cantidad de unidades. Por defecto es 1."}
                     },
-                    "required": ["product_name"]
+                    "required": ["product_id"]
                 }
             }
         },
@@ -51,11 +51,11 @@ class QwenAIService:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "product_name": {"type": "string", "description": "Nombre del producto a actualizar o eliminar."},
+                        "product_id": {"type": "integer", "description": "ID numérico del producto a actualizar o eliminar."},
                         "quantity": {"type": "integer", "description": "Nueva cantidad total o unidades a sumar. Para eliminar por completo o restar a 0, usa 0 o la acción correspondiente."},
                         "action": {"type": "string", "enum": ["add", "set", "remove"], "description": "Acción: 'add' para sumar unidades, 'set' para fijar una cantidad exacta (ej. 'mejor solo 1'), o 'remove' para quitar el producto por completo."}
                     },
-                    "required": ["product_name", "quantity", "action"]
+                    "required": ["product_id", "quantity", "action"]
                 }
             }
         },
@@ -234,6 +234,12 @@ class QwenAIService:
                 "description": "Extrae el texto y contenido de una página web autorizada. Úsalo para buscar documentación, especificaciones técnicas o leer artículos a pedido del usuario.",
                 "parameters": {
                     "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "description": "URL de la página web a raspar."
+                        }
+                    },
                     "required": ["url"]
                 }
             }
