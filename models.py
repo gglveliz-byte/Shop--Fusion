@@ -633,3 +633,136 @@ class ReservaStock(db.Model):
 
     def __repr__(self):
         return f'<ReservaStock Prod:{self.producto_id} - Cant:{self.cantidad}>'
+
+
+# ==================== MÓDULO DE SOPORTE (TICKETS) ====================
+
+class TicketSoporte(db.Model):
+    """
+    Tabla para gestionar tickets de soporte creados desde el chatbot o canales externos.
+    Los datos de contacto (PII) se cifran automáticamente al guardar.
+    """
+    __tablename__ = 'tickets_soporte'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Asunto y descripción del problema (sanitizados anti-XSS)
+    asunto = db.Column(db.String(200), nullable=False)
+    descripcion = db.Column(db.Text, nullable=True)
+
+    # Prioridad del ticket
+    prioridad = db.Column(
+        db.Enum('baja', 'media', 'alta', 'critica', name='prioridad_ticket'),
+        nullable=False,
+        default='media'
+    )
+
+    # Estado actual del ticket
+    estado = db.Column(
+        db.Enum('abierto', 'en_progreso', 'resuelto', 'cerrado', name='estado_ticket'),
+        nullable=False,
+        default='abierto'
+    )
+
+    # Canal de origen: chat, email, formulario
+    canal = db.Column(db.String(50), nullable=False, default='chat')
+
+    # Datos de contacto del cliente (PII — cifrados)
+    _contacto_nombre = db.Column('contacto_nombre', db.String(300), nullable=True)
+    _contacto_email  = db.Column('contacto_email',  db.String(400), nullable=True)
+
+    # Indica si el ticket fue escalado al equipo humano
+    escalado = db.Column(db.Boolean, nullable=False, default=False)
+
+    # Timestamps
+    creado_en     = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    actualizado_en = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    resuelto_en   = db.Column(db.DateTime, nullable=True)
+
+    # Relación con comentarios
+    comentarios = db.relationship('ComentarioTicket', backref='ticket', lazy=True, cascade='all, delete-orphan')
+
+    # --- Propiedades de cifrado PII ---
+    @property
+    def contacto_nombre(self):
+        return decrypt_data(self._contacto_nombre) if self._contacto_nombre else None
+
+    @contacto_nombre.setter
+    def contacto_nombre(self, value):
+        self._contacto_nombre = encrypt_data(sanitize_html(value)) if value else None
+
+    @property
+    def contacto_email(self):
+        return decrypt_data(self._contacto_email) if self._contacto_email else None
+
+    @contacto_email.setter
+    def contacto_email(self, value):
+        self._contacto_email = encrypt_data(sanitize_html(value)) if value else None
+
+    # --- Validaciones ---
+    @validates('asunto')
+    def validate_asunto(self, key, value):
+        return sanitize_html(value) if value else value
+
+    @validates('descripcion')
+    def validate_descripcion(self, key, value):
+        return sanitize_html(value) if value else value
+
+    # --- Helpers ---
+    @property
+    def numero(self):
+        """Retorna un código legible tipo TKT-0042."""
+        return f"TKT-{str(self.id).zfill(4)}"
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'numero': self.numero,
+            'asunto': self.asunto,
+            'descripcion': self.descripcion,
+            'prioridad': self.prioridad,
+            'estado': self.estado,
+            'canal': self.canal,
+            'escalado': self.escalado,
+            'contacto_nombre': self.contacto_nombre,
+            'creado_en': self.creado_en.isoformat() if self.creado_en else None,
+            'actualizado_en': self.actualizado_en.isoformat() if self.actualizado_en else None,
+            'resuelto_en': self.resuelto_en.isoformat() if self.resuelto_en else None,
+        }
+
+    def __repr__(self):
+        return f'<TicketSoporte {self.numero} [{self.prioridad}] - {self.estado}>'
+
+
+class ComentarioTicket(db.Model):
+    """
+    Comentarios asociados a un ticket de soporte.
+    Pueden ser generados por la IA, el admin o el propio usuario.
+    """
+    __tablename__ = 'comentarios_tickets'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    ticket_id = db.Column(db.Integer, db.ForeignKey('tickets_soporte.id'), nullable=False)
+
+    # Quién escribió el comentario: 'ia', 'admin', 'usuario'
+    autor = db.Column(db.String(20), nullable=False, default='ia')
+
+    contenido = db.Column(db.Text, nullable=False)
+
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    @validates('contenido')
+    def validate_contenido(self, key, value):
+        return sanitize_html(value) if value else value
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'autor': self.autor,
+            'contenido': self.contenido,
+            'creado_en': self.creado_en.isoformat() if self.creado_en else None,
+        }
+
+    def __repr__(self):
+        return f'<ComentarioTicket Ticket:{self.ticket_id} por {self.autor}>'

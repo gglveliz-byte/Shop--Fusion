@@ -4,6 +4,7 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_talisman import Talisman
 from flask_cors import CORS
+from flask_mail import Mail
 from config import Config
 from utils.rate_limit import limiter
 
@@ -32,6 +33,9 @@ file_handler.setLevel(logging.INFO)
 
 csrf = CSRFProtect()
 
+# [FASE 3 / SOPORTE] Instancia global de Flask-Mail
+mail = Mail()
+
 
 def create_app(config_class=Config):
     """Factory para crear la aplicación Flask"""
@@ -52,6 +56,15 @@ def create_app(config_class=Config):
     # [FASE 4 / SEGURIDAD - ANTI-DDOS]
     # Inicialización del limitador de tráfico
     limiter.init_app(app)
+
+    # [FASE 3 / SOPORTE] Configuración y arranque de Flask-Mail
+    app.config['MAIL_SERVER']   = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+    app.config['MAIL_PORT']     = int(os.environ.get('MAIL_PORT', 587))
+    app.config['MAIL_USE_TLS']  = os.environ.get('MAIL_USE_TLS', 'True') == 'True'
+    app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+    app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
+    mail.init_app(app)
 
     # [FASE 2 / SEGURIDAD - MURALLA EXTERIOR]
     # Configuración de Content Security Policy (CSP) y Headers de Seguridad

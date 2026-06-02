@@ -728,7 +728,7 @@ def chat():
         
         ejecucion_directa = False  # Resetear la bandera para la siguiente iteración del bucle
         # El próximo prompt será vacío; el modelo reaccionará a los mensajes 'tool'
-        prompt_actual = ""
+        prompt_actual = ""  
         modelo_actual = target_model
 
     # 5. Respuesta final al usuario
