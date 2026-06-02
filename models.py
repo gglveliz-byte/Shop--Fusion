@@ -612,3 +612,24 @@ class Transaccion(db.Model):
 
     def __repr__(self):
         return f'<Transaccion {self.tipo} - {self.monto} ({self.categoria})>'
+
+# ==================== MÓDULO DE RESERVAS DE INVENTARIO ====================
+
+class ReservaStock(db.Model):
+    """
+    Tabla para mantener la persistencia de las reservas de inventario.
+    Soluciona el problema de los hilos en memoria perdiéndose si el servidor se reinicia.
+    """
+    __tablename__ = 'reservas_stock'
+
+    id = db.Column(db.Integer, primary_key=True)
+    producto_id = db.Column(db.Integer, db.ForeignKey('productos.id'), nullable=False)
+    cantidad = db.Column(db.Integer, nullable=False)
+    fecha_expiracion = db.Column(db.DateTime, nullable=False)
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relación
+    producto = db.relationship('Producto', backref=db.backref('reservas', lazy=True))
+
+    def __repr__(self):
+        return f'<ReservaStock Prod:{self.producto_id} - Cant:{self.cantidad}>'

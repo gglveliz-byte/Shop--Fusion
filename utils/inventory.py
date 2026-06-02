@@ -1,32 +1,50 @@
 import threading
+from datetime import datetime, timedelta
 from flask import current_app
 from sqlalchemy import func
-from models import db, Producto
+from models import db, Producto, ReservaStock
 from utils.security_logger import log_security_event
 
 # [FASE 2 - HERRAMIENTA INVENTARIO EN TIEMPO REAL] Paso 2.1: Creación del Módulo de Inventario
-def _release_stock(product_id, quantity, app):
+# ----------------- MOTOR HÍBRIDO DE RESERVAS -----------------
+def limpiar_reservas_expiradas():
     """
-    Función interna (Callback) que se ejecuta de forma invisible cuando el cronómetro llega a cero.
-    Sirve para devolver el stock bloqueado a la disponibilidad general.
+    Busca todas las reservas en la base de datos cuyo tiempo haya expirado,
+    libera el stock en el producto y elimina el registro de reserva.
+    Esta función se llama "perezosamente" (lazy) justo antes de consultar o modificar stock.
     """
-    # Como los Hilos (Threads) corren fuera del flujo normal de Flask, 
-    # necesitamos decirle explícitamente que use el contexto original de la aplicación.
-    with app.app_context():
-        producto = Producto.query.get(product_id)
-        # Verificamos que el producto exista y que tenga reservas activas
-        if producto and producto.stock_reservado >= quantity:
-            producto.stock_reservado -= quantity
-            db.session.commit()
+    ahora = datetime.utcnow()
+    reservas_vencidas = ReservaStock.query.filter(ReservaStock.fecha_expiracion <= ahora).all()
+    
+    if reservas_vencidas:
+        for reserva in reservas_vencidas:
+            if reserva.producto:
+                reserva.producto.stock_reservado -= reserva.cantidad
+                # Evitar que el stock reservado quede en negativo por errores pasados
+                if reserva.producto.stock_reservado < 0:
+                    reserva.producto.stock_reservado = 0
+            db.session.delete(reserva)
+        db.session.commit()
 
-# CORRECCIÓN PARA LA HERRAMIENTA DE INVENTARIO INTELIGENTE
+def _auto_release_worker(app):
+    """
+    Función interna (Callback) que ejecuta el cronómetro automáticamente.
+    Llama al limpiador global de reservas dentro del contexto de Flask.
+    """
+    with app.app_context():
+        limpiar_reservas_expiradas()
+
+
+# -------------- HERRAMIENTAS IA INVENTARIO (LOS USADO POR AI QWEN) ----------------
+
 def search_product(query):
     """
     Busca productos por nombre o palabra clave.
     Esta función ayuda a la IA a obtener IDs REALES desde la base de datos
     y evita que invente identificadores incorrectos.
     """
-    
+    limpiar_reservas_expiradas()
+
     # Validar que exista una búsqueda válida
     if not query or not query.strip():
         return {
@@ -68,6 +86,8 @@ def check_stock(product_id):
     Devuelve la radiografía exacta del inventario de un producto.
     La IA usa esto para informar al cliente sin venderle humo.
     """
+    limpiar_reservas_expiradas()
+
     producto = Producto.query.get(product_id)
     if not producto:
         return {"success": False, "error": "Producto no encontrado."}
@@ -88,9 +108,11 @@ def check_stock(product_id):
 # [FASE 2 - HERRAMIENTA INVENTARIO EN TIEMPO REAL] Paso 2.3: Función de Bloqueo Temporal
 def reserve_stock(product_id, quantity, minutes=2):
     """
-    Atrapa una cantidad de stock durante 'X' minutos.
-    Si el cliente no paga en ese tiempo, un cronómetro liberará el stock automáticamente.
+    Atrapa una cantidad de stock y la guarda en la base de datos con una fecha de expiración.
+    Soluciona el problema de los reinicios de servidor.
     """
+    limpiar_reservas_expiradas()
+    
     # Validar cantidad correcta
     if quantity <= 0:
         return {
@@ -115,16 +137,23 @@ def reserve_stock(product_id, quantity, minutes=2):
         
     # Sumar la cantidad solicitada a la "caja fuerte" de reservas
     producto.stock_reservado += quantity
-    db.session.commit()
     
-    # Iniciar el cronómetro en un hilo paralelo (Background Thread)
-    # Extraemos el objeto real de Flask para pasárselo al hilo
-    app = current_app._get_current_object() 
-    
-    # threading.Timer requiere segundos, por lo que multiplicamos minutos * 60
-    timer = threading.Timer(minutes * 60.0, _release_stock, args=[product_id, quantity, app])
-    timer.daemon = True # Garantiza que si apagamos el servidor, el cronómetro muera con él
+    # Crear el registro en la base de datos
+    expiracion = datetime.utcnow() + timedelta(minutes=minutes)
+    nueva_reserva = ReservaStock(
+        producto_id=product_id,
+        cantidad=quantity,
+        fecha_expiracion=expiracion
+    )
+
+    # Lanzar cronómetro automático (Tiempo Real)
+    app = current_app._get_current_object()
+    timer = threading.Timer(minutes * 60.0, _auto_release_worker, args=[app])
+    timer.daemon = True
     timer.start()
+
+    db.session.add(nueva_reserva)
+    db.session.commit()
     
     return {
         "success": True,
@@ -145,6 +174,8 @@ def update_stock(product_id, delta):
     Aplica una suma o resta definitiva al inventario total de un producto (ej. cuando llega un proveedor o se completa una venta).
     Si el stock cae por debajo del umbral, genera un registro automático de advertencia.
     """
+    limpiar_reservas_expiradas()
+    
     # Validar que exista un cambio real
     if delta == 0:
         return {
