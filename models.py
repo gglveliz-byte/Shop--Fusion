@@ -633,3 +633,27 @@ class ReservaStock(db.Model):
 
     def __repr__(self):
         return f'<ReservaStock Prod:{self.producto_id} - Cant:{self.cantidad}>'
+
+# ==================== MÓDULO DE BASE DE CONOCIMIENTO (FAQ / RAG) ====================
+
+class DocumentoConocimiento(db.Model):
+    """
+    Tabla para almacenar los manuales, políticas y preguntas frecuentes.
+    Actúa como el "cerebro" interno para que la IA responda consultas de soporte.
+    """
+    __tablename__ = 'documentos_conocimiento'
+
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(200), nullable=False)
+    categoria = db.Column(db.String(50), default='general')
+    contenido_texto = db.Column(db.Text, nullable=False)
+    
+    # Aquí guardaremos el vector matemático de la IA.
+    # Usamos JSON en lugar de instalar bases de datos gigantes, para que funcione en Render (Free Tier)
+    vector_embedding = db.Column(db.JSON, nullable=True) 
+    
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+    actualizado_en = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<DocumentoConocimiento {self.titulo}>'
