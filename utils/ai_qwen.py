@@ -370,6 +370,25 @@ class QwenAIService:
                     }
                 }
             }
+        },
+        
+        # HERRAMIENTA RAG PARA CONSULTAR MANUALES - FAQ
+        {
+            "type": "function",
+            "function": {
+                "name": "searchKnowledgeBase",
+                "description": "Busca información en manuales internos, políticas de la tienda, garantías, envíos, devoluciones y preguntas frecuentes. Debes usar esta herramienta antes de responder consultas sobre políticas, soporte o reglas del negocio.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Pregunta o tema específico a buscar(ej: política de devoluciones, garantía de productos, tiempos de envío)."
+                        }
+                    },
+                    "required": ["query"]
+                }
+            }
         }
     ]
 
@@ -382,6 +401,7 @@ class QwenAIService:
 2. AUTONOMÍA DE HERRAMIENTAS: Tienes un catálogo de herramientas con descripciones claras. Decide inteligentemente cuál usar según la petición. Puedes ejecutar herramientas de forma secuencial (ej. buscar un producto en catálogo -> luego reservar su stock -> luego crear la orden).
 3. REPORTES BI Y ANALÍTICA: Cuando generes análisis o reportes financieros, formatea la información SIEMPRE en tablas Markdown profesionales, usa emojis (📈, 💰) y proporciona 2 o 3 recomendaciones estratégicas basadas en los datos reales devueltos por el servidor.
 4. SOPORTE E INVESTIGACIÓN: Si debes investigar documentación externa, limítate a resumir los datos reales extraídos de las webs autorizadas.
+5. BASE DE CONOCIMIENTOS (RAG): Para consultas sobre soporte, políticas, garantías, devoluciones o envíos, primero revisa la base de conocimiento interna antes de responder. Basa tu respuesta únicamente en la información encontrada y, si no existe información suficiente, indica que un asesor humano continuará la atención.
 
 === 📦 REGLAS CRÍTICAS DE INVENTARIO ===
 1. Nunca inventes IDs, stock, tiempos, límites ni configuraciones del sistema. Usa únicamente datos reales devueltos por herramientas.
