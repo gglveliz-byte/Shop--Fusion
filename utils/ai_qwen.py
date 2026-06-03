@@ -371,22 +371,55 @@ class QwenAIService:
                 }
             }
         },
-        
-        # HERRAMIENTA RAG PARA CONSULTAR MANUALES - FAQ
+        # -- HERRAMIENTAS DE SOPORTE (FASE 4) --
         {
             "type": "function",
             "function": {
-                "name": "searchKnowledgeBase",
-                "description": "Busca información en manuales internos, políticas de la tienda, garantías, envíos, devoluciones y preguntas frecuentes. Debes usar esta herramienta antes de responder consultas sobre políticas, soporte o reglas del negocio.",
+                "name": "createSupportTicket",
+                "description": "Crea un nuevo ticket de soporte técnico. Úsalo cuando un usuario reporte un problema, queja o solicite ayuda que no puedas resolver directamente. Siempre debes pedir nombre y email antes de crearlo.",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "query": {
+                        "subject": {"type": "string", "description": "Asunto breve del problema."},
+                        "description": {"type": "string", "description": "Descripción detallada del problema."},
+                        "priority": {
                             "type": "string",
-                            "description": "Pregunta o tema específico a buscar(ej: política de devoluciones, garantía de productos, tiempos de envío)."
-                        }
+                            "enum": ["baja", "media", "alta", "critica"],
+                            "description": "Prioridad del problema. Usa 'alta' o 'critica' para problemas urgentes, pagos o errores graves."
+                        },
+                        "contact_name": {"type": "string", "description": "Nombre del cliente."},
+                        "contact_email": {"type": "string", "description": "Correo electrónico del cliente."}
                     },
-                    "required": ["query"]
+                    "required": ["subject", "description", "priority"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "getTicketStatus",
+                "description": "Consulta el estado actual de un ticket de soporte previamente creado usando su ID numérico (no el código TKT, solo el número).",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "ticket_id": {"type": "integer", "description": "ID numérico del ticket (ej: si es TKT-0042, el ID es 42)."}
+                    },
+                    "required": ["ticket_id"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "addComment",
+                "description": "Añade información adicional o un nuevo comentario a un ticket de soporte existente.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "ticket_id": {"type": "integer", "description": "ID numérico del ticket."},
+                        "comment": {"type": "string", "description": "El comentario o actualización a añadir."}
+                    },
+                    "required": ["ticket_id", "comment"]
                 }
             }
         }
@@ -410,6 +443,12 @@ class QwenAIService:
 4. Si existen múltiples coincidencias de productos, solicita aclaración antes de continuar.
 5. Verifica siempre la respuesta de las herramientas antes de informar éxito. Si success=false o existe error, informa el problema y detén la operación.
 6. Nunca ejecutes herramientas de modificación únicamente para obtener información adicional o consultar configuraciones internas.
+
+=== 🎫 REGLAS DE SOPORTE Y ESCALADO (NUEVO) ===
+1. Si el usuario reporta un problema que no puedes resolver en 2 intentos, O si menciona palabras como "urgente", "error", "no puedo pagar", "queja", crea un ticket de soporte inmediatamente.
+2. Antes de crear el ticket, DEBES pedir siempre amablemente el nombre y el correo electrónico del usuario para que el equipo humano pueda contactarlo.
+3. Asigna prioridad 'alta' a problemas de pago o caídas del sistema, y 'media' a consultas generales.
+4. Una vez creado el ticket, informa siempre al usuario el número oficial generado (Ej: TKT-0042) para que pueda hacer seguimiento.
 
 === ⚠️ SEGURIDAD Y CONTROL DE AUTORIZACIÓN ===
 1. LÍMITES DE PERMISOS Y PRIVACIDAD: Si el usuario te pide una acción administrativa (ej. reportes financieros, métricas) y no posees la herramienta en tu catálogo, explícale de forma natural que no tienes acceso a esa información. IMPORTANTE: NUNCA menciones nombres de herramientas (ej. `listProducts`, `getSalesReport`), ni digas que "están bloqueadas", ni hables de "niveles de usuario" o "permisos". Simplemente discúlpate, dile que como asistente de ventas solo puedes ayudarle con sus compras, y ofrécele ayuda con el catálogo.

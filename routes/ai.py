@@ -141,7 +141,7 @@ def chat():
 
     if not es_admin:
         # Si no es admin, permitimos herramientas de compra, carrito y catálogo
-        herramientas_permitidas = ['createCustomerOrder', 'addProductToCart', 'updateCartItem', 'checkoutCart', 'listProducts', 'validatePaymentReceipt']
+        herramientas_permitidas = ['createCustomerOrder', 'addProductToCart', 'updateCartItem', 'checkoutCart', 'listProducts', 'validatePaymentReceipt', 'createSupportTicket', 'getTicketStatus', 'addComment']
         herramientas_disponibles = [t for t in qwen_service.TOOLS if t['function']['name'] in herramientas_permitidas]
         print("DEBUG: Usuario no-admin detectado. Habilitando herramientas de compra y carrito.")
         
@@ -349,6 +349,39 @@ def chat():
                 else:
                     # Si falló (ej. no está en lista blanca o cayó), le decimos a la IA que informe del error
                     system_msgs.append(f"ERROR AL LEER LA WEB: {db_res.get('error')}. Informa amablemente al usuario del problema.")
+
+            # --- Lógica de Soporte Técnico (Fase 5) ---
+            elif func_name == "createSupportTicket":
+                from utils.support import create_ticket, escalate_ticket
+                db_res = create_ticket(
+                    subject=args.get('subject'),
+                    description=args.get('description'),
+                    priority=args.get('priority', 'media'),
+                    contact_name=args.get('contact_name'),
+                    contact_email=args.get('contact_email'),
+                    canal='chat'
+                )
+                
+                # Si se creó con éxito y la prioridad es alta/crítica, lo escalamos automáticamente
+                if db_res.get('success') and args.get('priority') in ['alta', 'critica']:
+                    esc_res = escalate_ticket(db_res['ticket_id'])
+                    db_res['escalation'] = esc_res
+
+                system_msgs.append(f"Ticket creado. Resultado: {json.dumps(db_res)}. Informa el número del ticket al usuario.")
+
+            elif func_name == "getTicketStatus":
+                from utils.support import get_ticket_status
+                db_res = get_ticket_status(ticket_id=args.get('ticket_id'))
+                system_msgs.append(f"Estado del ticket devuelto: {json.dumps(db_res)}. Resúmelo amablemente para el usuario.")
+
+            elif func_name == "addComment":
+                from utils.support import add_comment
+                db_res = add_comment(
+                    ticket_id=args.get('ticket_id'), 
+                    content=args.get('comment'), 
+                    author='ia'
+                )
+                system_msgs.append(f"Comentario añadido al ticket. Resultado: {json.dumps(db_res)}.")
 
             elif func_name == "listProducts":
                 from models import Producto
