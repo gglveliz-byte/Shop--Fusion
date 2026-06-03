@@ -313,7 +313,25 @@ class QwenAIService:
                 }
             }
         },
-        # -- HERRAMIENTAS DE REPORTES Y ANALÍTICA (HERRAMIENTA 10) --
+        # HERRAMIENTA RAG PARA CONSULTAR MANUALES - FAQ (HERRAMIENTA 10)
+        {
+            "type": "function",
+            "function": {
+                "name": "searchKnowledgeBase",
+                "description": "Busca información en manuales internos, políticas de la tienda, garantías, envíos, devoluciones y preguntas frecuentes. Debes usar esta herramienta antes de responder consultas sobre políticas, soporte o reglas del negocio.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Pregunta o tema específico a buscar(ej: política de devoluciones, garantía de productos, tiempos de envío)."
+                        }
+                    },
+                    "required": ["query"]
+                }
+            }
+        },
+        # -- HERRAMIENTAS DE REPORTES Y ANALÍTICA (HERRAMIENTA 11) --
         {
             "type": "function",
             "function": {
