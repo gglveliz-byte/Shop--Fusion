@@ -1,6 +1,7 @@
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
+from models import DocumentoConocimiento
 
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()
@@ -310,24 +311,6 @@ class QwenAIService:
                         "delta": {"type": "integer", "description": "El cambio en el inventario. Puede ser positivo (ej: 10 para sumar stock) o negativo (ej: -3 para restar stock)."}
                     },
                     "required": ["product_id", "delta"]
-                }
-            }
-        },
-        # HERRAMIENTA RAG PARA CONSULTAR MANUALES - FAQ (HERRAMIENTA 10)
-        {
-            "type": "function",
-            "function": {
-                "name": "searchKnowledgeBase",
-                "description": "Busca información en manuales internos, políticas de la tienda, garantías, envíos, devoluciones y preguntas frecuentes. Debes usar esta herramienta antes de responder consultas sobre políticas, soporte o reglas del negocio.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "Pregunta o tema específico a buscar(ej: política de devoluciones, garantía de productos, tiempos de envío)."
-                        }
-                    },
-                    "required": ["query"]
                 }
             }
         },

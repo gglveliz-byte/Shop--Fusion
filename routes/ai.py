@@ -141,7 +141,7 @@ def chat():
 
     if not es_admin:
         # Si no es admin, permitimos herramientas de compra, carrito y catálogo
-        herramientas_permitidas = ['createCustomerOrder', 'addProductToCart', 'updateCartItem', 'checkoutCart', 'listProducts', 'validatePaymentReceipt', 'createSupportTicket', 'getTicketStatus', 'addComment','searchKnowledgeBase']
+        herramientas_permitidas = ['createCustomerOrder', 'addProductToCart', 'updateCartItem', 'checkoutCart', 'listProducts', 'validatePaymentReceipt', 'createSupportTicket', 'getTicketStatus', 'addComment']
         herramientas_disponibles = [t for t in qwen_service.TOOLS if t['function']['name'] in herramientas_permitidas]
         print("DEBUG: Usuario no-admin detectado. Habilitando herramientas de compra y carrito.")
         
@@ -734,26 +734,6 @@ def chat():
                 lim = args.get('limit', 5) or 5
                 db_res = get_top_products(limit=lim)
                 system_msgs.append(f"Ranking de productos estrella completado: {json.dumps(db_res)}.")
-
-            # --- Lógica de Base de Conocimientos (FAQ)  ---
-            elif func_name == "searchKnowledgeBase":
-                from utils.knowledge_base import searchKnowledgeBase
-                # IMPORTANTE: Le inyectamos el cliente de Qwen que ya tenemos instanciado arriba
-                # Reutilizar el cliente ya inicializado en qwen_service
-                db_res = searchKnowledgeBase(query=args.get('query'),ai_client=qwen_service.client)
-                
-                if db_res.get('success'):
-                    # Juntamos los fragmentos encontrados en un solo texto
-                    fragmentos = "\n\n".join([f"📖 {m['titulo']}:\n{m['contenido']}" for m in db_res['matches']])
-                    system_msgs.append(
-                        f"[SISTEMA INTERNO] Encontré estos manuales en la empresa para tu consulta:\n\n{fragmentos}\n\n"
-                        "INSTRUCCIÓN: Redacta una respuesta amable al usuario basándote ESTRICTAMENTE en estos textos. No inventes reglas que no estén ahí."
-                    )
-                else:
-                    system_msgs.append(
-                        f"[SISTEMA INTERNO] Resultado de la búsqueda: {db_res.get('error')}. "
-                        "INSTRUCCIÓN: Dile al cliente que no tienes esa información a mano y que un asesor humano se pondrá en contacto pronto."
-                    )
 
             if db_res:
                 db_results_totales.append(db_res)
