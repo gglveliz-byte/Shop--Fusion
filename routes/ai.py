@@ -141,7 +141,7 @@ def chat():
 
     if not es_admin:
         # Si no es admin, permitimos herramientas de compra, carrito y catálogo
-        herramientas_permitidas = ['createCustomerOrder', 'addProductToCart', 'updateCartItem', 'checkoutCart', 'listProducts', 'validatePaymentReceipt', 'createSupportTicket', 'getTicketStatus', 'addComment']
+        herramientas_permitidas = ['createCustomerOrder', 'addProductToCart', 'updateCartItem', 'checkoutCart', 'listProducts', 'validatePaymentReceipt', 'createSupportTicket', 'getTicketStatus', 'addComment','searchKnowledgeBase']
         herramientas_disponibles = [t for t in qwen_service.TOOLS if t['function']['name'] in herramientas_permitidas]
         print("DEBUG: Usuario no-admin detectado. Habilitando herramientas de compra y carrito.")
         
