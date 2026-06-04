@@ -525,7 +525,7 @@ def setup_login_manager(login_manager):
         return None
 
 
-# ==================== WHITE-LABEL CONFIGURATION ====================
+# ==================== CONFIGURACIÓN WHITE-LABEL ====================
 
 class Configuracion(db.Model):
     """
@@ -581,7 +581,7 @@ class Configuracion(db.Model):
         return f'<Configuracion {self.nombre_tienda}>'
 
 
-# ==================== MÓDULO DE CONTABILIDAD ====================
+# ==================== MÓDULO DE CONTABILIDAD (HERRAMIENTA 5) ====================
 
 class Transaccion(db.Model):
     """
@@ -613,7 +613,7 @@ class Transaccion(db.Model):
     def __repr__(self):
         return f'<Transaccion {self.tipo} - {self.monto} ({self.categoria})>'
 
-# ==================== MÓDULO DE RESERVAS DE INVENTARIO ====================
+# ==================== MÓDULO DE RESERVAS DE INVENTARIO (HERRAMIENTA 8) ====================
 
 class ReservaStock(db.Model):
     """
@@ -767,7 +767,7 @@ class ComentarioTicket(db.Model):
     def __repr__(self):
         return f'<ComentarioTicket Ticket:{self.ticket_id} por {self.autor}>'
 
-# ==================== MÓDULO DE BASE DE CONOCIMIENTO (FAQ / RAG) ====================
+# ==================== MÓDULO DE BASE DE CONOCIMIENTO (FAQ - HERRAMIENTA 10) ====================
 
 class DocumentoConocimiento(db.Model):
     """
@@ -790,3 +790,25 @@ class DocumentoConocimiento(db.Model):
 
     def __repr__(self):
         return f'<DocumentoConocimiento {self.titulo}>'
+
+# ==================== MÓDULO DE ASISTENTE Y AGENDA (HERRAMIENTA 13) ====================
+
+class Recordatorio(db.Model):
+    """
+    Tabla para gestionar recordatorios y tareas del administrador delegadas a la IA.
+    """
+    __tablename__ = 'recordatorios'
+
+    id = db.Column(db.Integer, primary_key=True)
+    texto_tarea = db.Column(db.String(500), nullable=False)
+    fecha_hora_programada = db.Column(db.DateTime, nullable=False)
+    completado = db.Column(db.Boolean, default=False)
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+
+    """__repr__ define cómo se mostrará este objeto cuando se imprima en consola,
+    aparezca en logs o durante tareas de depuración (debugging).
+    Esto facilita identificar rápidamente el contenido del registro
+    en lugar de mostrar únicamente una dirección de memoria."""
+    
+    def __repr__(self):
+        return f'<Recordatorio {self.id}: {self.texto_tarea[:20]}...>'    

@@ -1,8 +1,9 @@
+"""
 import math
 from models import DocumentoConocimiento, db
 
 def cosine_similarity(vec1, vec2):
-    """Función matemática pura para calcular similitud vectorial."""
+    #Función matemática pura para calcular similitud vectorial.
     if not vec1 or not vec2: return 0.0
     dot_product = sum(a * b for a, b in zip(vec1, vec2))
     magnitude1 = math.sqrt(sum(a * a for a in vec1))
@@ -11,7 +12,7 @@ def cosine_similarity(vec1, vec2):
     return dot_product / (magnitude1 * magnitude2)
 
 def generar_embedding(texto, ai_client):
-    """Usa el cliente inyectado desde afuera para generar el vector."""
+    #Usa el cliente inyectado desde afuera para generar el vector.
     try:
         response = ai_client.embeddings.create(
             model="text-embedding-v2",
@@ -23,7 +24,7 @@ def generar_embedding(texto, ai_client):
         return None
 
 def searchKnowledgeBase(query, ai_client):
-    """Motor RAG puramente matemático. Recibe el cliente IA como parámetro."""
+    #Motor RAG puramente matemático. Recibe el cliente IA como parámetro.
     query_embedding = generar_embedding(query, ai_client)
 
     if not query_embedding:
@@ -70,3 +71,4 @@ def searchKnowledgeBase(query, ai_client):
         return {"success": False,"error": "No encontré información en los manuales."}
 
     return {"success": True,"matches": top_resultados}
+"""
