@@ -687,20 +687,18 @@ def chat():
                 system_msgs.append(f"REPORTE CATEGORIZADO: {json.dumps(db_res)}.")
                 target_model = "qwen-max"
 
-            # --- Lógica de Inventario (FASE 3 -  HERRAMIENTA 8) ---
+            # --- Lógica de Inventario -  HERRAMIENTA 8 ---
             elif func_name == "searchProduct":
                 from utils.inventory import search_product
                 db_res = search_product(query=args.get('query'))
                 system_msgs.append(f"Búsqueda de producto completada: {json.dumps(db_res)}.")
             
             elif func_name == "checkStock":
-                # Paso 3.3: Conectar checkStock con la función utils.inventory.check_stock
                 from utils.inventory import check_stock
                 db_res = check_stock(product_id=args.get('product_id'))
                 system_msgs.append(f"Consulta de inventario completada: {json.dumps(db_res)}.")
 
             elif func_name == "reserveStock":
-                # Paso 3.3: Conectar reserveStock con la función utils.inventory.reserve_stock
                 from utils.inventory import reserve_stock
                 minutos=args.get('minutes')
                 if minutos is not None:
@@ -710,12 +708,11 @@ def chat():
                 system_msgs.append(f"Reserva de inventario completada: {json.dumps(db_res)}.")
 
             elif func_name == "updateStock":
-                # Paso 3.3: Conectar updateStock con la función utils.inventory.update_stock
                 from utils.inventory import update_stock
                 db_res = update_stock(product_id=args.get('product_id'), delta=args.get('delta'))
                 system_msgs.append(f"Actualización física de inventario completada: {json.dumps(db_res)}.")
 
-            # --- Lógica de Analítica y BI (FASE 3 - HERRAMIENTA 10) ---
+            # --- Lógica de Analítica y BI - HERRAMIENTA 12 ---
             elif func_name == "getSalesReport":
                 from utils.analytics import get_sales_report
                 periodo = args.get('period', 'this_month') or 'this_month'
@@ -734,6 +731,22 @@ def chat():
                 lim = args.get('limit', 5) or 5
                 db_res = get_top_products(limit=lim)
                 system_msgs.append(f"Ranking de productos estrella completado: {json.dumps(db_res)}.")
+
+            # --- Lógica de Agenda y Recordatorios - HERRAMIENTA 13 ---
+            elif func_name == "createReminder":
+                from utils.agenda import createReminder
+                db_res = createReminder(text=args.get('text'), datetime_str=args.get('datetime'))
+                system_msgs.append(f"Resultado de creación de recordatorio: {json.dumps(db_res)}")
+
+            elif func_name == "listTodayReminders":
+                from utils.agenda import listTodayReminders
+                db_res = listTodayReminders()
+                system_msgs.append(f"Lista de recordatorios pendientes obtenida: {json.dumps(db_res)}")
+
+            elif func_name == "markDone":
+                from utils.agenda import markDone
+                db_res = markDone(reminderId=args.get('reminderId'))
+                system_msgs.append(f"Resultado de la actualización de recordatorio: {json.dumps(db_res)}")
 
             if db_res:
                 db_results_totales.append(db_res)

@@ -190,7 +190,7 @@ class QwenAIService:
             }
         },
 
-        # -- HERRAMIENTAS DE CONTABILIDAD --
+        # -- HERRAMIENTA 5 - GESTIÓN DE CONTABILIDAD --
         {
             "type": "function",
             "function": {
@@ -225,8 +225,9 @@ class QwenAIService:
                 "parameters": {"type": "object", "properties": {}}
             }
         },
+
+        # HERRAMIENTA 7 - WEB SCRAPING
         {
-            # Paso 3.1: Registro de la Herramienta (Esquema JSON)
             # Le enseñamos a la IA qué parámetros necesita para buscar en internet
             "type": "function",
             "function": {
@@ -244,11 +245,9 @@ class QwenAIService:
                 }
             }
         },
-        # -- HERRAMIENTAS DE GESTIÓN DE STOCK (FASE 3 - INVENTARIOS) --
-        
-        # CORRECCIÓN PARA LA HERRAMIENTA DE INVENTARIO INTELIGENTE
+
+        # -- HERRAMIENTA 8 - GESTIÓN DE INVENTARIO --
         {
-            # Paso 3.1: Registro de la Herramienta searchProduct
             "type": "function",
             "function": {
                 "name": "searchProduct",
@@ -266,7 +265,6 @@ class QwenAIService:
             }
         },
         {
-            # Paso 3.1: Registro de la Herramienta checkStock
             "type": "function",
             "function": {
                 "name": "checkStock",
@@ -281,7 +279,6 @@ class QwenAIService:
             }
         },
         {
-            # Paso 3.1: Registro de la Herramienta reserveStock
             "type": "function",
             "function": {
                 "name": "reserveStock",
@@ -298,7 +295,6 @@ class QwenAIService:
             }
         },
         {
-            # Paso 3.1: Registro de la Herramienta updateStock
             "type": "function",
             "function": {
                 "name": "updateStock",
@@ -313,7 +309,8 @@ class QwenAIService:
                 }
             }
         },
-        # -- HERRAMIENTAS DE REPORTES Y ANALÍTICA (HERRAMIENTA 11) --
+
+        # -- HERRAMIENTA 11 - GESTIÓN DE REPORTES Y ANALÍTICA --
         {
             "type": "function",
             "function": {
@@ -422,6 +419,45 @@ class QwenAIService:
                     "required": ["ticket_id", "comment"]
                 }
             }
+        },
+
+        # -- HERRAMIENTA 13: ASISTENTE PERSONAL Y AGENDA --
+        {
+            "type": "function",
+            "function": {
+                "name": "createReminder",
+                "description": "Crea un recordatorio o agenda una tarea para el administrador. Úsalo cuando te pidan recordar algo.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "text": {"type": "string", "description": "Descripción de la tarea (ej: 'Llamar al proveedor')."},
+                        "datetime": {"type": "string", "description": "Fecha y hora en formato YYYY-MM-DDTHH:MM:SS."}
+                    },
+                    "required": ["text", "datetime"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "listTodayReminders",
+                "description": "Obtiene los recordatorios y tareas pendientes o atrasadas. Úsalo cuando el usuario pregunte por su agenda de hoy.",
+                "parameters": {"type": "object", "properties": {}}
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "markDone",
+                "description": "Marca una tarea o recordatorio como completado usando su ID.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "reminderId": {"type": "integer", "description": "ID numérico de la tarea."}
+                    },
+                    "required": ["reminderId"]
+                }
+            }
         }
     ]
 
@@ -435,6 +471,7 @@ class QwenAIService:
 3. REPORTES BI Y ANALÍTICA: Cuando generes análisis o reportes financieros, formatea la información SIEMPRE en tablas Markdown profesionales, usa emojis (📈, 💰) y proporciona 2 o 3 recomendaciones estratégicas basadas en los datos reales devueltos por el servidor.
 4. SOPORTE E INVESTIGACIÓN: Si debes investigar documentación externa, limítate a resumir los datos reales extraídos de las webs autorizadas.
 5. BASE DE CONOCIMIENTOS (FAQ): Para consultas sobre soporte, políticas, garantías, devoluciones o envíos, primero revisa la base de conocimiento interna antes de responder. Basa tu respuesta únicamente en la información encontrada y, si no existe información suficiente, indica que un asesor humano continuará la atención.
+6. ASISTENTE PERSONAL (AGENDA): Si un usuario que no es administrador solicita guardar o gestionar recordatorios personales, responde amablemente que no puedes realizar esa acción.
 
 === 📦 REGLAS CRÍTICAS DE INVENTARIO ===
 1. Nunca inventes IDs, stock, tiempos, límites ni configuraciones del sistema. Usa únicamente datos reales devueltos por herramientas.
