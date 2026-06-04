@@ -65,8 +65,8 @@
                         {% endif %}
                     </td>
                     <td class="px-6 py-4">
-                        <div class="font-medium text-gray-900 dark:text-white">{{ t.contacto_nombre_descifrado or 'Anónimo' }}</div>
-                        <div class="text-xs text-gray-500">{{ t.contacto_email_descifrado or 'Sin email' }}</div>
+                        <div class="font-medium text-gray-900 dark:text-white">{{ t.contacto_nombre or 'Anónimo' }}</div>
+                        <div class="text-xs text-gray-500">{{ t.contacto_email or 'Sin email' }}</div>
                     </td>
                     <td class="px-6 py-4">
                         <div class="max-w-xs truncate" title="{{ t.asunto }}">{{ t.asunto }}</div>
@@ -99,12 +99,14 @@
                         <div class="flex justify-center items-center gap-2">
                             {% if t.estado != 'cerrado' %}
                             <form action="{{ url_for('admin.ticket_resolver', id=t.id) }}" method="POST" class="inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="px-3 py-1 text-xs font-medium text-white bg-green-500 hover:bg-green-600 rounded-md transition-colors" title="Marcar Resuelto">✓ Resuelto</button>
                             </form>
                             {% endif %}
                             
                             {% if not t.escalado and t.estado != 'cerrado' %}
                             <form action="{{ url_for('admin.ticket_escalar', id=t.id) }}" method="POST" class="inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="px-3 py-1 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-md transition-colors" title="Escalar Urgente">↑ Escalar</button>
                             </form>
                             {% endif %}
