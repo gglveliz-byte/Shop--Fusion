@@ -1,7 +1,6 @@
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
-from models import DocumentoConocimiento
 
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()
@@ -435,7 +434,7 @@ class QwenAIService:
 2. AUTONOMÍA DE HERRAMIENTAS: Tienes un catálogo de herramientas con descripciones claras. Decide inteligentemente cuál usar según la petición. Puedes ejecutar herramientas de forma secuencial (ej. buscar un producto en catálogo -> luego reservar su stock -> luego crear la orden).
 3. REPORTES BI Y ANALÍTICA: Cuando generes análisis o reportes financieros, formatea la información SIEMPRE en tablas Markdown profesionales, usa emojis (📈, 💰) y proporciona 2 o 3 recomendaciones estratégicas basadas en los datos reales devueltos por el servidor.
 4. SOPORTE E INVESTIGACIÓN: Si debes investigar documentación externa, limítate a resumir los datos reales extraídos de las webs autorizadas.
-5. BASE DE CONOCIMIENTOS (RAG): Para consultas sobre soporte, políticas, garantías, devoluciones o envíos, primero revisa la base de conocimiento interna antes de responder. Basa tu respuesta únicamente en la información encontrada y, si no existe información suficiente, indica que un asesor humano continuará la atención.
+5. BASE DE CONOCIMIENTOS (FAQ): Para consultas sobre soporte, políticas, garantías, devoluciones o envíos, primero revisa la base de conocimiento interna antes de responder. Basa tu respuesta únicamente en la información encontrada y, si no existe información suficiente, indica que un asesor humano continuará la atención.
 
 === 📦 REGLAS CRÍTICAS DE INVENTARIO ===
 1. Nunca inventes IDs, stock, tiempos, límites ni configuraciones del sistema. Usa únicamente datos reales devueltos por herramientas.
@@ -470,17 +469,41 @@ Tu tono global es altamente profesional y transparente. Eres servicial y persuas
             )
 
     def get_response(self, prompt, model=None, system_instruction=None, history=None, tools=None):
-        """Envía consulta a la IA con protección total (Try-Catch)."""
+        """Envía consulta a la IA con protección total (Try-Catch) y 
+        Base de Conocimiento inyectada."""
         if not self.client: return "Error: API KEY no configurada."
 
         try:
-            # 1. Configuración de mensajes
-            sys_msg = system_instruction if system_instruction else self.SYSTEM_PROMPT
+            #1. Cargar documentos FAQ desde la BD de forma segura
+            from models import DocumentoConocimiento
+            from flask import current_app
+            
+            faq_texto = ""
+            with current_app.app_context():
+                documentos = DocumentoConocimiento.query.all()
+                if documentos:
+                    faq_texto = "\n\n".join([
+                        f"[{doc.categoria.upper()}] {doc.titulo}:\n{doc.contenido_texto}"
+                        for doc in documentos
+                    ])
+
+            # 2. Configuración de mensajes base
+            base_prompt = system_instruction if system_instruction else self.SYSTEM_PROMPT
+            
+            # Inyectamos el FAQ al final del prompt para que Qwen lo lea
+            sys_msg = f"""{base_prompt}
+            === BASE DE CONOCIMIENTO INTERNA (FAQ) ===
+            Las siguientes son las políticas estrictas de la empresa.
+            Úsalas siempre para responder dudas de clientes sobre estos temas:
+            {faq_texto}
+            """
+
+            # 3. Construcción de mensajes con historial
             messages = [{"role": "system", "content": sys_msg}]
             if history: messages.extend(history)
             if prompt: messages.append({"role": "user", "content": prompt})
 
-            # 2. Selección de modelo y herramientas
+            # 4. Selección de modelo y herramientas
             target_model = model if model else self.MODEL_LOGICA
             final_tools = tools if tools is not None else self.TOOLS
 
@@ -488,7 +511,7 @@ Tu tono global es altamente profesional y transparente. Eres servicial y persuas
             if target_model == "qwen-max": 
                 extra_params["extra_body"] = {"enable_thinking": True}
 
-            # 3. Llamada a la API
+            # 5. Llamada a la API
             response_stream = self.client.chat.completions.create(
                 model=target_model,
                 messages=messages,
