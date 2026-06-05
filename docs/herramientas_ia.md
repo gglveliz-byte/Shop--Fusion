@@ -92,7 +92,26 @@ A continuación se detalla la lista oficial de los **10 Módulos de Herramientas
 
 ---
 
-## 10. 📈 Reportes y analítica (Admin BI)
+## 10. 🧠 Base de Conocimiento / FAQ (Soporte Técnico)
+**Descripción:** Inyecta manuales internos, políticas de devolución, envíos y guías de tallas directamente en el contexto de la IA para responder de forma automática y precisa sin necesidad de escalar consultas genéricas. Utiliza un patrón de "Context Stuffing" en el prompt para optimizar los recursos del entorno Free Tier, permitiendo que la IA sepa el manual "de memoria".
+**Rol principal:** Soporte Técnico / Ventas
+* **Archivos Clave:**
+  * `models.py`: Estructura de la tabla `DocumentoConocimiento`.
+  * `utils/ai_qwen.py`: Carga e inyecta los documentos de forma dinámica en el `SYSTEM_PROMPT` dentro del método `get_response`.
+
+---
+
+## 11. 🎟️ Sistema de Tickets de Soporte
+**Descripción:** La IA puede crear, actualizar y consultar tickets de soporte. Actúa como primer nivel de atención y escala automáticamente cuando no puede resolver la consulta o necesita confirmación humana. Notifica al equipo humano cuando se crea un ticket nuevo.
+**Rol principal:** Soporte Técnico
+* **Archivos Clave:**
+  * `utils/ai_qwen.py`: Configura los esquemas JSON para `createSupportTicket`, `getTicketStatus` y `addComment`.
+  * `routes/ai.py`: Intercepta la ejecución de estas herramientas para interactuar con la BD.
+  * `models.py`: Estructura transaccional de las tablas `TicketSoporte` y `ComentarioTicket`.
+
+---
+
+## 12. 📈 Reportes y analítica (Admin BI)
 **Descripción:** Motor de Inteligencia de Negocios (BI) que genera comparativas financieras de crecimiento, márgenes netos reales y el ranking del rendimiento de los productos a lo largo del tiempo.
 **Rol principal:** Admin / Analista BI Senior
 * **Archivos Clave:**
@@ -100,6 +119,17 @@ A continuación se detalla la lista oficial de los **10 Módulos de Herramientas
   * `routes/ai.py`: Blinda y ejecuta las funciones como herramientas de acceso restringido para los administradores.
 
 ---
+
+## 13. 📅 Gestión de recordatorios y agenda (Asistente personal)
+**Descripción:** Permite al administrador delegar recordatorios, eventos y pequeñas tareas a la IA. La IA interactúa con la base de datos para crear tareas programadas, listar la agenda del día (y tareas atrasadas) y tachar tareas completadas.
+**Rol principal:** Asistente Personal / Admin
+* **Archivos Clave:**
+  * `utils/agenda.py`: Contiene la lógica segura de fechas y funciones core `createReminder`, `listTodayReminders` y `markDone`.
+  * `routes/ai.py`: Intercepta las llamadas a las herramientas y devuelve los resultados a la IA.
+  * `models.py`: Estructura de la tabla `Recordatorio`.
+
+---
+
 
 ## ⚙️ Notas de Arquitectura e Infraestructura (Free Tier)
 Dado que el proyecto utiliza servicios en la nube en su capa gratuita (**Free Tier**), la Inteligencia Artificial está adaptada para garantizar estabilidad:
