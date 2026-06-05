@@ -458,6 +458,30 @@ class QwenAIService:
                     "required": ["reminderId"]
                 }
             }
+        },
+        # -- HERRAMIENTA 14: COMUNICACIONES Y CORREOS --
+        {
+            "type": "function",
+            "function": {
+                "name": "sendEmail",
+                "description": "Envía un correo electrónico a un cliente usando plantillas predefinidas. IMPORTANTE: Los parámetros deben ser cadenas de texto cortas y simples. NO incluyas bloques largos de texto ni HTML.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "to": {"type": "string", "description": "Correo electrónico del destinatario."},
+                        "subject": {"type": "string", "description": "Asunto del correo (máximo 80 caracteres)."},
+                        "template_name": {
+                            "type": "string", 
+                            "enum": ["general.html", "seguimiento.html", "encuesta.html"],
+                            "description": "Plantilla a utilizar: 'seguimiento.html' para post-venta, 'encuesta.html' para satisfacción, 'general.html' para correos libres."
+                        },
+                        "nombre_cliente": {"type": "string", "description": "Nombre del cliente destinatario."},
+                        "nombre_producto": {"type": "string", "description": "Nombre del producto comprado (opcional, dejar vacío si no aplica)."},
+                        "body_content": {"type": "string", "description": "Texto breve del cuerpo del correo (solo para plantilla general.html). Máximo 500 caracteres. Puede usar Markdown simple como **negrita**."}
+                    },
+                    "required": ["to", "subject", "template_name", "nombre_cliente"]
+                }
+            }
         }
     ]
 
@@ -489,6 +513,11 @@ PASO 3 — CREAR EL TICKET: SOLAMENTE después de que el usuario te haya proporc
 PASO 4 — CONFIRMAR: Una vez creado, informa siempre al usuario el número oficial (Ej: TKT-0042) para que pueda hacer seguimiento.
 REGLA DE PRIORIDAD: Asigna 'alta' o 'critica' a problemas de pago, cobros duplicados o caídas del sistema. Asigna 'media' a consultas generales.
 
+=== 📧 REGLAS DE COMUNICACIONES (ENVÍO DE CORREOS) ===
+REGLA DE CONFIRMACIÓN (HUMAN-IN-THE-LOOP): NUNCA ejecutes la herramienta sendEmail por tu propia cuenta. Si el administrador te pide enviar un correo:
+1. Redacta primero un borrador del correo en el chat.
+2. Pregúntale al usuario explícitamente: "¿Estás de acuerdo con enviar este correo ahora?".
+3. SOLAMENTE ejecuta la herramienta sendEmail si el usuario responde afirmativamente (ej: "sí", "envíalo", "ok").
 === ⚠️ SEGURIDAD Y CONTROL DE AUTORIZACIÓN ===
 1. LÍMITES DE PERMISOS Y PRIVACIDAD: Si el usuario te pide una acción administrativa (ej. reportes financieros, métricas) y no posees la herramienta en tu catálogo, explícale de forma natural que no tienes acceso a esa información. IMPORTANTE: NUNCA menciones nombres de herramientas (ej. `listProducts`, `getSalesReport`), ni digas que "están bloqueadas", ni hables de "niveles de usuario" o "permisos". Simplemente discúlpate, dile que como asistente de ventas solo puedes ayudarle con sus compras, y ofrécele ayuda con el catálogo.
 2. CONFIRMACIÓN DE ACCIONES CRÍTICAS: Si el servidor o una herramienta te devuelve un mensaje requiriendo confirmación de seguridad, detente inmediatamente. Pide la confirmación al usuario y no des por completado el flujo hasta que el sistema lo autorice.

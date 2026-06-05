@@ -383,6 +383,30 @@ def chat():
                 )
                 system_msgs.append(f"Comentario añadido al ticket. Resultado: {json.dumps(db_res)}.")
 
+            elif func_name == "sendEmail":
+                # Sólo administradores pueden usar esta herramienta de envío libre
+                if not es_admin:
+                    db_res = {"success": False, "error": "Permiso denegado: solo administradores pueden enviar correos manuales."}
+                    system_msgs.append(f"[SEGURIDAD] Intento de envío de email sin autorización: {json.dumps(db_res)}.")
+                else:
+                    from utils.communications import send_email
+                    # Construir context a partir de parámetros planos (evita JSON malformado de Qwen)
+                    context = {}
+                    if args.get('nombre_cliente'):
+                        context['nombre_cliente'] = args['nombre_cliente']
+                    if args.get('nombre_producto'):
+                        context['nombre_producto'] = args['nombre_producto']
+                    if args.get('body_content'):
+                        context['body_content'] = args['body_content']
+                    
+                    email_res = send_email(
+                        to_email=args.get('to'),
+                        subject=args.get('subject'),
+                        template_name=args.get('template_name', 'general.html'),
+                        context=context
+                    )
+                    db_res = email_res
+                    system_msgs.append(f"Resultado envío email: {json.dumps(db_res)}.")
             elif func_name == "listProducts":
                 from models import Producto
                 category = args.get('category')

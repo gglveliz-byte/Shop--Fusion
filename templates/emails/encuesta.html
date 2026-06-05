@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f9fafb; margin: 0; padding: 20px;">
+    <div style="max-width: 600px; margin: auto; background: white; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; color: #374151;">
+        <div style="background: #8b5cf6; color: white; padding: 20px; text-align: center;">
+            <h2 style="margin: 0; font-size: 22px;">¿Cómo calificarías tu experiencia?</h2>
+        </div>
+        <div style="padding: 30px 24px; font-size: 16px; line-height: 1.6; text-align: center;">
+            <p>Hola <strong>{{ nombre_cliente | default('Cliente') }}</strong>,</p>
+            <p>Tu opinión es el motor que nos hace mejorar todos los días. Nos encantaría saber cómo fue tu experiencia reciente con Shop Fusion.</p>
+            
+            <div style="margin: 30px 0;">
+                <p style="font-weight: bold; margin-bottom: 15px;">Selecciona una calificación:</p>
+                <!-- Botones simulados de calificación -->
+                <a href="{{ link_encuesta | default('#') }}?score=5" style="display: inline-block; background-color: #10b981; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 5px;">⭐⭐⭐⭐⭐</a>
+                <a href="{{ link_encuesta | default('#') }}?score=3" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 5px;">⭐⭐⭐</a>
+                <a href="{{ link_encuesta | default('#') }}?score=1" style="display: inline-block; background-color: #ef4444; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 5px;">⭐</a>
+            </div>
+
+            <p style="font-size: 14px; color: #6b7280;">Tomará menos de un minuto y nos ayudará enormemente.</p>
+        </div>
+    </div>
+</body>
+</html>
