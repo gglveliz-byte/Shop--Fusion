@@ -9,7 +9,7 @@
     padding: 0;
     box-sizing: border-box;
 }
-
+alert
 /* [E15] Accesibilidad por teclado: Indicadores visuales de foco claros */
 *:focus-visible {
     outline: 3px solid var(--primary-color);
@@ -35,6 +35,9 @@
     --bg-page: #f8f9fa;
     --bg-surface: #ffffff;
     --border-color: #d1d5db;
+    --dark-color: #1f2937;
+    --dark-bg: #111827;
+    --light-color: #f9fafb;
 
     /* Sombras sutiles y realistas */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -279,6 +282,17 @@ body {
     background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(6, 182, 212, 0.05));
     color: #0e7490;
     border-left-color: var(--info-color);
+}
+
+.alert-close {
+    float: right;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1;
 }
 
 /* === PRODUCTOS GRID === */
@@ -1463,6 +1477,52 @@ body {
     margin-bottom: 1.5rem;
 }
 
+/*FASE 1 TARJETA DE REDISEÑO 2*/
+
+.logo-img {
+    height: 40px;
+    width: auto;
+}
+
+/*FASE 2 TARJETA DE REDISEÑO 2*/
+
+.menu-toggle {
+    display: none;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+
+/* FASE 3 TARJETA REDISEÑO 2*/
+.footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.footer-brand p {
+    color: var(--text-secondary);
+}
+
+.footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.footer-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+.footer-bottom {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #374151;
+}
+
 /* === RESPONSIVE === */
 @media (max-width: 768px) {
     .navbar .container {
@@ -1569,5 +1629,17 @@ body {
 
     .unete-container {
         padding: 2rem;
+    }
+}
+
+
+@media (max-width:768px){
+
+    .menu-toggle{
+        display:block;
+    }
+
+    .nav-links{
+        display:none;
     }
 }

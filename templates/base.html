@@ -41,47 +41,64 @@
 
 <body>
     {% block body %}
-    <nav class="navbar">
-        <div class="container">
-            <a href="{{ url_for('tienda.index') }}" class="logo">
-                {% if config_web and config_web.logo_path %}
-                <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}"
-                    alt="{{ config_web.nombre_tienda }}" style="height: 40px;">
-                {% else %}
-                🛍️ {{ config_web.nombre_tienda if config_web else 'Tienda' }}
-                {% endif %}
-            </a>
+    <!-- FASE 1: Navbar con header -->
+    <header>
+        <nav class="navbar">
+            <div class="container">
+                <a href="{{ url_for('tienda.index') }}" class="logo">
+                    {% if config_web and config_web.logo_path %}
+                    <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}"
+                        alt="{{ config_web.nombre_tienda }}" class="logo-img">
+                    {% else %}
+                    🛍️ {{ config_web.nombre_tienda if config_web else 'Tienda' }}
+                    {% endif %}
+                </a>
 
-            <div class="nav-links">
-                {% if current_user.is_authenticated %}
-                {# [MODIFICACIÓN SEGURIDAD TC015] #}
-                {# Se reemplazó el uso de __class__.__name__ por propiedades explícitas definidas en models.py #}
-                {# Archivo dependiente: models.py (clases Admin y Afiliado) #}
-                {% if current_user.is_admin %}
-                <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('admin.productos') }}">Productos</a>
-                <a href="{{ url_for('admin.pedidos') }}">Pedidos</a>
-                <a href="{{ url_for('admin.configuracion') }}">Configuración</a>
-                <a href="{{ url_for('admin.afiliados') }}">Afiliados</a>
-                <a href="{{ url_for('admin.comisiones') }}">Comisiones</a>
-                <a href="{{ url_for('auth.logout') }}" class="btn-logout">Cerrar Sesión</a>
-                {% elif current_user.is_afiliado %}
-                <a href="{{ url_for('afiliado.dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('afiliado.productos') }}">Productos</a>
-                <a href="{{ url_for('afiliado.pedidos') }}">Pedidos</a>
-                <a href="{{ url_for('afiliado.comisiones') }}">Mis Comisiones</a>
-                <a href="{{ url_for('afiliado.mi_cuenta') }}">Mi Cuenta</a>
-                <a href="{{ url_for('auth.logout') }}" class="btn-logout">Cerrar Sesión</a>
-                {% endif %}
-                {% else %}
-                <a href="{{ url_for('tienda.index') }}">Inicio</a>
-                <a href="{{ url_for('tienda.carrito') }}">🛒 Carrito</a>
-                <a href="{{ url_for('tienda.unete') }}" class="btn-primary">Trabaja con Nosotros</a>
-                {% endif %}
+                <!-- FASE 2: Botón para móviles -->
+                <button class="menu-toggle" aria-label="Abrir menú">
+                    <svg width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+
+                <div class="nav-links">
+                    {% if current_user.is_authenticated %}
+                    {# [MODIFICACIÓN SEGURIDAD TC015] #}
+                    {# Se reemplazó el uso de __class__.__name__ por propiedades explícitas definidas en models.py #}
+                    {# Archivo dependiente: models.py (clases Admin y Afiliado) #}
+                    {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+                    <a href="{{ url_for('admin.productos') }}">Productos</a>
+                    <a href="{{ url_for('admin.pedidos') }}">Pedidos</a>
+                    <a href="{{ url_for('admin.configuracion') }}">Configuración</a>
+                    <a href="{{ url_for('admin.afiliados') }}">Afiliados</a>
+                    <a href="{{ url_for('admin.comisiones') }}">Comisiones</a>
+                    <a href="{{ url_for('auth.logout') }}" class="btn-logout">Cerrar Sesión</a>
+                    {% elif current_user.is_afiliado %}
+                    <a href="{{ url_for('afiliado.dashboard') }}">Dashboard</a>
+                    <a href="{{ url_for('afiliado.productos') }}">Productos</a>
+                    <a href="{{ url_for('afiliado.pedidos') }}">Pedidos</a>
+                    <a href="{{ url_for('afiliado.comisiones') }}">Mis Comisiones</a>
+                    <a href="{{ url_for('afiliado.mi_cuenta') }}">Mi Cuenta</a>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-logout">Cerrar Sesión</a>
+                    {% endif %}
+                    {% else %}
+                    <a href="{{ url_for('tienda.index') }}">Inicio</a>
+                    <a href="{{ url_for('tienda.carrito') }}">🛒 Carrito</a>
+                    <a href="{{ url_for('tienda.unete') }}" class="btn btn-primary">Trabaja con Nosotros</a>
+                    {% endif %}
+                </div>
             </div>
-        </div>
-    </nav>
-
+        </nav>
+    </header>
+    
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     <div class="container">
@@ -99,9 +116,28 @@
         {% block content %}{% endblock %}
     </main>
 
+    <!-- FASE 3: Footer mejorado -->
     <footer class="footer">
         <div class="container">
-            <p>{{ config_web.mensaje_footer if config_web else '&copy; 2026 Todos los derechos reservados.' }}</p>
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>
+                        {{ config_web.nombre_tienda if config_web else 'Tienda' }}
+                    </h3>
+                    <p>
+                        {{ config_web.mensaje_footer if config_web else 'Tu tienda online de confianza' }}
+                    </p>
+                </div>
+                <div class="footer-links">
+                    <h4>Legal y Soporte</h4>
+
+                    <a href="#">Términos y Condiciones</a>
+                    <a href="#">Política de Privacidad</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Todos los derechos reservados.</p>
+            </div>
         </div>
     </footer>
     {% endblock %}
