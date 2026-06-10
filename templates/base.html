@@ -17,16 +17,22 @@
     <!-- [MODIFICACIÓN SEGURIDAD E22] -->
     <!-- Token CSRF para validación de solicitudes y protección contra falsificación -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <!-- Tipografía Principal: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <!-- Motor de Color Dinámico (White-Label) -->
     <style>
         :root {
-            --primary-color: {{ config_web.color_primario if config_web else '#6366f1' }};
-            --secondary-color: {{ config_web.color_secundario if config_web else '#22c55e' }};
-            --accent-color: {{ config_web.color_acento if config_web else '#06b6d4' }};
-            --primary-dark: {{ config_web.color_primario if config_web else '#4f46e5' }};
-            --secondary-dark: {{ config_web.color_secundario if config_web else '#16a34a' }};
+            --primary-color: {{ config_web.color_primario if config_web else '#2563eb' }};
+            --secondary-color: {{ config_web.color_secundario if config_web else '#059669' }};
+            --accent-color: {{ config_web.color_acento if config_web else '#0284c7' }};
+            --primary-dark: {{ config_web.color_primario if config_web else '#1d4ed8' }};
+            --secondary-dark: {{ config_web.color_secundario if config_web else '#047857' }};
         }
     </style>
 
