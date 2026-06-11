@@ -90,8 +90,8 @@
                     <a href="{{ url_for('auth.logout') }}" class="btn btn-logout">Cerrar Sesión</a>
                     {% endif %}
                     {% else %}
-                    <a href="{{ url_for('tienda.index') }}">Inicio</a>
-                    <a href="{{ url_for('tienda.carrito') }}">🛒 Carrito</a>
+                    <a href="{{ url_for('tienda.index') }}" class="btn btn-primary">Inicio</a>
+                    <a href="{{ url_for('tienda.carrito') }}" class="btn btn-primary">🛒 Carrito</a>
                     <a href="{{ url_for('tienda.unete') }}" class="btn btn-primary">Trabaja con Nosotros</a>
                     {% endif %}
                 </div>
@@ -119,25 +119,27 @@
     <!-- FASE 3: Footer mejorado -->
     <footer class="footer">
         <div class="container">
+
             <div class="footer-grid">
                 <div class="footer-brand">
                     <h3>
                         {{ config_web.nombre_tienda if config_web else 'Tienda' }}
                     </h3>
-                    <p>
-                        {{ config_web.mensaje_footer if config_web else 'Tu tienda online de confianza' }}
-                    </p>
                 </div>
+
                 <div class="footer-links">
                     <h4>Legal y Soporte</h4>
-
                     <a href="#">Términos y Condiciones</a>
                     <a href="#">Política de Privacidad</a>
                 </div>
             </div>
+
             <div class="footer-bottom">
-                <p>&copy; 2026 Todos los derechos reservados.</p>
+                <p>
+                    {{ config_web.mensaje_footer if config_web else '© 2026 Todos los derechos reservados.' }}
+                </p>
             </div>
+
         </div>
     </footer>
     {% endblock %}
