@@ -22,6 +22,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
@@ -41,62 +42,54 @@
 
 <body>
     {% block body %}
-    <!-- FASE 1: Navbar con header -->
-    <header>
-        <nav class="navbar">
-            <div class="container">
-                <a href="{{ url_for('tienda.index') }}" class="logo">
-                    {% if config_web and config_web.logo_path %}
-                    <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}"
-                        alt="{{ config_web.nombre_tienda }}" class="logo-img">
-                    {% else %}
-                    🛍️ {{ config_web.nombre_tienda if config_web else 'Tienda' }}
-                    {% endif %}
-                </a>
-
-                <!-- FASE 2: Botón para móviles -->
-                <button class="menu-toggle" aria-label="Abrir menú">
-                    <svg width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2">
-                        <line x1="3" y1="6" x2="21" y2="6"></line>
-                        <line x1="3" y1="12" x2="21" y2="12"></line>
-                        <line x1="3" y1="18" x2="21" y2="18"></line>
-                    </svg>
-                </button>
-
-                <div class="nav-links">
-                    {% if current_user.is_authenticated %}
-                    {# [MODIFICACIÓN SEGURIDAD TC015] #}
-                    {# Se reemplazó el uso de __class__.__name__ por propiedades explícitas definidas en models.py #}
-                    {# Archivo dependiente: models.py (clases Admin y Afiliado) #}
-                    {% if current_user.is_admin %}
-                    <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
-                    <a href="{{ url_for('admin.productos') }}">Productos</a>
-                    <a href="{{ url_for('admin.pedidos') }}">Pedidos</a>
-                    <a href="{{ url_for('admin.configuracion') }}">Configuración</a>
-                    <a href="{{ url_for('admin.afiliados') }}">Afiliados</a>
-                    <a href="{{ url_for('admin.comisiones') }}">Comisiones</a>
-                    <a href="{{ url_for('auth.logout') }}" class="btn-logout">Cerrar Sesión</a>
-                    {% elif current_user.is_afiliado %}
-                    <a href="{{ url_for('afiliado.dashboard') }}">Dashboard</a>
-                    <a href="{{ url_for('afiliado.productos') }}">Productos</a>
-                    <a href="{{ url_for('afiliado.pedidos') }}">Pedidos</a>
-                    <a href="{{ url_for('afiliado.comisiones') }}">Mis Comisiones</a>
-                    <a href="{{ url_for('afiliado.mi_cuenta') }}">Mi Cuenta</a>
-                    <a href="{{ url_for('auth.logout') }}" class="btn btn-logout">Cerrar Sesión</a>
-                    {% endif %}
-                    {% else %}
-                    <a href="{{ url_for('tienda.index') }}" class="btn btn-primary">Inicio</a>
-                    <a href="{{ url_for('tienda.carrito') }}" class="btn btn-primary">🛒 Carrito</a>
-                    <a href="{{ url_for('tienda.unete') }}" class="btn btn-primary">Trabaja con Nosotros</a>
-                    {% endif %}
+    <!-- Header Moderno -->
+    <header class="m-header">
+        <div class="m-container m-header-inner">
+            <!-- Logo dinámico -->
+            <a href="{{ url_for('tienda.index') }}" class="m-logo">
+                {% if config_web and config_web.logo_path %}
+                    <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}" alt="Logo">
+                {% endif %}
+                {{ config_web.nombre_tienda if config_web else 'ShopFusion' }}
+            </a>
+            
+            <!-- Opciones del Header -->
+            {% if current_user.is_authenticated %}
+                {# [MODIFICACIÓN SEGURIDAD TC015] #}
+                <nav class="m-nav">
+                {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">Dashboard</a>
+                    <a href="{{ url_for('admin.productos') }}" class="{% if request.endpoint == 'admin.productos' %}active{% endif %}">Productos</a>
+                    <a href="{{ url_for('admin.pedidos') }}" class="{% if request.endpoint == 'admin.pedidos' %}active{% endif %}">Pedidos</a>
+                    <a href="{{ url_for('admin.configuracion') }}" class="{% if request.endpoint == 'admin.configuracion' %}active{% endif %}">Configuración</a>
+                    <a href="{{ url_for('admin.afiliados') }}" class="{% if request.endpoint == 'admin.afiliados' %}active{% endif %}">Afiliados</a>
+                    <a href="{{ url_for('admin.comisiones') }}" class="{% if request.endpoint == 'admin.comisiones' %}active{% endif %}">Comisiones</a>
+                {% elif current_user.is_afiliado %}
+                    <a href="{{ url_for('afiliado.dashboard') }}" class="{% if request.endpoint == 'afiliado.dashboard' %}active{% endif %}">Dashboard</a>
+                    <a href="{{ url_for('afiliado.productos') }}" class="{% if request.endpoint == 'afiliado.productos' %}active{% endif %}">Productos</a>
+                    <a href="{{ url_for('afiliado.pedidos') }}" class="{% if request.endpoint == 'afiliado.pedidos' %}active{% endif %}">Pedidos</a>
+                    <a href="{{ url_for('afiliado.comisiones') }}" class="{% if request.endpoint == 'afiliado.comisiones' %}active{% endif %}">Mis Comisiones</a>
+                    <a href="{{ url_for('afiliado.mi_cuenta') }}" class="{% if request.endpoint == 'afiliado.mi_cuenta' %}active{% endif %}">Mi Cuenta</a>
+                {% endif %}
+                </nav>
+                
+                <div class="m-header-actions">
+                    <a href="{{ url_for('auth.logout') }}" class="m-btn m-btn-outline">Cerrar Sesión</a>
                 </div>
-            </div>
-        </nav>
+            {% else %}
+                <nav class="m-nav">
+                    <a href="{{ url_for('tienda.index') }}" class="{% if request.endpoint == 'tienda.index' %}active{% endif %}">Inicio</a>
+                    <a href="#" onclick="toggleCarrito()">
+                        Carrito <span id="carrito-count" class="m-badge">0</span>
+                    </a>
+                    <a href="{{ url_for('tienda.unete') }}" class="{% if request.endpoint == 'tienda.unete' %}active{% endif %}">Trabaja con Nosotros</a>
+                </nav>
+                
+                <div class="m-header-actions">
+                    <a href="{{ url_for('auth.admin_login') }}" class="m-btn m-btn-primary">Acceder</a>
+                </div>
+            {% endif %}
+        </div>
     </header>
     
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -116,30 +109,43 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- FASE 3: Footer mejorado -->
-    <footer class="footer">
-        <div class="container">
-
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <h3>
-                        {{ config_web.nombre_tienda if config_web else 'Tienda' }}
-                    </h3>
-                </div>
-
-                <div class="footer-links">
-                    <h4>Legal y Soporte</h4>
-                    <a href="#">Términos y Condiciones</a>
-                    <a href="#">Política de Privacidad</a>
+    <!-- Footer Moderno -->
+    <footer class="m-footer">
+        <div class="m-container">
+            <div class="m-footer-top">
+                <div class="m-footer-brand">
+                    <h4>{{ config_web.nombre_tienda if config_web else 'ShopFusion' }}</h4>
+                    <p>{{ config_web.meta_descripcion if config_web else 'Ofrecemos tecnología de vanguardia para compras digitales con confianza y seguridad.' }}</p>
+                    <div class="m-footer-socials">
+                        <a href="#" class="m-social-btn"><span class="material-symbols-outlined">share</span></a>
+                        <a href="#" class="m-social-btn"><span class="material-symbols-outlined">language</span></a>
+                    </div>
+                <div class="m-footer-links-wrapper">
+                    <div class="m-footer-col">
+                        <h5>Empresa</h5>
+                        <ul>
+                            <li><a href="#">Privacidad</a></li>
+                            <li><a href="#">Términos y Condiciones</a></li>
+                        </ul>
+                    </div>
+                    <div class="m-footer-col">
+                        <h5>Sede Central</h5>
+                        <p>
+                            {{ config_web.direccion if config_web and config_web.direccion else 'Avenida de la Innovación, 42' }}<br/>
+                            {{ config_web.email if config_web and config_web.email else 'info@shopfusion.com' }}
+                        </p>
+                    </div>
                 </div>
             </div>
-
-            <div class="footer-bottom">
-                <p>
-                    {{ config_web.mensaje_footer if config_web else '© 2026 Todos los derechos reservados.' }}
-                </p>
+        </div>
+        <div class="m-footer-bottom">
+            <div class="m-container m-footer-bottom-inner">
+                <p class="m-footer-copy">© 2026 {{ config_web.nombre_tienda if config_web else 'ShopFusion' }}. Todos los derechos reservados.</p>
+                <div class="m-footer-badges">
+                    <span class="material-symbols-outlined">credit_card</span>
+                    <span class="material-symbols-outlined">shield</span>
+                </div>
             </div>
-
         </div>
     </footer>
     {% endblock %}

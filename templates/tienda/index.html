@@ -3,45 +3,86 @@
 {% block title %}Inicio{% endblock %}
 
 {% block content %}
-<!-- Hero Section con Video de Fondo -->
-<div class="hero-video-section">
-    <!-- Video para Desktop -->
-    <video class="hero-video desktop-video" autoplay muted loop playsinline>
-        <source src="{{ url_for('static', filename='propio/fondo_pantallas grandes.mp4') }}" type="video/mp4">
-    </video>
-    <!-- Video para Mobile -->
-    <video class="hero-video mobile-video" autoplay muted loop playsinline>
-        <source src="{{ url_for('static', filename='propio/movile_fondo.mp4') }}" type="video/mp4">
-    </video>
-    <!-- Overlay con efecto tech -->
-    <div class="hero-overlay"></div>
-    <div class="hero-grid-overlay"></div>
-    <!-- Contenido del Hero -->
-    <div class="hero-content">
-        <div class="container">
+<!-- Hero Section (Integrando Video Original) -->
+<section class="m-hero">
+    <div class="m-hero-video-wrap">
+        <!-- Desktop Video -->
+        <video autoplay muted loop playsinline class="m-desktop-video">
+            <source src="{{ url_for('static', filename='propio/fondo_pantallas grandes.mp4') }}" type="video/mp4">
+        </video>
+        <!-- Mobile Video -->
+        <video autoplay muted loop playsinline class="m-mobile-video">
+            <source src="{{ url_for('static', filename='propio/movile_fondo.mp4') }}" type="video/mp4">
+        </video>
+        <div class="overlay"></div>
+    </div>
+
+    <div class="m-container m-hero-content">
+        <div class="m-hero-text">
             {% if config_web and config_web.logo_path %}
-                <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}" alt="{{ config_web.nombre_tienda }}" class="hero-logo">
+                <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}" alt="{{ config_web.nombre_tienda }}" style="height: 60px; margin-bottom: 1rem;">
             {% endif %}
-            <h1 class="hero-title">{{ config_web.nombre_tienda if config_web else 'Nuestra Tienda' }}</h1>
-            <p class="hero-subtitle">Tecnologia al mejor precio</p>
-            <div class="hero-features">
-                <span class="hero-feature"><i class="feature-icon">🚚</i> Envio Gratis</span>
-                <span class="hero-feature"><i class="feature-icon">✅</i> Garantia</span>
-                <span class="hero-feature"><i class="feature-icon">💳</i> Pago Seguro</span>
-            </div>
+            <h1>Bienvenido a <span>{{ config_web.nombre_tienda if config_web else 'ShopFusion' }}</span></h1>
+            <p>{{ config_web.meta_descripcion if config_web else 'Calidad y confianza en cada compra. Descubre una experiencia diseñada para la eficiencia.' }}</p>
             {% if afiliado_codigo %}
-            <div class="afiliado-badge-new">
-                <span class="badge-icon">✨</span>
-                <span>Comprando con: <strong>{{ afiliado_codigo }}</strong></span>
-            </div>
+            <div style="background: rgba(34, 197, 94, 0.2); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1rem; border: 1px solid rgba(34, 197, 94, 0.5);">
+                ✨ Comprando con: <strong>{{ afiliado_codigo }}</strong>
+            </div><br/>
             {% endif %}
-            <a href="#productos-section" class="btn-hero-scroll">
-                <span>Ver Productos</span>
-                <span class="scroll-arrow">↓</span>
-            </a>
+            <div class="m-hero-actions">
+                <a href="#productos-section" class="m-btn m-btn-primary" style="padding: 0.75rem 2rem;">Explorar Catálogo</a>
+                <a href="#" class="m-btn m-btn-white-outline" style="padding: 0.75rem 2rem;">Saber Más</a>
+            </div>
+        </div>
+        <div class="m-hero-logo-side">
+            <!-- Espacio reservado para balance visual -->
         </div>
     </div>
-</div>
+</section>
+
+<!-- Bloques de Información -->
+<section class="m-features-wrapper">
+    <div class="m-container m-features-grid">
+        <div class="m-feature-card">
+            <div class="m-feature-icon">
+                <span class="material-symbols-outlined">local_shipping</span>
+            </div>
+            <div class="m-feature-info">
+                <h3>Envío Seguro</h3>
+                <p>Llegada íntegra de tu pedido.</p>
+            </div>
+        </div>
+        <div class="m-feature-card">
+            <div class="m-feature-icon">
+                <span class="material-symbols-outlined">verified_user</span>
+            </div>
+            <div class="m-feature-info">
+                <h3>Garantía</h3>
+                <p>Protección total asegurada.</p>
+            </div>
+        </div>
+        <div class="m-feature-card">
+            <div class="m-feature-icon">
+                <span class="material-symbols-outlined">payments</span>
+            </div>
+            <div class="m-feature-info">
+                <h3>Pago Seguro</h3>
+                <p>Transacciones encriptadas.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    @media (min-width: 768px) {
+        .m-desktop-video { display: block !important; }
+        .m-mobile-video { display: none !important; }
+    }
+    @media (max-width: 767px) {
+        .m-desktop-video { display: none !important; }
+        .m-mobile-video { display: block !important; }
+    }
+</style>
 
 <!-- Banner de Garantía y Pago Contra Entrega -->
 <div class="garantia-banner" id="garantia-banner">
@@ -54,7 +95,7 @@
                 <span class="garantia-item-icon">🚚</span>
                 <div class="garantia-item-text">
                     <strong>Envíos a Todo el País</strong>
-                    <p>Llegamos a cualquier parte de Ecuador</p>
+                    <p>Llegamos a cualquier parte del país</p>
                 </div>
             </div>
             <div class="garantia-item destacado-verde">
@@ -85,8 +126,15 @@
 <!-- Main Container -->
 <div class="container">
     <!-- Seccion de Productos -->
-    <div id="productos-section">
-        <h2 class="section-title">Nuestros Productos</h2>
+    <div id="productos-section" class="m-catalog">
+        <div class="m-catalog-header">
+            <div class="m-catalog-title">
+                <h2>Catálogo Destacado</h2>
+            </div>
+            <div class="m-catalog-meta">
+                {{ productos_db|length }} productos en stock
+            </div>
+        </div>
 
         <!-- Barra de Busqueda y Filtros -->
         <div class="filtros-container">
@@ -551,41 +599,51 @@
         const primeraImagen = todasImagenes.length > 0 ? todasImagenes[0] : null;
 
         return `
-        <div class="producto-card" data-id="${producto.id}" data-nombre="${producto.nombre.toLowerCase()}">
-            ${primeraImagen ?
-                `<div class="producto-imagen-container" ${tieneMultiplesImagenes ? `data-imagenes='${JSON.stringify(todasImagenes)}' data-index="0"` : ''}>
-                    <img src="${getImageUrl(primeraImagen)}" alt="${producto.nombre}" class="producto-imagen" onclick="verDetalle(${producto.id})">
-                    ${tieneOferta ? '<span class="oferta-tag">OFERTA</span>' : ''}
-                    ${tieneMultiplesImagenes ? `
-                        <button class="btn-nav-img btn-prev" onclick="event.stopPropagation(); cambiarImagenCard(this.parentElement, -1)">‹</button>
-                        <button class="btn-nav-img btn-next" onclick="event.stopPropagation(); cambiarImagenCard(this.parentElement, 1)">›</button>
-                        <div class="img-indicators">
-                            ${todasImagenes.map((_, i) => `<span class="img-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`).join('')}
-                        </div>
-                        <span class="img-counter">${todasImagenes.length} fotos</span>
-                    ` : ''}
-                </div>` :
-                `<div class="producto-sin-imagen" onclick="verDetalle(${producto.id})">📦</div>`
-            }
-            <div class="producto-info">
-                <h3>${producto.nombre}</h3>
-                <p class="producto-descripcion">${producto.descripcion ? producto.descripcion.substring(0, 80) + '...' : ''}</p>
-                <div class="producto-precio">
+        <div class="m-product-card" data-id="${producto.id}" data-nombre="${producto.nombre.toLowerCase()}">
+            <div class="m-product-img-wrapper" ${tieneMultiplesImagenes ? `data-imagenes='${JSON.stringify(todasImagenes)}' data-index="0"` : ''}>
+                ${primeraImagen ?
+                    `<img src="${getImageUrl(primeraImagen)}" alt="${producto.nombre}" class="producto-imagen" onclick="verDetalle(${producto.id})" style="cursor:pointer;">` :
+                    `<div style="font-size:3rem; cursor:pointer;" onclick="verDetalle(${producto.id})">📦</div>`
+                }
+                
+                ${tieneOferta ? '<span class="m-product-badge" style="background-color: var(--accent-color); left: 0.5rem; right: auto;">OFERTA</span>' : ''}
+                
+                ${producto.stock > 0 ? 
+                    `<span class="m-product-badge m-badge-available">Disponible</span>` : 
+                    `<span class="m-product-badge m-badge-soldout">Agotado</span>`
+                }
+
+                ${tieneMultiplesImagenes ? `
+                    <button class="btn-nav-img btn-prev" onclick="event.stopPropagation(); cambiarImagenCard(this.parentElement, -1)">‹</button>
+                    <button class="btn-nav-img btn-next" onclick="event.stopPropagation(); cambiarImagenCard(this.parentElement, 1)">›</button>
+                    <div class="img-indicators">
+                        ${todasImagenes.map((_, i) => `<span class="img-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`).join('')}
+                    </div>
+                    <span class="img-counter" style="position: absolute; top: 0.5rem; left: 0.5rem; background: rgba(0,0,0,0.6); color: white; padding: 0.25rem 0.5rem; font-size: 0.75rem;">${todasImagenes.length} fotos</span>
+                ` : ''}
+            </div>
+            
+            <div class="m-product-body">
+                <h4 class="m-product-title" title="${producto.nombre}">${producto.nombre}</h4>
+                <p class="m-product-desc">${producto.descripcion ? producto.descripcion.substring(0, 80) + '...' : ''}</p>
+                
+                <div class="m-product-price-row">
                     ${tieneOferta ?
-                `<span class="precio-anterior">$${producto.precio_final.toFixed(2)}</span>
-                         <span class="precio-actual">$${producto.precio_oferta.toFixed(2)}</span>` :
-                `<span class="precio-actual">$${producto.precio_final.toFixed(2)}</span>`
-            }
+                        `<span class="m-price-current">$${producto.precio_oferta.toFixed(2)}</span>
+                         <span class="m-price-old">$${producto.precio_final.toFixed(2)}</span>` :
+                        `<span class="m-price-current">$${producto.precio_final.toFixed(2)}</span>`
+                    }
+                    <span style="margin-left: auto; font-size: 0.85rem; font-weight: 600; color: ${producto.stock > 0 ? 'var(--secondary-color)' : 'var(--danger-color)'}">
+                        ${producto.stock > 0 ? `Stock: ${producto.stock}` : 'Agotado'}
+                    </span>
                 </div>
-                <div class="stock-info-basica" style="margin-bottom: 10px; font-size: 0.85rem; font-weight: 600; color: ${producto.stock > 0 ? '#22c55e' : '#ef4444'}">
-                    ${producto.stock > 0 ? `✅ Disponible: ${producto.stock}` : '❌ Agotado'}
-                </div>
-                <div class="producto-acciones">
-                    <button onclick="verDetalle(${producto.id})" class="btn btn-secondary btn-sm">Ver Mas</button>
+                
+                <div class="m-product-actions">
+                    <button onclick="verDetalle(${producto.id})" class="m-btn" style="width: 100%; background-color: var(--bg-page); color: var(--primary-color); border: 1px solid var(--primary-color);">Ver Más</button>
                     ${producto.stock > 0 ?
-                `<button onclick="agregarAlCarrito(${producto.id}, '${producto.nombre.replace(/'/g, "\\'")}', ${precioMostrar}, '${primeraImagen || ''}')" class="btn btn-primary">Agregar</button>` :
-                `<button disabled class="btn btn-secondary btn-sm" style="opacity: 0.6; cursor: not-allowed;">Agotado</button>`
-            }
+                        `<button onclick="agregarAlCarrito(${producto.id}, '${producto.nombre.replace(/'/g, "\\'")}', ${precioMostrar}, '${primeraImagen || ''}')" class="m-btn m-btn-primary" style="width: 100%;">Comprar</button>` :
+                        `<button disabled class="m-btn" style="width: 100%; opacity: 0.5; cursor: not-allowed; border: 1px solid var(--border-color);">Agotado</button>`
+                    }
                 </div>
             </div>
         </div>
@@ -1459,10 +1517,10 @@
     }
 
     .chip.active {
-        background: linear-gradient(135deg, var(--tech-primary), #4f46e5);
+        background: var(--primary-color);
         color: white;
-        border-color: transparent;
-        box-shadow: 0 4px 15px var(--tech-glow);
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
 
     .chip-icon {
