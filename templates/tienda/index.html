@@ -114,10 +114,10 @@
     </div>
 </div>
 
-<!-- Carrito Flotante -->
-<div id="carrito-flotante" class="carrito-flotante" onclick="toggleCarrito()">
-    <span class="carrito-icono">🛒</span>
-    <span class="carrito-badge" id="carrito-count">0</span>
+<!-- Carrito Flotante Moderno -->
+<div id="carrito-flotante" class="m-carrito-flotante" onclick="toggleCarrito()">
+    <span class="material-symbols-outlined m-carrito-icono">shopping_bag</span>
+    <span class="m-carrito-badge" id="carrito-count">0</span>
 </div>
 
 <!-- Main Container -->
@@ -2026,8 +2026,9 @@
         justify-content: space-between;
         align-items: center;
         padding: 1.5rem;
-        background: linear-gradient(135deg, var(--tech-dark), #1e293b);
-        color: white;
+        background: var(--bg-surface);
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-primary);
     }
 
     .carrito-header h2 {
@@ -2037,19 +2038,20 @@
     }
 
     .btn-cerrar-carrito {
-        background: rgba(255, 255, 255, 0.1);
+        background: transparent;
         border: none;
         font-size: 1.5rem;
         cursor: pointer;
-        color: white;
+        color: var(--text-muted);
         width: 40px;
         height: 40px;
-        border-radius: var(--radius);
+        border-radius: 2px;
         transition: all 0.3s;
     }
 
     .btn-cerrar-carrito:hover {
-        background: #ef4444;
+        background: var(--bg-page);
+        color: var(--danger-color);
     }
 
     .carrito-items-lista {
@@ -2075,8 +2077,9 @@
         display: flex;
         gap: 1rem;
         padding: 1rem;
-        border-radius: var(--radius);
-        background: #f8fafc;
+        border-radius: 2px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
         margin-bottom: 0.75rem;
         align-items: center;
     }
@@ -2084,9 +2087,9 @@
     .item-mini-imagen {
         width: 60px;
         height: 60px;
-        border-radius: var(--radius);
+        border-radius: 2px;
         overflow: hidden;
-        background: white;
+        background: var(--bg-page);
         flex-shrink: 0;
     }
 
@@ -2109,7 +2112,7 @@
 
     .item-mini-info p {
         margin: 0;
-        color: var(--tech-primary);
+        color: var(--primary-color);
         font-size: 0.85rem;
         font-weight: 600;
     }
@@ -2123,18 +2126,18 @@
     .btn-cantidad {
         width: 28px;
         height: 28px;
-        border-radius: var(--radius);
-        border: 1px solid #e2e8f0;
-        background: white;
+        border-radius: 2px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-page);
         cursor: pointer;
         font-weight: 700;
         transition: all 0.2s;
     }
 
     .btn-cantidad:hover {
-        background: var(--tech-primary);
+        background: var(--primary-color);
         color: white;
-        border-color: var(--tech-primary);
+        border-color: var(--primary-color);
     }
 
     .btn-eliminar {
@@ -2152,8 +2155,8 @@
 
     .carrito-footer {
         padding: 1.5rem;
-        background: #f8fafc;
-        border-top: 1px solid #e2e8f0;
+        background: var(--bg-surface);
+        border-top: 1px solid var(--border-color);
     }
 
     .carrito-total {
@@ -2162,7 +2165,7 @@
         font-size: 1.25rem;
         font-weight: 800;
         margin-bottom: 1rem;
-        color: var(--tech-dark);
+        color: var(--text-primary);
     }
 
     /* ========================================
@@ -2420,7 +2423,7 @@
         top: 2rem;
         right: 2rem;
         padding: 1rem 1.5rem;
-        border-radius: var(--radius);
+        border-radius: 2px;
         z-index: 9999;
         opacity: 0;
         transform: translateX(400px);
@@ -2434,15 +2437,17 @@
     }
 
     .notificacion-success {
-        background: linear-gradient(135deg, var(--tech-secondary), #059669);
+        background: var(--secondary-color);
         color: white;
-        box-shadow: 0 10px 40px rgba(34, 197, 94, 0.3);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--border-color);
     }
 
     .notificacion-error {
-        
+        background: var(--danger-color);
         color: white;
-        box-shadow: 0 10px 40px rgba(239, 68, 68, 0.3);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--border-color);
     }
 
     /* ========================================
