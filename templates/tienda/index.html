@@ -10,7 +10,7 @@
                 <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}" alt="{{ config_web.nombre_tienda }}" style="height: 60px; width: fit-content; margin-bottom: 0.5rem;">
             {% endif %}
             <h1 style="font-size: 2.25rem; font-weight: 800; color: var(--primary-color); line-height: 1.2; margin: 0;">Bienvenido a {{ config_web.nombre_tienda if config_web else 'ShopFusion' }}</h1>
-            <p style="font-size: 1.125rem; color: var(--text-muted); line-height: 1.5; margin: 0;">{{ config_web.meta_descripcion if config_web else 'Bienvenido a nuestra tienda oficial. Calidad y confianza en cada compra. Descubre una experiencia de compra diseñada para la eficiencia y el profesionalismo.' }}</p>
+            <p style="font-size: 1.125rem; color: var(--text-muted); line-height: 1.5; margin: 0;">{{ config_web.mensaje_bienvenida if config_web else 'Bienvenido a nuestra tienda oficial. Calidad y confianza en cada compra. Descubre una experiencia de compra diseñada para la eficiencia y el profesionalismo.' }}</p>
             
             {% if afiliado_codigo %}
             <div style="background: rgba(34, 197, 94, 0.1); padding: 0.5rem 1rem; border-radius: 2px; display: inline-block; border: 1px solid rgba(34, 197, 94, 0.3); color: #047857; font-weight: 500;">

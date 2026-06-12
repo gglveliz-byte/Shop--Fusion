@@ -79,9 +79,7 @@
             {% else %}
                 <nav class="m-nav">
                     <a href="{{ url_for('tienda.index') }}" class="{% if request.endpoint == 'tienda.index' %}active{% endif %}">Inicio</a>
-                    <a href="#" onclick="toggleCarrito()">
-                        Carrito <span id="carrito-count" class="m-badge">0</span>
-                    </a>
+                    <a href="{{ url_for('tienda.carrito') }}" class="{% if request.endpoint == 'tienda.carrito' %}active{% endif %}">Carrito</a>
                     <a href="{{ url_for('tienda.unete') }}" class="{% if request.endpoint == 'tienda.unete' %}active{% endif %}">Trabaja con Nosotros</a>
                 </nav>
                 
@@ -114,7 +112,7 @@
         <div class="m-footer-top">
             <div class="m-footer-brand">
                 <h4>{{ config_web.nombre_tienda if config_web else 'Marca Blanca' }}</h4>
-                <p>{{ config_web.meta_descripcion if config_web else 'Ofrecemos tecnología de vanguardia para compras digitales con confianza y seguridad.' }}</p>
+                <p>{{ config_web.mensaje_footer if config_web else 'Ofrecemos tecnología de vanguardia para compras digitales con confianza y seguridad.' }}</p>
                 <div class="m-footer-socials">
                     <a href="#" class="m-social-btn"><span class="material-symbols-outlined">share</span></a>
                     <a href="#" class="m-social-btn"><span class="material-symbols-outlined">language</span></a>
@@ -139,7 +137,7 @@
         </div>
         <div class="m-footer-bottom">
             <div class="m-footer-bottom-inner">
-                <p class="m-footer-copy">{{ config_web.mensaje_footer if config_web else 'Derechos Reservados'}}</p>
+                <p class="m-footer-copy">{{ config_web.mensaje_copyright if config_web else 'Derechos Reservados'}}</p>
                 <div class="m-footer-badges">
                     <span class="material-symbols-outlined">credit_card</span>
                     <span class="material-symbols-outlined">account_balance</span>

@@ -482,7 +482,7 @@ class Configuracion(db.Model):
     actualizado_en = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # [PASO 2 - SANITIZACIÓN]
-    @validates('nombre_tienda', 'mensaje_bienvenida', 'mensaje_footer', 'meta_descripcion')
+    @validates('nombre_tienda', 'mensaje_bienvenida', 'mensaje_footer', 'mensaje_copyright', 'meta_descripcion')
     def validate_config_text(self, key, value):
         """Sanitiza la configuración de marca blanca (Anti-XSS)"""
         return sanitize_html(value)

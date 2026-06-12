@@ -66,7 +66,8 @@ def index():
             'precio_final': float(p.precio_final),
             'precio_oferta': float(p.precio_oferta) if p.precio_oferta else None,
             'imagen': todas_imagenes[0] if todas_imagenes else None,
-            'imagenes': todas_imagenes
+            'imagenes': todas_imagenes,
+            'stock': p.stock
         })
 
     # Número de WhatsApp del admin
