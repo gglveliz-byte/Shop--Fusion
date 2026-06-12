@@ -3,39 +3,36 @@
 {% block title %}Inicio{% endblock %}
 
 {% block content %}
-<!-- Hero Section (Integrando Video Original) -->
-<section class="m-hero">
-    <div class="m-hero-video-wrap">
-        <!-- Desktop Video -->
-        <video autoplay muted loop playsinline class="m-desktop-video">
-            <source src="{{ url_for('static', filename='propio/fondo_pantallas grandes.mp4') }}" type="video/mp4">
-        </video>
-        <!-- Mobile Video -->
-        <video autoplay muted loop playsinline class="m-mobile-video">
-            <source src="{{ url_for('static', filename='propio/movile_fondo.mp4') }}" type="video/mp4">
-        </video>
-        <div class="overlay"></div>
-    </div>
-
-    <div class="m-container m-hero-content">
-        <div class="m-hero-text">
+<section style="background: white; border-bottom: 1px solid var(--border-color);">
+    <div style="max-width: 1280px; margin: 0 auto; padding: 5rem 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: 3rem;">
+        <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 1.5rem;">
             {% if config_web and config_web.logo_path %}
-                <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}" alt="{{ config_web.nombre_tienda }}" style="height: 60px; margin-bottom: 1rem;">
+                <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}" alt="{{ config_web.nombre_tienda }}" style="height: 60px; width: fit-content; margin-bottom: 0.5rem;">
             {% endif %}
-            <h1>Bienvenido a <span>{{ config_web.nombre_tienda if config_web else 'ShopFusion' }}</span></h1>
-            <p>{{ config_web.meta_descripcion if config_web else 'Calidad y confianza en cada compra. Descubre una experiencia diseñada para la eficiencia.' }}</p>
+            <h1 style="font-size: 2.25rem; font-weight: 800; color: var(--primary-color); line-height: 1.2; margin: 0;">Bienvenido a {{ config_web.nombre_tienda if config_web else 'ShopFusion' }}</h1>
+            <p style="font-size: 1.125rem; color: var(--text-muted); line-height: 1.5; margin: 0;">{{ config_web.meta_descripcion if config_web else 'Bienvenido a nuestra tienda oficial. Calidad y confianza en cada compra. Descubre una experiencia de compra diseñada para la eficiencia y el profesionalismo.' }}</p>
+            
             {% if afiliado_codigo %}
-            <div style="background: rgba(34, 197, 94, 0.2); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1rem; border: 1px solid rgba(34, 197, 94, 0.5);">
+            <div style="background: rgba(34, 197, 94, 0.1); padding: 0.5rem 1rem; border-radius: 2px; display: inline-block; border: 1px solid rgba(34, 197, 94, 0.3); color: #047857; font-weight: 500;">
                 ✨ Comprando con: <strong>{{ afiliado_codigo }}</strong>
-            </div><br/>
+            </div>
             {% endif %}
-            <div class="m-hero-actions">
-                <a href="#productos-section" class="m-btn m-btn-primary" style="padding: 0.75rem 2rem;">Explorar Catálogo</a>
-                <a href="#" class="m-btn m-btn-white-outline" style="padding: 0.75rem 2rem;">Saber Más</a>
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="#productos-section" class="m-btn" style="background-color: var(--primary-color); color: white; padding: 0.75rem 2rem; border-radius: 2px; font-weight: 500;">Explorar Catálogo</a>
+                <a href="#" class="m-btn" style="border: 1px solid var(--primary-color); color: var(--primary-color); padding: 0.75rem 2rem; border-radius: 2px; font-weight: 500;">Saber Más</a>
             </div>
         </div>
-        <div class="m-hero-logo-side">
-            <!-- Espacio reservado para balance visual -->
+        
+        <div style="flex: 1; min-width: 300px; position: relative; overflow: hidden; aspect-ratio: 16/9; background: #f3f4f6; border-radius: 2px;">
+            <!-- Desktop Video -->
+            <video autoplay muted loop playsinline class="m-desktop-video" style="width: 100%; height: 100%; object-fit: cover;">
+                <source src="{{ url_for('static', filename='propio/fondo_pantallas grandes.mp4') }}" type="video/mp4">
+            </video>
+            <!-- Mobile Video -->
+            <video autoplay muted loop playsinline class="m-mobile-video" style="width: 100%; height: 100%; object-fit: cover;">
+                <source src="{{ url_for('static', filename='propio/movile_fondo.mp4') }}" type="video/mp4">
+            </video>
         </div>
     </div>
 </section>
@@ -127,54 +124,36 @@
 <div class="container">
     <!-- Seccion de Productos -->
     <div id="productos-section" class="m-catalog">
-        <div class="m-catalog-header">
-            <div class="m-catalog-title">
-                <h2>Catálogo Destacado</h2>
-            </div>
-            <div class="m-catalog-meta">
-                {{ productos_db|length }} productos en stock
-            </div>
-        </div>
-
-        <!-- Barra de Busqueda y Filtros -->
-        <div class="filtros-container">
-            <div class="search-box">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="buscar-producto" placeholder="Buscar productos..." onkeyup="filtrarProductos()">
-                <button class="btn-clear-search" id="btn-clear" onclick="limpiarBusqueda()"
-                    style="display: none;">✕</button>
-            </div>
-
-            <div class="filtros-row">
-                <!-- Filtro Categoria - Dinamico desde BD -->
-                <div class="filtro-grupo">
-                    <label>Categoria</label>
-                    <div class="filtro-chips" id="filtro-categoria">
-                        <button class="chip active" data-categoria="todos" onclick="filtrarCategoria('todos')">
-                            <span class="chip-icon">🛍️</span> Todos ({{ productos_db|length }})
+        <!-- Barra de Busqueda y Filtros al estilo base2.html -->
+        <div class="filtros-container" style="background: transparent; border: none; box-shadow: none; padding: 0; margin-bottom: 3rem;">
+            <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1.5rem;">
+                <!-- Categoria / Titulo -->
+                <div style="flex: 1 1 60%; min-width: 300px; display: flex; flex-direction: column; gap: 1rem;">
+                    <h2 style="font-size: 1.875rem; font-weight: 800; color: var(--text-color); margin: 0;">Catálogo Destacado</h2>
+                    <div class="filtro-chips" id="filtro-categoria" style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem;">
+                        <button class="chip active" data-categoria="todos" onclick="filtrarCategoria('todos')" style="padding: 0.375rem 1rem; white-space: nowrap; font-size: 0.75rem; border-radius: 2px;">
+                            Todos
                         </button>
                         {% for cat_key, cat_data in categorias.items() %}
-                        <button class="chip" data-categoria="{{ cat_key }}" onclick="filtrarCategoria('{{ cat_key }}')">
-                            <span class="chip-icon">
-                                {% if cat_key == 'telefonos' %}📱
-                                {% elif cat_key == 'computadoras' %}💻
-                                {% elif cat_key == 'perfumes' %}🧴
-                                {% elif cat_key == 'ropa' %}👕
-                                {% elif cat_key == 'zapatos' %}👟
-                                {% elif cat_key == 'herramientas' %}🔧
-                                {% elif cat_key == 'hogar' %}🏠
-                                {% elif cat_key == 'electronica' %}🔌
-                                {% elif cat_key == 'accesorios' %}⌚
-                                {% else %}📦
-                                {% endif %}
-                            </span> {{ cat_data.nombre }} ({{ cat_data.count }})
+                        <button class="chip" data-categoria="{{ cat_key }}" onclick="filtrarCategoria('{{ cat_key }}')" style="padding: 0.375rem 1rem; white-space: nowrap; font-size: 0.75rem; border-radius: 2px;">
+                            {{ cat_data.nombre }}
                         </button>
                         {% endfor %}
                     </div>
                 </div>
 
+                <!-- Buscador -->
+                <div style="flex: 0 1 33%; min-width: 250px;">
+                    <div class="search-box" style="position: relative; margin-bottom: 0;">
+                        <input type="text" id="buscar-producto" placeholder="Filtrar por nombre..." onkeyup="filtrarProductos()" style="width: 100%; padding: 0.625rem 2.5rem 0.625rem 1rem; border: 1px solid var(--border-color); font-size: 0.875rem; border-radius: 2px; background: white;">
+                        <span class="material-symbols-outlined" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">tune</span>
+                        <button class="btn-clear-search" id="btn-clear" onclick="limpiarBusqueda()" style="display: none; position: absolute; right: 2.5rem; top: 50%; transform: translateY(-50%);">✕</button>
+                    </div>
+                </div>
+            </div>
+
                 <!-- Filtro Marca - Se muestra cuando se selecciona telefonos o computadoras -->
-                <div class="filtro-grupo" id="filtro-marca-container" style="display: none;">
+                <div class="filtro-grupo" id="filtro-marca-container" style="display: none !important;">
                     <label>Marca</label>
                     <div class="filtro-chips" id="filtro-marca">
                         <button class="chip active" data-marca="todas" onclick="filtrarMarca('todas')">Todas</button>
@@ -206,7 +185,7 @@
             </div>
 
             <!-- Contador de resultados -->
-            <div class="resultados-info">
+            <div class="resultados-info" style="display: none !important;">
                 <span id="contador-resultados">{{ productos_db|length }} productos</span>
                 <button class="btn-limpiar-filtros" onclick="limpiarFiltros()" style="display: none;"
                     id="btn-limpiar-filtros">

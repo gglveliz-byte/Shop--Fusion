@@ -474,8 +474,8 @@ class Configuracion(db.Model):
         """Cifra el contacto antes de guardarlo en la configuración"""
         self.whatsapp_contacto_encrypted = encrypt_data(value)
     mensaje_bienvenida = db.Column(db.String(255), default='¡Bienvenido a nuestra tienda!')
-    mensaje_footer = db.Column(db.String(255), default='© 2024 Todos los derechos reservados.')
-    
+    mensaje_footer = db.Column(db.String(255), default='Tu tienda online de confianza')
+    mensaje_copyright = db.Column(db.String(255), default='© 2026 Todos los derechos reservados.')
     # Metadatos SEO
     meta_descripcion = db.Column(db.Text, nullable=True)
     
