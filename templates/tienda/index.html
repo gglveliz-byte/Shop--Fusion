@@ -82,35 +82,46 @@
 </style>
 
 <!-- Banner de Garantía y Pago Contra Entrega -->
-<div class="garantia-banner" id="garantia-banner">
-    <div class="garantia-banner-content">
-        <button class="garantia-close" onclick="cerrarBannerGarantia()">&times;</button>
-        <div class="garantia-icon-main">🛡️</div>
-        <h3 class="garantia-titulo">¡Compra con Confianza!</h3>
-        <div class="garantia-items">
-            <div class="garantia-item">
-                <span class="garantia-item-icon">🚚</span>
+<div class="garantia-banner" id="garantia-banner" style="position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div class="garantia-banner-content" style="background-color: var(--bg-surface); width: 90%; max-width: 500px; padding: 2.5rem; position: relative; border: 1px solid var(--border-color); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+        <button class="garantia-close" onclick="cerrarBannerGarantia()" style="position: absolute; top: 1rem; right: 1.25rem; font-size: 1.5rem; background: none; border: none; cursor: pointer; color: var(--text-muted); transition: color 0.2s;">&times;</button>
+        
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="width: 64px; height: 64px; background-color: var(--primary-light); color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                <span class="material-symbols-outlined" style="font-size: 2rem;">verified_user</span>
+            </div>
+            <h3 class="garantia-titulo" style="font-size: 1.5rem; font-weight: 800; color: var(--text-color); margin: 0;">¡Compra con Confianza!</h3>
+        </div>
+
+        <div class="garantia-items" style="display: flex; flex-direction: column; gap: 1rem;">
+            <div class="garantia-item" style="display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; border: 1px solid var(--border-color); background-color: white;">
+                <span class="material-symbols-outlined" style="color: var(--primary-color); font-size: 1.5rem; margin-top: 0.125rem;">local_shipping</span>
                 <div class="garantia-item-text">
-                    <strong>Envíos a Todo el País</strong>
-                    <p>Llegamos a cualquier parte del país</p>
+                    <strong style="display: block; color: var(--text-color); font-weight: 700; margin-bottom: 0.25rem;">Envíos a Todo el País</strong>
+                    <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">Llegamos a cualquier parte del país</p>
                 </div>
             </div>
-            <div class="garantia-item destacado-verde">
-                <span class="garantia-item-icon">📱💻</span>
+            
+            <div class="garantia-item" style="display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; border: 1px solid var(--border-color); background-color: white; border-left: 4px solid var(--secondary-color);">
+                <span class="material-symbols-outlined" style="color: var(--secondary-color); font-size: 1.5rem; margin-top: 0.125rem;">devices</span>
                 <div class="garantia-item-text">
-                    <strong>1 Año de Garantía</strong>
-                    <p>Solo en Teléfonos y Computadoras</p>
+                    <strong style="display: block; color: var(--text-color); font-weight: 700; margin-bottom: 0.25rem;">1 Año de Garantía</strong>
+                    <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">Solo en Teléfonos y Computadoras</p>
                 </div>
             </div>
-            <div class="garantia-item destacado">
-                <span class="garantia-item-icon">💵</span>
+            
+            <div class="garantia-item" style="display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; border: 1px solid var(--border-color); background-color: white; border-left: 4px solid var(--warning-color);">
+                <span class="material-symbols-outlined" style="color: var(--warning-color); font-size: 1.5rem; margin-top: 0.125rem;">payments</span>
                 <div class="garantia-item-text">
-                    <strong>Pago Contra Entrega</strong>
-                    <p>Paga cuando recibas tu producto (excepto celulares y computadoras)</p>
+                    <strong style="display: block; color: var(--text-color); font-weight: 700; margin-bottom: 0.25rem;">Pago Contra Entrega</strong>
+                    <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">Paga cuando recibas tu producto (excepto celulares y computadoras)</p>
                 </div>
             </div>
         </div>
-        <button class="garantia-btn-entendido" onclick="cerrarBannerGarantia()">¡Entendido!</button>
+        
+        <div style="margin-top: 2rem; text-align: center;">
+            <button class="garantia-btn-entendido" onclick="cerrarBannerGarantia()" style="background-color: var(--primary-color); color: white; border: none; padding: 0.875rem 2rem; font-weight: 600; cursor: pointer; width: 100%; transition: background-color 0.2s;">¡Entendido!</button>
+        </div>
     </div>
 </div>
 
