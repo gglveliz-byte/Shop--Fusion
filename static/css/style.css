@@ -375,7 +375,6 @@ body {
 .precio-actual {
     font-size: 1.75rem;
     font-weight: 800;
-    background: linear-gradient(135deg, var(--secondary-color), var(--secondary-dark));
 }
 
 .precio-badge {
@@ -1158,15 +1157,13 @@ body {
     background: linear-gradient(135deg, var(--secondary-color), var(--secondary-dark));
 }
 
-.resumen-total {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-    color: white;
-}
 
+/*
 .resumen-total .resumen-label,
 .resumen-total .resumen-valor-grande {
     color: white;
 }
+*/
 
 .comisiones-lista {
     display: grid;
