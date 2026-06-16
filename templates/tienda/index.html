@@ -3,130 +3,168 @@
 {% block title %}Inicio{% endblock %}
 
 {% block content %}
-<!-- Hero Section con Video de Fondo -->
-<div class="hero-video-section">
-    <!-- Video para Desktop -->
-    <video class="hero-video desktop-video" autoplay muted loop playsinline>
-        <source src="{{ url_for('static', filename='propio/fondo_pantallas grandes.mp4') }}" type="video/mp4">
-    </video>
-    <!-- Video para Mobile -->
-    <video class="hero-video mobile-video" autoplay muted loop playsinline>
-        <source src="{{ url_for('static', filename='propio/movile_fondo.mp4') }}" type="video/mp4">
-    </video>
-    <!-- Overlay con efecto tech -->
-    <div class="hero-overlay"></div>
-    <div class="hero-grid-overlay"></div>
-    <!-- Contenido del Hero -->
-    <div class="hero-content">
-        <div class="container">
+<section style="background: white; border-bottom: 1px solid var(--border-color);">
+    <div style="max-width: 1280px; margin: 0 auto; padding: 5rem 1rem; display: flex; flex-wrap: wrap; align-items: center; gap: 3rem;">
+        <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 1.5rem;">
             {% if config_web and config_web.logo_path %}
-                <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}" alt="{{ config_web.nombre_tienda }}" class="hero-logo">
+                <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}" alt="{{ config_web.nombre_tienda }}" style="height: 60px; width: fit-content; margin-bottom: 0.5rem;">
             {% endif %}
-            <h1 class="hero-title">{{ config_web.nombre_tienda if config_web else 'Nuestra Tienda' }}</h1>
-            <p class="hero-subtitle">Tecnologia al mejor precio</p>
-            <div class="hero-features">
-                <span class="hero-feature"><i class="feature-icon">🚚</i> Envio Gratis</span>
-                <span class="hero-feature"><i class="feature-icon">✅</i> Garantia</span>
-                <span class="hero-feature"><i class="feature-icon">💳</i> Pago Seguro</span>
-            </div>
+            <h1 style="font-size: 2.25rem; font-weight: 800; color: var(--primary-color); line-height: 1.2; margin: 0;">Bienvenido a {{ config_web.nombre_tienda if config_web else 'ShopFusion' }}</h1>
+            <p style="font-size: 1.125rem; color: var(--text-muted); line-height: 1.5; margin: 0;">{{ config_web.mensaje_bienvenida if config_web else 'Bienvenido a nuestra tienda oficial. Calidad y confianza en cada compra. Descubre una experiencia de compra diseñada para la eficiencia y el profesionalismo.' }}</p>
+            
             {% if afiliado_codigo %}
-            <div class="afiliado-badge-new">
-                <span class="badge-icon">✨</span>
-                <span>Comprando con: <strong>{{ afiliado_codigo }}</strong></span>
+            <div style="background: rgba(34, 197, 94, 0.1); padding: 0.5rem 1rem; border-radius: 2px; display: inline-block; border: 1px solid rgba(34, 197, 94, 0.3); color: #047857; font-weight: 500;">
+                ✨ Comprando con: <strong>{{ afiliado_codigo }}</strong>
             </div>
             {% endif %}
-            <a href="#productos-section" class="btn-hero-scroll">
-                <span>Ver Productos</span>
-                <span class="scroll-arrow">↓</span>
-            </a>
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="#productos-section" class="m-btn" style="background-color: var(--primary-color); color: white; padding: 0.75rem 2rem; border-radius: 2px; font-weight: 500;">Explorar Catálogo</a>
+                <a href="#" class="m-btn" style="border: 1px solid var(--primary-color); color: var(--primary-color); padding: 0.75rem 2rem; border-radius: 2px; font-weight: 500;">Saber Más</a>
+            </div>
+        </div>
+        
+        <div style="flex: 1; min-width: 300px; position: relative; overflow: hidden; aspect-ratio: 16/9; background: #f3f4f6; border-radius: 2px;">
+            <!-- Desktop Video -->
+            <video autoplay muted loop playsinline class="m-desktop-video" style="width: 100%; height: 100%; object-fit: cover;">
+                <source src="{{ url_for('static', filename='propio/fondo_pantallas grandes.mp4') }}" type="video/mp4">
+            </video>
+            <!-- Mobile Video -->
+            <video autoplay muted loop playsinline class="m-mobile-video" style="width: 100%; height: 100%; object-fit: cover;">
+                <source src="{{ url_for('static', filename='propio/movile_fondo.mp4') }}" type="video/mp4">
+            </video>
         </div>
     </div>
-</div>
+</section>
+
+<!-- Bloques de Información -->
+<section class="m-features-wrapper">
+    <div class="m-container m-features-grid">
+        <div class="m-feature-card">
+            <div class="m-feature-icon">
+                <span class="material-symbols-outlined">local_shipping</span>
+            </div>
+            <div class="m-feature-info">
+                <h3>Envío Seguro</h3>
+                <p>Llegada íntegra de tu pedido.</p>
+            </div>
+        </div>
+        <div class="m-feature-card">
+            <div class="m-feature-icon">
+                <span class="material-symbols-outlined">verified_user</span>
+            </div>
+            <div class="m-feature-info">
+                <h3>Garantía</h3>
+                <p>Protección total asegurada.</p>
+            </div>
+        </div>
+        <div class="m-feature-card">
+            <div class="m-feature-icon">
+                <span class="material-symbols-outlined">payments</span>
+            </div>
+            <div class="m-feature-info">
+                <h3>Pago Seguro</h3>
+                <p>Transacciones encriptadas.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    @media (min-width: 768px) {
+        .m-desktop-video { display: block !important; }
+        .m-mobile-video { display: none !important; }
+    }
+    @media (max-width: 767px) {
+        .m-desktop-video { display: none !important; }
+        .m-mobile-video { display: block !important; }
+    }
+</style>
 
 <!-- Banner de Garantía y Pago Contra Entrega -->
-<div class="garantia-banner" id="garantia-banner">
-    <div class="garantia-banner-content">
-        <button class="garantia-close" onclick="cerrarBannerGarantia()">&times;</button>
-        <div class="garantia-icon-main">🛡️</div>
-        <h3 class="garantia-titulo">¡Compra con Confianza!</h3>
-        <div class="garantia-items">
-            <div class="garantia-item">
-                <span class="garantia-item-icon">🚚</span>
+<div class="garantia-banner" id="garantia-banner" style="position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div class="garantia-banner-content" style="background-color: var(--bg-surface); width: 90%; max-width: 500px; padding: 2.5rem; position: relative; border: 1px solid var(--border-color); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+        <button class="garantia-close" onclick="cerrarBannerGarantia()" style="position: absolute; top: 1rem; right: 1.25rem; font-size: 1.5rem; background: none; border: none; cursor: pointer; color: var(--text-muted); transition: color 0.2s;">&times;</button>
+        
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="width: 64px; height: 64px; background-color: var(--primary-light); color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                <span class="material-symbols-outlined" style="font-size: 2rem;">verified_user</span>
+            </div>
+            <h3 class="garantia-titulo" style="font-size: 1.5rem; font-weight: 800; color: var(--text-color); margin: 0;">¡Compra con Confianza!</h3>
+        </div>
+
+        <div class="garantia-items" style="display: flex; flex-direction: column; gap: 1rem;">
+            <div class="garantia-item" style="display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; border: 1px solid var(--border-color); background-color: white;">
+                <span class="material-symbols-outlined" style="color: var(--primary-color); font-size: 1.5rem; margin-top: 0.125rem;">local_shipping</span>
                 <div class="garantia-item-text">
-                    <strong>Envíos a Todo el País</strong>
-                    <p>Llegamos a cualquier parte de Ecuador</p>
+                    <strong style="display: block; color: var(--text-color); font-weight: 700; margin-bottom: 0.25rem;">Envíos a Todo el País</strong>
+                    <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">Llegamos a cualquier parte del país</p>
                 </div>
             </div>
-            <div class="garantia-item destacado-verde">
-                <span class="garantia-item-icon">📱💻</span>
+            
+            <div class="garantia-item" style="display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; border: 1px solid var(--border-color); background-color: white; border-left: 4px solid var(--secondary-color);">
+                <span class="material-symbols-outlined" style="color: var(--secondary-color); font-size: 1.5rem; margin-top: 0.125rem;">devices</span>
                 <div class="garantia-item-text">
-                    <strong>1 Año de Garantía</strong>
-                    <p>Solo en Teléfonos y Computadoras</p>
+                    <strong style="display: block; color: var(--text-color); font-weight: 700; margin-bottom: 0.25rem;">1 Año de Garantía</strong>
+                    <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">Solo en Teléfonos y Computadoras</p>
                 </div>
             </div>
-            <div class="garantia-item destacado">
-                <span class="garantia-item-icon">💵</span>
+            
+            <div class="garantia-item" style="display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; border: 1px solid var(--border-color); background-color: white; border-left: 4px solid var(--warning-color);">
+                <span class="material-symbols-outlined" style="color: var(--warning-color); font-size: 1.5rem; margin-top: 0.125rem;">payments</span>
                 <div class="garantia-item-text">
-                    <strong>Pago Contra Entrega</strong>
-                    <p>Paga cuando recibas tu producto (excepto celulares y computadoras)</p>
+                    <strong style="display: block; color: var(--text-color); font-weight: 700; margin-bottom: 0.25rem;">Pago Contra Entrega</strong>
+                    <p style="margin: 0; font-size: 0.875rem; color: var(--text-muted);">Paga cuando recibas tu producto (excepto celulares y computadoras)</p>
                 </div>
             </div>
         </div>
-        <button class="garantia-btn-entendido" onclick="cerrarBannerGarantia()">¡Entendido!</button>
+        
+        <div style="margin-top: 2rem; text-align: center;">
+            <button class="garantia-btn-entendido" onclick="cerrarBannerGarantia()" style="background-color: var(--primary-color); color: white; border: none; padding: 0.875rem 2rem; font-weight: 600; cursor: pointer; width: 100%; transition: background-color 0.2s;">¡Entendido!</button>
+        </div>
     </div>
 </div>
 
-<!-- Carrito Flotante -->
-<div id="carrito-flotante" class="carrito-flotante" onclick="toggleCarrito()">
-    <span class="carrito-icono">🛒</span>
-    <span class="carrito-badge" id="carrito-count">0</span>
+<!-- Carrito Flotante Moderno -->
+<div id="carrito-flotante" class="m-carrito-flotante" onclick="toggleCarrito()">
+    <span class="material-symbols-outlined m-carrito-icono">shopping_bag</span>
+    <span class="m-carrito-badge" id="carrito-count">0</span>
 </div>
 
 <!-- Main Container -->
 <div class="container">
     <!-- Seccion de Productos -->
-    <div id="productos-section">
-        <h2 class="section-title">Nuestros Productos</h2>
-
-        <!-- Barra de Busqueda y Filtros -->
-        <div class="filtros-container">
-            <div class="search-box">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="buscar-producto" placeholder="Buscar productos..." onkeyup="filtrarProductos()">
-                <button class="btn-clear-search" id="btn-clear" onclick="limpiarBusqueda()"
-                    style="display: none;">✕</button>
-            </div>
-
-            <div class="filtros-row">
-                <!-- Filtro Categoria - Dinamico desde BD -->
-                <div class="filtro-grupo">
-                    <label>Categoria</label>
-                    <div class="filtro-chips" id="filtro-categoria">
-                        <button class="chip active" data-categoria="todos" onclick="filtrarCategoria('todos')">
-                            <span class="chip-icon">🛍️</span> Todos ({{ productos_db|length }})
+    <div id="productos-section" class="m-catalog">
+        <!-- Barra de Busqueda y Filtros al estilo base2.html -->
+        <div class="filtros-container" style="background: transparent; border: none; box-shadow: none; padding: 0; margin-bottom: 1.5rem;">
+            <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1.5rem;">
+                <!-- Categoria / Titulo -->
+                <div style="flex: 1 1 60%; min-width: 300px; display: flex; flex-direction: column; gap: 1rem;">
+                    <h2 style="font-size: 1.875rem; font-weight: 800; color: var(--text-color); margin: 0;">Catálogo Destacado</h2>
+                    <div class="filtro-chips" id="filtro-categoria" style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem;">
+                        <button class="chip active" data-categoria="todos" onclick="filtrarCategoria('todos')" style="padding: 0.375rem 1rem; white-space: nowrap; font-size: 0.75rem; border-radius: 2px;">
+                            Todos
                         </button>
                         {% for cat_key, cat_data in categorias.items() %}
-                        <button class="chip" data-categoria="{{ cat_key }}" onclick="filtrarCategoria('{{ cat_key }}')">
-                            <span class="chip-icon">
-                                {% if cat_key == 'telefonos' %}📱
-                                {% elif cat_key == 'computadoras' %}💻
-                                {% elif cat_key == 'perfumes' %}🧴
-                                {% elif cat_key == 'ropa' %}👕
-                                {% elif cat_key == 'zapatos' %}👟
-                                {% elif cat_key == 'herramientas' %}🔧
-                                {% elif cat_key == 'hogar' %}🏠
-                                {% elif cat_key == 'electronica' %}🔌
-                                {% elif cat_key == 'accesorios' %}⌚
-                                {% else %}📦
-                                {% endif %}
-                            </span> {{ cat_data.nombre }} ({{ cat_data.count }})
+                        <button class="chip" data-categoria="{{ cat_key }}" onclick="filtrarCategoria('{{ cat_key }}')" style="padding: 0.375rem 1rem; white-space: nowrap; font-size: 0.75rem; border-radius: 2px;">
+                            {{ cat_data.nombre }}
                         </button>
                         {% endfor %}
                     </div>
                 </div>
 
+                <!-- Buscador -->
+                <div style="flex: 0 1 33%; min-width: 250px;">
+                    <div class="search-box" style="position: relative; margin-bottom: 0;">
+                        <input type="text" id="buscar-producto" placeholder="Filtrar por nombre..." onkeyup="filtrarProductos()" style="width: 100%; padding: 0.625rem 2.5rem 0.625rem 1rem; border: 1px solid var(--border-color); font-size: 0.875rem; border-radius: 2px; background: white;">
+                        <span class="material-symbols-outlined" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">tune</span>
+                        <button class="btn-clear-search" id="btn-clear" onclick="limpiarBusqueda()" style="display: none; position: absolute; right: 2.5rem; top: 50%; transform: translateY(-50%);">✕</button>
+                    </div>
+                </div>
+            </div>
+
                 <!-- Filtro Marca - Se muestra cuando se selecciona telefonos o computadoras -->
-                <div class="filtro-grupo" id="filtro-marca-container" style="display: none;">
+                <div class="filtro-grupo" id="filtro-marca-container" style="display: none !important;">
                     <label>Marca</label>
                     <div class="filtro-chips" id="filtro-marca">
                         <button class="chip active" data-marca="todas" onclick="filtrarMarca('todas')">Todas</button>
@@ -155,10 +193,9 @@
                             onclick="filtrarMarca('asus')">ASUS</button>
                     </div>
                 </div>
-            </div>
 
             <!-- Contador de resultados -->
-            <div class="resultados-info">
+            <div class="resultados-info" style="display: none !important;">
                 <span id="contador-resultados">{{ productos_db|length }} productos</span>
                 <button class="btn-limpiar-filtros" onclick="limpiarFiltros()" style="display: none;"
                     id="btn-limpiar-filtros">
@@ -243,53 +280,23 @@
                     placeholder="Calle, numero, ciudad, codigo postal"></textarea>
             </div>
 
-            <div class="metodo-pago-section mb-3">
-                <label class="d-block mb-2"><strong>Método de Pago:</strong></label>
-                <div class="metodo-opciones">
-                    <label class="metodo-opcion">
-                        <input type="radio" name="metodo_pago" value="whatsapp" checked onchange="cambiarMetodoPago(this.value)">
-                        <div class="metodo-card">
-                            <span>💬 WhatsApp</span>
-                        </div>
-                    </label>
-                    <label class="metodo-opcion">
-                        <input type="radio" name="metodo_pago" value="paypal" onchange="cambiarMetodoPago(this.value)">
-                        <div class="metodo-card">
-                            <span>💳 PayPal / Tarjeta</span>
-                        </div>
-                    </label>
-                </div>
-            </div>
-
             <div class="checkout-resumen">
                 <h3>Resumen del Pedido</h3>
                 <div id="resumen-items"></div>
-                
-                <!-- Recargo PayPal (oculto por defecto) -->
-                <div id="recargo-paypal-div" class="resumen-item text-danger" style="display: none; font-size: 0.9rem;">
-                    <span>Comisión PayPal (5.4%):</span>
-                    <span id="monto-recargo">+$0.00</span>
-                </div>
-
                 <div class="resumen-total">
                     <span>Total a Pagar:</span>
                     <span id="total-checkout">$0.00</span>
                 </div>
             </div>
 
-            <!-- Botón WhatsApp -->
-            <button type="submit" id="btn-submit-whatsapp" class="btn btn-success btn-block btn-lg">
+            <button type="submit" class="btn btn-success btn-block btn-lg">
                 Enviar Pedido por WhatsApp
             </button>
-
-            <!-- Contenedor PayPal (oculto por defecto) -->
-            <div id="paypal-button-container" class="mt-3" style="display: none;"></div>
         </form>
     </div>
 </div>
 
-<!-- SDK de PayPal -->
-<script src="https://www.paypal.com/sdk/js?client-id={{ config.PAYPAL_CLIENT_ID }}&currency=USD&intent=capture&enable-funding=card"></script>
+<!-- Overlay -->
 <div id="overlay" class="overlay" onclick="cerrarTodo()"></div>
 
 <script>
@@ -312,14 +319,6 @@
     document.addEventListener('DOMContentLoaded', function () {
         actualizarCarrito();
         renderizarProductos();
-
-        // Abrir checkout si se requiere por parámetro de URL (?checkout=true) desde la IA o redirección
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('checkout') === 'true') {
-            setTimeout(() => {
-                mostrarCheckout();
-            }, 300);
-        }
     });
 
     // Marcas conocidas para telefonos y computadoras
@@ -589,41 +588,51 @@
         const primeraImagen = todasImagenes.length > 0 ? todasImagenes[0] : null;
 
         return `
-        <div class="producto-card" data-id="${producto.id}" data-nombre="${producto.nombre.toLowerCase()}">
-            ${primeraImagen ?
-                `<div class="producto-imagen-container" ${tieneMultiplesImagenes ? `data-imagenes='${JSON.stringify(todasImagenes)}' data-index="0"` : ''}>
-                    <img src="${getImageUrl(primeraImagen)}" alt="${producto.nombre}" class="producto-imagen" onclick="verDetalle(${producto.id})">
-                    ${tieneOferta ? '<span class="oferta-tag">OFERTA</span>' : ''}
-                    ${tieneMultiplesImagenes ? `
-                        <button class="btn-nav-img btn-prev" onclick="event.stopPropagation(); cambiarImagenCard(this.parentElement, -1)">‹</button>
-                        <button class="btn-nav-img btn-next" onclick="event.stopPropagation(); cambiarImagenCard(this.parentElement, 1)">›</button>
-                        <div class="img-indicators">
-                            ${todasImagenes.map((_, i) => `<span class="img-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`).join('')}
-                        </div>
-                        <span class="img-counter">${todasImagenes.length} fotos</span>
-                    ` : ''}
-                </div>` :
-                `<div class="producto-sin-imagen" onclick="verDetalle(${producto.id})">📦</div>`
-            }
-            <div class="producto-info">
-                <h3>${producto.nombre}</h3>
-                <p class="producto-descripcion">${producto.descripcion ? producto.descripcion.substring(0, 80) + '...' : ''}</p>
-                <div class="producto-precio">
+        <div class="m-product-card" data-id="${producto.id}" data-nombre="${producto.nombre.toLowerCase()}">
+            <div class="m-product-img-wrapper" ${tieneMultiplesImagenes ? `data-imagenes='${JSON.stringify(todasImagenes)}' data-index="0"` : ''}>
+                ${primeraImagen ?
+                    `<img src="${getImageUrl(primeraImagen)}" alt="${producto.nombre}" class="producto-imagen" onclick="verDetalle(${producto.id})" style="cursor:pointer;">` :
+                    `<div style="font-size:3rem; cursor:pointer;" onclick="verDetalle(${producto.id})">📦</div>`
+                }
+                
+                ${tieneOferta ? '<span class="m-product-badge" style="background-color: var(--accent-color); left: 0.5rem; right: auto;">OFERTA</span>' : ''}
+                
+                ${producto.stock > 0 ? 
+                    `<span class="m-product-badge m-badge-available">Disponible</span>` : 
+                    `<span class="m-product-badge m-badge-soldout">Agotado</span>`
+                }
+
+                ${tieneMultiplesImagenes ? `
+                    <button class="btn-nav-img btn-prev" onclick="event.stopPropagation(); cambiarImagenCard(this.parentElement, -1)">‹</button>
+                    <button class="btn-nav-img btn-next" onclick="event.stopPropagation(); cambiarImagenCard(this.parentElement, 1)">›</button>
+                    <div class="img-indicators">
+                        ${todasImagenes.map((_, i) => `<span class="img-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`).join('')}
+                    </div>
+                    <span class="img-counter" style="position: absolute; top: 0.5rem; left: 0.5rem; background: rgba(0,0,0,0.6); color: white; padding: 0.25rem 0.5rem; font-size: 0.75rem;">${todasImagenes.length} fotos</span>
+                ` : ''}
+            </div>
+            
+            <div class="m-product-body">
+                <h4 class="m-product-title" title="${producto.nombre}">${producto.nombre}</h4>
+                <p class="m-product-desc">${producto.descripcion ? producto.descripcion.substring(0, 80) + '...' : ''}</p>
+                
+                <div class="m-product-price-row">
                     ${tieneOferta ?
-                `<span class="precio-anterior">$${producto.precio_final.toFixed(2)}</span>
-                         <span class="precio-actual">$${producto.precio_oferta.toFixed(2)}</span>` :
-                `<span class="precio-actual">$${producto.precio_final.toFixed(2)}</span>`
-            }
+                        `<span class="m-price-current">$${producto.precio_oferta.toFixed(2)}</span>
+                         <span class="m-price-old">$${producto.precio_final.toFixed(2)}</span>` :
+                        `<span class="m-price-current">$${producto.precio_final.toFixed(2)}</span>`
+                    }
+                    <span style="margin-left: auto; font-size: 0.85rem; font-weight: 600; color: ${producto.stock > 0 ? 'var(--secondary-color)' : 'var(--danger-color)'}">
+                        ${producto.stock > 0 ? `Stock: ${producto.stock}` : 'Agotado'}
+                    </span>
                 </div>
-                <div class="stock-info-basica" style="margin-bottom: 10px; font-size: 0.85rem; font-weight: 600; color: ${producto.stock > 0 ? '#22c55e' : '#ef4444'}">
-                    ${producto.stock > 0 ? `✅ Disponible: ${producto.stock}` : '❌ Agotado'}
-                </div>
-                <div class="producto-acciones">
-                    <button onclick="verDetalle(${producto.id})" class="btn btn-secondary btn-sm">Ver Mas</button>
+                
+                <div class="m-product-actions">
+                    <button onclick="verDetalle(${producto.id})" class="m-btn" style="width: 100%; background-color: var(--bg-page); color: var(--primary-color); border: 1px solid var(--primary-color);">Ver Más</button>
                     ${producto.stock > 0 ?
-                `<button onclick="agregarAlCarrito(${producto.id}, '${producto.nombre.replace(/'/g, "\\'")}', ${precioMostrar}, '${primeraImagen || ''}')" class="btn btn-primary">Agregar</button>` :
-                `<button disabled class="btn btn-secondary btn-sm" style="opacity: 0.6; cursor: not-allowed;">Agotado</button>`
-            }
+                        `<button onclick="agregarAlCarrito(${producto.id}, '${producto.nombre.replace(/'/g, "\\'")}', ${precioMostrar}, '${primeraImagen || ''}')" class="m-btn m-btn-primary" style="width: 100%;">Comprar</button>` :
+                        `<button disabled class="m-btn" style="width: 100%; opacity: 0.5; cursor: not-allowed; border: 1px solid var(--border-color);">Agotado</button>`
+                    }
                 </div>
             </div>
         </div>
@@ -755,7 +764,6 @@
 
         guardarCarrito();
         actualizarCarrito();
-        sincronizarCarritoConServidor();
         mostrarNotificacion('Producto agregado al carrito');
 
         // Animacion del boton del carrito
@@ -767,18 +775,6 @@
     // Guardar carrito en localStorage
     function guardarCarrito() {
         localStorage.setItem('carrito', JSON.stringify(carrito));
-    }
-
-    // [NUEVO] Sincronizar carrito con el servidor para que la página /carrito no salga vacía
-    function sincronizarCarritoConServidor() {
-        fetch('/api/actualizar-carrito-session', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
-            },
-            body: JSON.stringify({ carrito: carrito })
-        });
     }
 
     // Actualizar visualizacion del carrito
@@ -1131,68 +1127,6 @@
 
     // Verificar al cargar la página
     document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
-
-    // --- LÓGICA DE PAYPAL Y CHECKOUT MODAL ---
-    function cambiarMetodoPago(metodo) {
-        const btnWhatsapp = document.getElementById('btn-submit-whatsapp');
-        const paypalContainer = document.getElementById('paypal-button-container');
-        const recargoDiv = document.getElementById('recargo-paypal-div');
-        const totalTexto = document.getElementById('total-checkout');
-
-        const totalBase = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-
-        if (metodo === 'paypal') {
-            btnWhatsapp.style.display = 'none';
-            paypalContainer.style.display = 'block';
-            recargoDiv.style.display = 'flex';
-            const recargo = totalBase * 0.054;
-            const totalConRecargo = totalBase + recargo;
-            document.getElementById('monto-recargo').textContent = '+$' + recargo.toFixed(2);
-            totalTexto.textContent = '$' + totalConRecargo.toFixed(2);
-            if (paypalContainer.innerHTML === "") renderizarPaypal(totalConRecargo);
-        } else {
-            btnWhatsapp.style.display = 'block';
-            paypalContainer.style.display = 'none';
-            recargoDiv.style.display = 'none';
-            totalTexto.textContent = '$' + totalBase.toFixed(2);
-        }
-    }
-
-    function renderizarPaypal(total) {
-        if (typeof paypal === 'undefined') return;
-        paypal.Buttons({
-            style: { layout: 'vertical', color: 'blue', shape: 'rect', label: 'pay' },
-            createOrder: function(data, actions) {
-                return fetch('/api/paypal/create-order', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
-                    },
-                    body: JSON.stringify({ carrito: carrito.map(i => ({id: i.id, cantidad: i.cantidad})) })
-                }).then(r => r.json()).then(order => order.id);
-            },
-            onApprove: function(data, actions) {
-                return fetch('/api/paypal/capture-order', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
-                    },
-                    body: JSON.stringify({
-                        orderID: data.orderID,
-                        nombre: document.getElementById('cliente-nombre').value,
-                        telefono: document.getElementById('cliente-telefono').value,
-                        direccion: document.getElementById('cliente-direccion').value,
-                        carrito: carrito.map(i => ({id: i.id, cantidad: i.cantidad}))
-                    })
-                }).then(r => r.json()).then(res => {
-                    if (res.success) window.location.href = `/pedido-exitoso/${res.pedido_id}`;
-                    else alert('Error: ' + res.error);
-                });
-            }
-        }).render('#paypal-button-container');
-    }
 </script>
 
 <style>
@@ -1251,7 +1185,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.7) 50%, rgba(15, 23, 42, 0.9) 100%);
+        background: rgba(15, 23, 42, 0.8);
         z-index: -1;
     }
 
@@ -1294,12 +1228,12 @@
     @keyframes fadeInUp {
         from {
             opacity: 0;
-            transform: translateY(30px);
+            
         }
 
         to {
             opacity: 1;
-            transform: translateY(0);
+            
         }
     }
 
@@ -1316,12 +1250,12 @@
 
         0%,
         100% {
-            transform: scale(1);
+            
             filter: drop-shadow(0 0 30px var(--tech-glow));
         }
 
         50% {
-            transform: scale(1.05);
+            
             filter: drop-shadow(0 0 50px var(--tech-glow));
         }
     }
@@ -1331,10 +1265,7 @@
         font-weight: 900;
         margin-bottom: 0.5rem;
         letter-spacing: -2px;
-        background: linear-gradient(135deg, #fff 0%, #c7d2fe 50%, #a5b4fc 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        
         text-shadow: none;
         filter: drop-shadow(0 4px 30px rgba(0, 0, 0, 0.5));
     }
@@ -1364,7 +1295,7 @@
         background: rgba(99, 102, 241, 0.15);
         backdrop-filter: blur(10px);
         padding: 0.75rem 1.5rem;
-        border-radius: 50px;
+        border-radius: var(--radius);
         font-size: 0.9rem;
         font-weight: 500;
         border: 1px solid rgba(99, 102, 241, 0.3);
@@ -1374,7 +1305,7 @@
     .hero-feature:hover {
         background: rgba(99, 102, 241, 0.25);
         border-color: var(--tech-accent);
-        transform: translateY(-3px);
+        
         box-shadow: 0 10px 30px rgba(6, 182, 212, 0.2);
     }
 
@@ -1385,7 +1316,7 @@
         background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(6, 182, 212, 0.2));
         backdrop-filter: blur(10px);
         padding: 1rem 2rem;
-        border-radius: 60px;
+        border-radius: var(--radius);
         margin-bottom: 2rem;
         border: 2px solid rgba(34, 197, 94, 0.5);
         animation: glowPulse 2s ease-in-out infinite;
@@ -1395,11 +1326,11 @@
 
         0%,
         100% {
-            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+            box-shadow: none;
         }
 
         50% {
-            box-shadow: 0 0 40px rgba(34, 197, 94, 0.5);
+            box-shadow: none;
         }
     }
 
@@ -1410,7 +1341,7 @@
         background: linear-gradient(135deg, var(--tech-primary), #4f46e5);
         color: white;
         padding: 1rem 2.5rem;
-        border-radius: 60px;
+        border-radius: var(--radius);
         text-decoration: none;
         font-weight: 600;
         font-size: 1.1rem;
@@ -1420,7 +1351,7 @@
     }
 
     .btn-hero-scroll:hover {
-        transform: translateY(-5px);
+        
         box-shadow: 0 20px 60px var(--tech-glow);
     }
 
@@ -1432,11 +1363,11 @@
 
         0%,
         100% {
-            transform: translateY(0);
+            
         }
 
         50% {
-            transform: translateY(5px);
+            
         }
     }
 
@@ -1445,7 +1376,7 @@
    ======================================== */
     #productos-section {
         padding: 4rem 0;
-        background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+        
         min-height: 100vh;
     }
 
@@ -1465,7 +1396,7 @@
         height: 4px;
         background: linear-gradient(90deg, var(--tech-primary), var(--tech-accent));
         margin: 1rem auto 0;
-        border-radius: 2px;
+        border-radius: var(--radius);
     }
 
     /* ========================================
@@ -1473,7 +1404,7 @@
    ======================================== */
     .filtros-container {
         background: white;
-        border-radius: 20px;
+        border-radius: var(--radius);
         padding: 1.5rem;
         margin-bottom: 2rem;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -1489,7 +1420,7 @@
         width: 100%;
         padding: 1rem 1rem 1rem 3rem;
         border: 2px solid #e2e8f0;
-        border-radius: 12px;
+        border-radius: var(--radius);
         font-size: 1rem;
         transition: all 0.3s ease;
         background: #f8fafc;
@@ -1498,7 +1429,7 @@
     .search-box input:focus {
         outline: none;
         border-color: var(--tech-primary);
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        box-shadow: none;
         background: white;
     }
 
@@ -1506,7 +1437,7 @@
         position: absolute;
         left: 1rem;
         top: 50%;
-        transform: translateY(-50%);
+        
         font-size: 1.2rem;
         opacity: 0.5;
     }
@@ -1515,12 +1446,12 @@
         position: absolute;
         right: 1rem;
         top: 50%;
-        transform: translateY(-50%);
+        
         background: #e2e8f0;
         border: none;
         width: 24px;
         height: 24px;
-        border-radius: 50%;
+        border-radius: var(--radius);
         cursor: pointer;
         font-size: 0.8rem;
         color: #64748b;
@@ -1561,7 +1492,7 @@
         padding: 0.6rem 1.2rem;
         background: #f1f5f9;
         border: 2px solid transparent;
-        border-radius: 50px;
+        border-radius: var(--radius);
         font-size: 0.85rem;
         font-weight: 500;
         cursor: pointer;
@@ -1575,10 +1506,10 @@
     }
 
     .chip.active {
-        background: linear-gradient(135deg, var(--tech-primary), #4f46e5);
+        background: var(--primary-color);
         color: white;
-        border-color: transparent;
-        box-shadow: 0 4px 15px var(--tech-glow);
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
 
     .chip-icon {
@@ -1604,7 +1535,7 @@
         border: 1px solid var(--tech-primary);
         color: var(--tech-primary);
         padding: 0.5rem 1rem;
-        border-radius: 8px;
+        border-radius: var(--radius);
         font-size: 0.85rem;
         cursor: pointer;
         transition: all 0.3s;
@@ -1647,14 +1578,14 @@
         flex: 1;
         height: 2px;
         background: linear-gradient(90deg, var(--tech-primary), transparent);
-        border-radius: 1px;
+        border-radius: var(--radius);
     }
 
     .categoria-count {
         background: var(--tech-primary);
         color: white;
         padding: 0.3rem 0.8rem;
-        border-radius: 20px;
+        border-radius: var(--radius);
         font-size: 0.8rem;
         font-weight: 600;
         white-space: nowrap;
@@ -1667,7 +1598,7 @@
         margin-bottom: 2rem;
         padding: 1.5rem;
         background: white;
-        border-radius: 20px;
+        border-radius: var(--radius);
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
         border: 1px solid rgba(0, 0, 0, 0.05);
     }
@@ -1686,9 +1617,9 @@
         align-items: center;
         gap: 0.5rem;
         padding: 0.6rem 1.25rem;
-        background: linear-gradient(135deg, #1e293b, #334155);
+        
         color: white;
-        border-radius: 12px;
+        border-radius: var(--radius);
         font-size: 1.1rem;
         font-weight: 700;
         letter-spacing: 0.5px;
@@ -1700,51 +1631,10 @@
         font-weight: 500;
     }
 
-    /* Colores especiales por marca - Telefonos */
-    .marca-iphone {
-        background: linear-gradient(135deg, #1d1d1f, #333);
-    }
-
-    .marca-samsung {
-        background: linear-gradient(135deg, #1428a0, #2145d4);
-    }
-
-    .marca-xiaomi {
-        background: linear-gradient(135deg, #ff6900, #ff8c00);
-    }
-
-    .marca-tecno {
-        background: linear-gradient(135deg, #0066cc, #0099ff);
-    }
-
-    .marca-infinix {
-        background: linear-gradient(135deg, #f47920, #ffae00);
-    }
-
-    .marca-honor {
-        background: linear-gradient(135deg, #00a0e9, #00c4ff);
-    }
-
-    .marca-zte {
-        background: linear-gradient(135deg, #005bac, #0082c8);
-    }
-
-    /* Colores especiales por marca - Computadoras */
-    .marca-hp {
-        background: linear-gradient(135deg, #0096d6, #00b3e3);
-    }
-
-    .marca-lenovo {
-        background: linear-gradient(135deg, #e2231a, #ff3b30);
-    }
-
-    .marca-dell {
-        background: linear-gradient(135deg, #007db8, #0095d5);
-    }
-
-    .marca-asus {
-        background: linear-gradient(135deg, #00539b, #0071c5);
-    }
+    /* SE ELIMINARON ESTILOS PARA MARCAS PERSONALIZADOS DEBIDO A 
+        SER WHITE LABEL Y AL SER SaaS NO SE SABE QUE PRODUCTOS SE VENDERÁN EN CADA TIENDA, 
+        POR LO TANTO SE MANTIENE UN DISEÑO GENERICO Y PERSONALIZABLE DESDE EL PANEL DE CONTROL
+    */
 
     /* ========================================
    GRID DE PRODUCTOS
@@ -1761,7 +1651,7 @@
 
     .producto-card {
         background: white;
-        border-radius: 16px;
+        border-radius: var(--radius);
         overflow: hidden;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1782,7 +1672,7 @@
     }
 
     .producto-card:hover {
-        transform: translateY(-8px);
+        
         box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15);
     }
 
@@ -1814,20 +1704,20 @@
     }
 
     .producto-card:hover .producto-imagen {
-        transform: scale(1.05);
+        
     }
 
     /* Navegación de imágenes en tarjetas */
     .btn-nav-img {
         position: absolute;
         top: 50%;
-        transform: translateY(-50%);
+        
         background: rgba(0, 0, 0, 0.6);
         color: white;
         border: none;
         width: 32px;
         height: 32px;
-        border-radius: 50%;
+        border-radius: var(--radius);
         font-size: 1.2rem;
         cursor: pointer;
         opacity: 0;
@@ -1867,7 +1757,7 @@
     .img-dot {
         width: 8px;
         height: 8px;
-        border-radius: 50%;
+        border-radius: var(--radius);
         background: rgba(255, 255, 255, 0.5);
         cursor: pointer;
         transition: all 0.3s ease;
@@ -1876,7 +1766,7 @@
 
     .img-dot.active {
         background: white;
-        transform: scale(1.3);
+        
     }
 
     .img-dot:hover {
@@ -1890,7 +1780,7 @@
         background: rgba(0, 0, 0, 0.6);
         color: white;
         padding: 4px 10px;
-        border-radius: 12px;
+        border-radius: var(--radius);
         font-size: 0.75rem;
         font-weight: 600;
     }
@@ -1899,10 +1789,10 @@
         position: absolute;
         top: 10px;
         right: 10px;
-        background: linear-gradient(135deg, #ef4444, #dc2626);
+        
         color: white;
         padding: 0.4rem 0.8rem;
-        border-radius: 8px;
+        border-radius: var(--radius);
         font-size: 0.7rem;
         font-weight: 700;
         letter-spacing: 1px;
@@ -1913,11 +1803,11 @@
 
         0%,
         100% {
-            transform: scale(1);
+            
         }
 
         50% {
-            transform: scale(1.05);
+            
         }
     }
 
@@ -1927,7 +1817,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+        
         font-size: 3rem;
         cursor: pointer;
     }
@@ -1976,10 +1866,6 @@
     .precio-actual {
         font-size: 1.5rem;
         font-weight: 800;
-        background: linear-gradient(135deg, var(--tech-secondary), #059669);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
     }
 
     .producto-acciones {
@@ -1990,7 +1876,7 @@
     .producto-acciones .btn {
         flex: 1;
         padding: 0.7rem 0.75rem;
-        border-radius: 10px;
+        border-radius: var(--radius);
         font-weight: 600;
         font-size: 0.85rem;
         border: none;
@@ -2005,7 +1891,7 @@
     }
 
     .producto-acciones .btn-primary:hover {
-        transform: translateY(-2px);
+        
         box-shadow: 0 8px 25px var(--tech-glow);
     }
 
@@ -2030,7 +1916,7 @@
         width: 65px;
         height: 65px;
         background: linear-gradient(135deg, var(--tech-primary), #4f46e5);
-        border-radius: 50%;
+        border-radius: var(--radius);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -2042,7 +1928,7 @@
     }
 
     .carrito-flotante:hover {
-        transform: scale(1.1);
+        
         box-shadow: 0 15px 50px var(--tech-glow);
     }
 
@@ -2054,11 +1940,11 @@
 
         0%,
         100% {
-            transform: scale(1);
+            
         }
 
         50% {
-            transform: scale(1.3);
+            
         }
     }
 
@@ -2070,11 +1956,11 @@
         position: absolute;
         top: -5px;
         right: -5px;
-        background: linear-gradient(135deg, #ef4444, #dc2626);
+        
         color: white;
         width: 26px;
         height: 26px;
-        border-radius: 50%;
+        border-radius: var(--radius);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -2109,8 +1995,9 @@
         justify-content: space-between;
         align-items: center;
         padding: 1.5rem;
-        background: linear-gradient(135deg, var(--tech-dark), #1e293b);
-        color: white;
+        background: var(--bg-surface);
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-primary);
     }
 
     .carrito-header h2 {
@@ -2120,19 +2007,20 @@
     }
 
     .btn-cerrar-carrito {
-        background: rgba(255, 255, 255, 0.1);
+        background: transparent;
         border: none;
         font-size: 1.5rem;
         cursor: pointer;
-        color: white;
+        color: var(--text-muted);
         width: 40px;
         height: 40px;
-        border-radius: 10px;
+        border-radius: 2px;
         transition: all 0.3s;
     }
 
     .btn-cerrar-carrito:hover {
-        background: #ef4444;
+        background: var(--bg-page);
+        color: var(--danger-color);
     }
 
     .carrito-items-lista {
@@ -2158,8 +2046,9 @@
         display: flex;
         gap: 1rem;
         padding: 1rem;
-        border-radius: 12px;
-        background: #f8fafc;
+        border-radius: 2px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
         margin-bottom: 0.75rem;
         align-items: center;
     }
@@ -2167,9 +2056,9 @@
     .item-mini-imagen {
         width: 60px;
         height: 60px;
-        border-radius: 10px;
+        border-radius: 2px;
         overflow: hidden;
-        background: white;
+        background: var(--bg-page);
         flex-shrink: 0;
     }
 
@@ -2192,7 +2081,7 @@
 
     .item-mini-info p {
         margin: 0;
-        color: var(--tech-primary);
+        color: var(--primary-color);
         font-size: 0.85rem;
         font-weight: 600;
     }
@@ -2206,18 +2095,18 @@
     .btn-cantidad {
         width: 28px;
         height: 28px;
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
-        background: white;
+        border-radius: 2px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-page);
         cursor: pointer;
         font-weight: 700;
         transition: all 0.2s;
     }
 
     .btn-cantidad:hover {
-        background: var(--tech-primary);
+        background: var(--primary-color);
         color: white;
-        border-color: var(--tech-primary);
+        border-color: var(--primary-color);
     }
 
     .btn-eliminar {
@@ -2235,8 +2124,8 @@
 
     .carrito-footer {
         padding: 1.5rem;
-        background: #f8fafc;
-        border-top: 1px solid #e2e8f0;
+        background: var(--bg-surface);
+        border-top: 1px solid var(--border-color);
     }
 
     .carrito-total {
@@ -2245,7 +2134,7 @@
         font-size: 1.25rem;
         font-weight: 800;
         margin-bottom: 1rem;
-        color: var(--tech-dark);
+        color: var(--text-primary);
     }
 
     /* ========================================
@@ -2268,15 +2157,17 @@
     }
 
     .modal-content {
-        background: white;
-        border-radius: 24px;
+        background: var(--bg-surface);
+        border-radius: 2px;
+        border: 1px solid var(--border-color);
         max-width: 900px;
         width: 90%;
         max-height: 90vh;
         overflow-y: auto;
         position: relative;
-        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+        box-shadow: var(--shadow-lg);
         animation: modalSlideIn 0.3s ease-out;
+        color: var(--text-primary);
     }
 
     @keyframes modalSlideIn {
@@ -2297,10 +2188,11 @@
         right: 1rem;
         font-size: 1.5rem;
         cursor: pointer;
-        background: #f1f5f9;
+        background: transparent;
+        color: var(--text-muted);
         width: 40px;
         height: 40px;
-        border-radius: 50%;
+        border-radius: 2px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -2310,9 +2202,8 @@
     }
 
     .modal-close:hover {
-        background: #ef4444;
-        color: white;
-        transform: rotate(90deg);
+        background: var(--bg-page);
+        color: var(--danger-color);
     }
 
     .producto-detalle-modal {
@@ -2332,9 +2223,10 @@
     .galeria-principal {
         position: relative;
         width: 100%;
-        border-radius: 16px;
+        border-radius: 2px;
         overflow: hidden;
-        background: #f8fafc;
+        background: var(--bg-page);
+        border: 1px solid var(--border-color);
     }
 
     .galeria-principal img {
@@ -2349,13 +2241,13 @@
     .btn-nav-modal {
         position: absolute;
         top: 50%;
-        transform: translateY(-50%);
-        background: rgba(0, 0, 0, 0.6);
-        color: white;
-        border: none;
+        
+        background: var(--bg-surface);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
         width: 44px;
         height: 44px;
-        border-radius: 50%;
+        border-radius: 2px;
         font-size: 1.5rem;
         cursor: pointer;
         transition: all 0.3s ease;
@@ -2366,8 +2258,8 @@
     }
 
     .btn-nav-modal:hover {
-        background: var(--tech-primary);
-        transform: translateY(-50%) scale(1.1);
+        background: var(--bg-page);
+        transform: translateY(-50%);
     }
 
     .btn-prev-modal {
@@ -2383,10 +2275,11 @@
         bottom: 10px;
         left: 50%;
         transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 6px 14px;
-        border-radius: 20px;
+        background: var(--bg-surface);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        padding: 4px 12px;
+        border-radius: 2px;
         font-size: 0.85rem;
         font-weight: 600;
     }
@@ -2403,28 +2296,28 @@
         width: 65px;
         height: 65px;
         object-fit: cover;
-        border-radius: 10px;
+        border-radius: 2px;
         cursor: pointer;
-        border: 3px solid transparent;
+        border: 1px solid transparent;
         transition: all 0.3s ease;
         opacity: 0.6;
     }
 
     .miniatura:hover {
-        opacity: 0.9;
-        border-color: var(--tech-accent);
+        opacity: 1;
+        border-color: var(--primary-light);
     }
 
     .miniatura.active {
         opacity: 1;
-        border-color: var(--tech-primary);
-        box-shadow: 0 4px 15px var(--tech-glow);
+        border-color: var(--primary-color);
+        box-shadow: none;
     }
 
     .detalle-info h1 {
         font-size: 1.5rem;
         font-weight: 800;
-        color: var(--tech-dark);
+        color: var(--text-primary);
         margin-bottom: 1rem;
     }
 
@@ -2439,9 +2332,10 @@
     .detalle-precio {
         margin: 1.5rem 0;
         padding: 1.25rem;
-        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-        border-radius: 16px;
-        border: 1px solid #e2e8f0;
+        
+        border-radius: 2px;
+        background: var(--bg-page);
+        border: 1px solid var(--border-color);
     }
 
     .modal-checkout {
@@ -2450,23 +2344,26 @@
     }
 
     .checkout-resumen {
-        background: #f8fafc;
+        background: var(--bg-page);
         padding: 1.5rem;
-        border-radius: 16px;
+        border-radius: 2px;
+        border: 1px solid var(--border-color);
         margin: 1.5rem 0;
     }
 
     .checkout-resumen h3 {
         margin-bottom: 1rem;
         font-weight: 700;
+        color: var(--text-primary);
     }
 
     .resumen-item {
         display: flex;
         justify-content: space-between;
         padding: 0.5rem 0;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid var(--border-color);
         font-size: 0.9rem;
+        color: var(--text-secondary);
     }
 
     .resumen-total {
@@ -2474,9 +2371,10 @@
         justify-content: space-between;
         padding: 1rem 0 0;
         margin-top: 0.5rem;
-        border-top: 2px solid var(--tech-dark);
+        border-top: 1px solid var(--border-color);
         font-size: 1.25rem;
         font-weight: 800;
+        color: var(--text-primary);
     }
 
     /* ========================================
@@ -2503,7 +2401,7 @@
         top: 2rem;
         right: 2rem;
         padding: 1rem 1.5rem;
-        border-radius: 12px;
+        border-radius: 2px;
         z-index: 9999;
         opacity: 0;
         transform: translateX(400px);
@@ -2517,15 +2415,17 @@
     }
 
     .notificacion-success {
-        background: linear-gradient(135deg, var(--tech-secondary), #059669);
+        background: var(--secondary-color);
         color: white;
-        box-shadow: 0 10px 40px rgba(34, 197, 94, 0.3);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--border-color);
     }
 
     .notificacion-error {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
+        background: var(--danger-color);
         color: white;
-        box-shadow: 0 10px 40px rgba(239, 68, 68, 0.3);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--border-color);
     }
 
     /* ========================================
@@ -2554,11 +2454,11 @@
         align-items: center;
         justify-content: center;
         padding: 0.75rem 1.5rem;
-        border-radius: 10px;
+        border-radius: 2px;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s;
-        border: none;
+        transition: all 0.2s;
+        border: 1px solid transparent;
         text-decoration: none;
     }
 
@@ -2572,14 +2472,14 @@
     }
 
     .btn-success {
-        background: linear-gradient(135deg, var(--tech-secondary), #059669);
+        background: var(--primary-color);
         color: white;
-        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        box-shadow: var(--shadow-sm);
     }
 
     .btn-success:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
+        background: var(--primary-dark);
+        box-shadow: var(--shadow);
     }
 
     /* ========================================
@@ -2593,22 +2493,24 @@
         display: block;
         font-weight: 600;
         margin-bottom: 0.5rem;
-        color: var(--tech-dark);
+        color: var(--text-primary);
     }
 
     .form-control {
         width: 100%;
         padding: 0.85rem 1rem;
-        border: 2px solid #e2e8f0;
-        border-radius: 10px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-page);
+        border-radius: 2px;
         font-size: 1rem;
-        transition: all 0.3s;
+        transition: all 0.2s;
+        color: var(--text-primary);
     }
 
     .form-control:focus {
         outline: none;
-        border-color: var(--tech-primary);
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        border-color: var(--primary-color);
+        box-shadow: none;
     }
 
     .form-text {
@@ -2736,7 +2638,7 @@
 
         .modal-content {
             width: 95%;
-            border-radius: 20px;
+            border-radius: var(--radius);
         }
 
         .producto-detalle-modal {
@@ -2772,11 +2674,11 @@
             left: 1rem;
             right: 1rem;
             top: 1rem;
-            transform: translateY(-100px);
+            
         }
 
         .notificacion.show {
-            transform: translateY(0);
+            
         }
     }
 
@@ -2861,8 +2763,8 @@
     }
 
     .garantia-banner-content {
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-        border-radius: 24px;
+        
+        border-radius: var(--radius);
         padding: 2rem;
         max-width: 450px;
         width: 100%;
@@ -2892,7 +2794,7 @@
         border: none;
         width: 36px;
         height: 36px;
-        border-radius: 50%;
+        border-radius: var(--radius);
         font-size: 24px;
         color: #64748b;
         cursor: pointer;
@@ -2920,11 +2822,11 @@
 
         0%,
         100% {
-            transform: scale(1);
+            
         }
 
         50% {
-            transform: scale(1.1);
+            
         }
     }
 
@@ -2934,10 +2836,7 @@
         font-weight: 800;
         color: #1a1a2e;
         margin: 0 0 1.5rem 0;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        
     }
 
     .garantia-items {
@@ -2953,7 +2852,7 @@
         gap: 1rem;
         background: white;
         padding: 1rem;
-        border-radius: 12px;
+        border-radius: var(--radius);
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         border-left: 4px solid #667eea;
         transition: transform 0.3s ease;
@@ -2964,12 +2863,12 @@
     }
 
     .garantia-item.destacado {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        
         border-left-color: #f59e0b;
     }
 
     .garantia-item.destacado-verde {
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        
         border-left-color: #10b981;
     }
 
@@ -2994,10 +2893,10 @@
     .garantia-btn-entendido {
         width: 100%;
         padding: 1rem 2rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        
         color: white;
         border: none;
-        border-radius: 12px;
+        border-radius: var(--radius);
         font-size: 1.1rem;
         font-weight: 700;
         cursor: pointer;
@@ -3006,14 +2905,14 @@
     }
 
     .garantia-btn-entendido:hover {
-        transform: translateY(-2px);
+        
         box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
     }
 
     @media (max-width: 500px) {
         .garantia-banner-content {
             padding: 1.5rem;
-            border-radius: 20px;
+            border-radius: var(--radius);
         }
 
         .garantia-icon-main {
@@ -3039,24 +2938,6 @@
         .garantia-item-text p {
             font-size: 0.8rem;
         }
-    }
-
-    /* Estilos del Selector de Pago */
-    .metodo-opciones { display: flex; gap: 10px; margin: 15px 0; }
-    .metodo-opcion { flex: 1; cursor: pointer; }
-    .metodo-opcion input { display: none; }
-    .metodo-card { 
-        padding: 10px; border: 2px solid #e2e8f0; border-radius: 10px; 
-        text-align: center; background: #f8fafc; transition: all 0.3s;
-        font-weight: bold; color: #64748b;
-    }
-    .metodo-opcion input:checked + .metodo-card { 
-        border-color: #6366f1; background: #eef2ff; color: #6366f1; 
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    .resumen-item.text-danger { 
-        display: flex; justify-content: space-between; 
-        color: #ef4444 !important; font-weight: bold; margin-top: 5px;
     }
 </style>
 {% endblock %}

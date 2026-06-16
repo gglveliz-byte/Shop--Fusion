@@ -17,16 +17,23 @@
     <!-- [MODIFICACIÓN SEGURIDAD E22] -->
     <!-- Token CSRF para validación de solicitudes y protección contra falsificación -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <!-- Tipografía Principal: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <!-- Motor de Color Dinámico (White-Label) -->
     <style>
         :root {
-            --primary-color: {{ config_web.color_primario if config_web else '#6366f1' }};
-            --secondary-color: {{ config_web.color_secundario if config_web else '#22c55e' }};
-            --accent-color: {{ config_web.color_acento if config_web else '#06b6d4' }};
-            --primary-dark: {{ config_web.color_primario if config_web else '#4f46e5' }};
-            --secondary-dark: {{ config_web.color_secundario if config_web else '#16a34a' }};
+            --primary-color: {{ config_web.color_primario if config_web else '#2563eb' }};
+            --secondary-color: {{ config_web.color_secundario if config_web else '#059669' }};
+            --accent-color: {{ config_web.color_acento if config_web else '#0284c7' }};
+            --primary-dark: {{ config_web.color_primario if config_web else '#1d4ed8' }};
+            --secondary-dark: {{ config_web.color_secundario if config_web else '#047857' }};
         }
     </style>
 
@@ -35,49 +42,55 @@
 
 <body>
     {% block body %}
-    <nav class="navbar">
-        <div class="container">
-            <a href="{{ url_for('tienda.index') }}" class="logo">
+    <!-- Header Moderno -->
+    <header class="m-header">
+        <div class="m-container m-header-inner">
+            <!-- Logo dinámico -->
+            <a href="{{ url_for('tienda.index') }}" class="m-logo">
                 {% if config_web and config_web.logo_path %}
-                <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}"
-                    alt="{{ config_web.nombre_tienda }}" style="height: 40px;">
-                {% else %}
-                🛍️ {{ config_web.nombre_tienda if config_web else 'Tienda' }}
+                    <img src="{{ url_for('static', filename='uploads/' + config_web.logo_path) }}" alt="Logo">
                 {% endif %}
+                {{ config_web.nombre_tienda if config_web else 'ShopFusion' }}
             </a>
-
-            <div class="nav-links">
-                {% if current_user.is_authenticated %}
+            
+            <!-- Opciones del Header -->
+            {% if current_user.is_authenticated %}
                 {# [MODIFICACIÓN SEGURIDAD TC015] #}
-                {# Se reemplazó el uso de __class__.__name__ por propiedades explícitas definidas en models.py #}
-                {# Archivo dependiente: models.py (clases Admin y Afiliado) #}
+                <nav class="m-nav">
                 {% if current_user.is_admin %}
-                <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('admin.productos') }}">Productos</a>
-                <a href="{{ url_for('admin.pedidos') }}">Pedidos</a>
-                <a href="{{ url_for('admin.configuracion') }}">Configuración</a>
-                <a href="{{ url_for('admin.afiliados') }}">Afiliados</a>
-                <a href="{{ url_for('admin.comisiones') }}">Comisiones</a>
-                <a href="{{ url_for('admin.contabilidad') }}">Contabilidad</a>
-                <a href="{{ url_for('admin.tickets') }}" style="color: #f43f5e; font-weight: bold;">Soporte (Tickets)</a>
-                <a href="{{ url_for('auth.logout') }}" class="btn-logout">Cerrar Sesión</a>
+                    <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">Dashboard</a>
+                    <a href="{{ url_for('admin.productos') }}" class="{% if request.endpoint == 'admin.productos' %}active{% endif %}">Productos</a>
+                    <a href="{{ url_for('admin.pedidos') }}" class="{% if request.endpoint == 'admin.pedidos' %}active{% endif %}">Pedidos</a>
+                    <a href="{{ url_for('admin.configuracion') }}" class="{% if request.endpoint == 'admin.configuracion' %}active{% endif %}">Configuración</a>
+                    <a href="{{ url_for('admin.afiliados') }}" class="{% if request.endpoint == 'admin.afiliados' %}active{% endif %}">Afiliados</a>
+                    <a href="{{ url_for('admin.comisiones') }}" class="{% if request.endpoint == 'admin.comisiones' %}active{% endif %}">Comisiones</a>
+                    <a href="{{ url_for('admin.tickets') }}" class="{% if request.endpoint == 'admin.tickets' %}active{% endif %}">Soporte (Tickets)</a>
                 {% elif current_user.is_afiliado %}
-                <a href="{{ url_for('afiliado.dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('afiliado.productos') }}">Productos</a>
-                <a href="{{ url_for('afiliado.pedidos') }}">Pedidos</a>
-                <a href="{{ url_for('afiliado.comisiones') }}">Mis Comisiones</a>
-                <a href="{{ url_for('afiliado.mi_cuenta') }}">Mi Cuenta</a>
-                <a href="{{ url_for('auth.logout') }}" class="btn-logout">Cerrar Sesión</a>
+                    <a href="{{ url_for('afiliado.dashboard') }}" class="{% if request.endpoint == 'afiliado.dashboard' %}active{% endif %}">Dashboard</a>
+                    <a href="{{ url_for('afiliado.productos') }}" class="{% if request.endpoint == 'afiliado.productos' %}active{% endif %}">Productos</a>
+                    <a href="{{ url_for('afiliado.pedidos') }}" class="{% if request.endpoint == 'afiliado.pedidos' %}active{% endif %}">Pedidos</a>
+                    <a href="{{ url_for('afiliado.comisiones') }}" class="{% if request.endpoint == 'afiliado.comisiones' %}active{% endif %}">Mis Comisiones</a>
+                    <a href="{{ url_for('afiliado.mi_cuenta') }}" class="{% if request.endpoint == 'afiliado.mi_cuenta' %}active{% endif %}">Mi Cuenta</a>
                 {% endif %}
-                {% else %}
-                <a href="{{ url_for('tienda.index') }}">Inicio</a>
-                <a href="{{ url_for('tienda.carrito') }}">🛒 Carrito</a>
-                <a href="{{ url_for('tienda.unete') }}" class="btn-primary">Trabaja con Nosotros</a>
-                {% endif %}
-            </div>
+                </nav>
+                
+                <div class="m-header-actions">
+                    <a href="{{ url_for('auth.logout') }}" class="m-btn m-btn-outline">Cerrar Sesión</a>
+                </div>
+            {% else %}
+                <nav class="m-nav">
+                    <a href="{{ url_for('tienda.index') }}" class="{% if request.endpoint == 'tienda.index' %}active{% endif %}">Inicio</a>
+                    <a href="{{ url_for('tienda.carrito') }}" class="{% if request.endpoint == 'tienda.carrito' %}active{% endif %}">Carrito</a>
+                    <a href="{{ url_for('tienda.unete') }}" class="{% if request.endpoint == 'tienda.unete' %}active{% endif %}">Trabaja con Nosotros</a>
+                </nav>
+                
+                <div class="m-header-actions">
+                    <a href="{{ url_for('auth.admin_login') }}" class="m-btn m-btn-primary">Acceder</a>
+                </div>
+            {% endif %}
         </div>
-    </nav>
-
+    </header>
+    
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     <div class="container">
@@ -95,9 +108,43 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="footer">
-        <div class="container">
-            <p>{{ config_web.mensaje_footer if config_web else '&copy; 2026 Todos los derechos reservados.' }}</p>
+    <!-- Footer Moderno -->
+    <footer class="m-footer">
+        <div class="m-footer-top">
+            <div class="m-footer-brand">
+                <h4>{{ config_web.nombre_tienda if config_web else 'Marca Blanca' }}</h4>
+                <p>{{ config_web.mensaje_footer if config_web else 'Ofrecemos tecnología de vanguardia para compras digitales con confianza y seguridad.' }}</p>
+                <div class="m-footer-socials">
+                    <a href="#" class="m-social-btn"><span class="material-symbols-outlined">share</span></a>
+                    <a href="#" class="m-social-btn"><span class="material-symbols-outlined">language</span></a>
+                </div>
+            </div>
+            <div class="m-footer-links-wrapper">
+                <div class="m-footer-col">
+                    <h5>Empresa</h5>
+                    <ul>
+                        <li><a href="#">Privacidad</a></li>
+                        <li><a href="#">Términos y Condiciones</a></li>
+                    </ul>
+                </div>
+                <div class="m-footer-col">
+                    <h5>Sede Central</h5>
+                    <p>
+                        {{ config_web.direccion if config_web and config_web.direccion else 'Avenida de la Innovación, 42' }}<br/>
+                        {{ config_web.email if config_web and config_web.email else 'info@shopfusion.com' }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="m-footer-bottom">
+            <div class="m-footer-bottom-inner">
+                <p class="m-footer-copy">{{ config_web.mensaje_copyright if config_web else 'Derechos Reservados'}}</p>
+                <div class="m-footer-badges">
+                    <span class="material-symbols-outlined">credit_card</span>
+                    <span class="material-symbols-outlined">account_balance</span>
+                    <span class="material-symbols-outlined">shield</span>
+                </div>
+            </div>
         </div>
     </footer>
     {% endblock %}
