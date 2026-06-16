@@ -3,64 +3,73 @@
 {% block title %}Productos - Admin{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="page-header">
-        <h1>📦 Gestión de Productos</h1>
-        <a href="{{ url_for('admin.crear_producto') }}" class="btn btn-success">+ Nuevo Producto</a>
+<div class="m-admin-container">
+    <div class="page-header-actions">
+        <div class="m-admin-header" style="margin:0;">
+            <span class="material-symbols-outlined m-admin-icon-title">inventory_2</span>
+            <h1>Gestión de Productos</h1>
+        </div>
+        <a href="{{ url_for('admin.crear_producto') }}" class="m-btn-primary-sm">+ Nuevo Producto</a>
     </div>
 
-    {% if productos %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Precio Final</th>
-                    <th>Precio Proveedor</th>
-                    <th>Precio Oferta</th>
-                    <th>Margen</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for producto in productos %}
+    <div class="m-admin-card">
+        {% if productos %}
+        <div class="m-table-responsive">
+            <table class="m-admin-table">
+                <thead>
                     <tr>
-                        <td>{{ producto.id }}</td>
-                        <td>{{ producto.nombre }}</td>
-                        <td>${{ "%.2f"|format(producto.precio_final) }}</td>
-                        <td>${{ "%.2f"|format(producto.precio_proveedor) }}</td>
-                        <td>
-                            {% if producto.precio_oferta %}
-                                <span class="badge badge-info">${{ "%.2f"|format(producto.precio_oferta) }}</span>
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        <td>${{ "%.2f"|format(producto.calcular_margen()) }}</td>
-                        <td>
-                            {% if producto.activo %}
-                                <span class="badge badge-success">Activo</span>
-                            {% else %}
-                                <span class="badge badge-secondary">Inactivo</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a href="{{ url_for('admin.editar_producto', id=producto.id) }}" class="btn btn-sm btn-primary">Editar</a>
-                            {% if producto.activo %}
-                                <form method="POST" action="{{ url_for('admin.eliminar_producto', id=producto.id) }}" style="display:inline;">
-                                    <!-- [MODIFICACIÓN SEGURIDAD E22] -->
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Desactivar este producto?')">Desactivar</button>
-                                </form>
-                            {% endif %}
-                        </td>
+                        <th>ID</th>
+                        <th>NOMBRE</th>
+                        <th>PRECIO FINAL</th>
+                        <th>PRECIO PROV.</th>
+                        <th>OFERTA</th>
+                        <th>MARGEN</th>
+                        <th>ESTADO</th>
+                        <th>ACCIONES</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p class="text-muted">No hay productos creados todavía.</p>
-    {% endif %}
+                </thead>
+                <tbody>
+                    {% for producto in productos %}
+                        <tr>
+                            <td>PRD-{{ '%03d' % producto.id }}</td>
+                            <td style="font-weight: 500;">{{ producto.nombre }}</td>
+                            <td>${{ "%.2f"|format(producto.precio_final) }}</td>
+                            <td style="color:#64748b;">${{ "%.2f"|format(producto.precio_proveedor) }}</td>
+                            <td>
+                                {% if producto.precio_oferta %}
+                                    <span class="m-badge m-badge-neutral">${{ "%.2f"|format(producto.precio_oferta) }}</span>
+                                {% else %}
+                                    <span style="color:#94a3b8;">-</span>
+                                {% endif %}
+                            </td>
+                            <td style="color:#059669; font-weight: 600;">${{ "%.2f"|format(producto.calcular_margen()) }}</td>
+                            <td>
+                                {% if producto.activo %}
+                                    <span class="m-badge m-badge-success">Activo</span>
+                                {% else %}
+                                    <span class="m-badge m-badge-neutral">Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin.editar_producto', id=producto.id) }}" class="m-btn-outline-sm" style="margin-right: 0.5rem;">Editar</a>
+                                {% if producto.activo %}
+                                    <form method="POST" action="{{ url_for('admin.eliminar_producto', id=producto.id) }}" style="display:inline;">
+                                        <!-- [MODIFICACIÓN SEGURIDAD E22] -->
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="m-btn-outline-sm" style="border-color:#ef4444; color:#ef4444;" onclick="return confirm('¿Desactivar este producto?')">Desactivar</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="padding: 3rem; text-align: center; color: #64748b;">
+            <p>No hay productos creados todavía.</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
