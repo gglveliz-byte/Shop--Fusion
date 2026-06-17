@@ -36,7 +36,6 @@
     posStyle.innerHTML = `
         #chatbot-bubble { 
             ${position}: 20px !important; 
-            border: 2px solid ${isDarkTheme ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.1)'};
             box-shadow: 0 4px 15px ${isDarkTheme ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.3)'} !important;
         }
         #chatbot-window { ${position}: 20px !important; }
@@ -46,13 +45,16 @@
     `;
     document.head.appendChild(posStyle);
 
-    // 2. Inyectar HTML del Chatbot
-    const chatbotHtml = `
-        <div id="chatbot-bubble">🤖</div>
+    // 2. Inyectar HTML del Chatbot (Con etiquetas de iconos y puros IDs)
+    const template = document.createElement('template');
+    template.innerHTML = `
+        <div id="chatbot-bubble">
+            <span class="material-symbols-outlined">forum</span>
+        </div>
         <div id="chatbot-window">
             <div class="chatbot-header">
-                <h3>Asistente AI Qwen</h3>
-                <span class="chatbot-close">&times;</span>
+                <h3><span class="material-symbols-outlined">forum</span> Asistente AI Qwen</h3>
+                <span class="chatbot-close"><span class="material-symbols-outlined">close</span></span>
             </div>
             <div class="chatbot-model-select">
                 <select id="chatbot-model">
@@ -62,18 +64,15 @@
             </div>
             <div id="chatbot-messages" class="chatbot-messages">
                 <div class="message ai">¡Hola! Soy un asistente externo. ¿En qué puedo ayudarte?</div>
-                <div id="chatbot-typing" class="typing" style="display:none; font-size:0.8rem; color:#888;">Escribiendo...</div>
+                <div id="chatbot-typing" class="typing" style="display:none;">Escribiendo...</div>
             </div>
             <div class="chatbot-input">
                 <input type="text" id="chatbot-input-field" placeholder="Escribe un mensaje...">
-                <button id="chatbot-send">➤</button>
+                <button id="chatbot-send"><span class="material-symbols-outlined">send</span></button>
             </div>
         </div>
     `;
-
-    const div = document.createElement('div');
-    div.innerHTML = chatbotHtml;
-    document.body.appendChild(div);
+    document.body.appendChild(template.content);
 
     // 3. Lógica del Chatbot
     setTimeout(() => {
@@ -98,21 +97,28 @@
             windowChat.style.display = 'none';
         });
 
-        // Botón para borrar historial
+        // Botón para borrar historial (Adaptado con icono limpio)
         const setupClearButton = () => {
             const header = document.querySelector('.chatbot-header');
+            const closeBtn = document.querySelector('.chatbot-close');
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.style.display = 'flex';
+            actionsDiv.style.alignItems = 'center';
+            actionsDiv.style.gap = '15px';
+            
             const clearBtn = document.createElement('span');
-            clearBtn.innerHTML = ' 🗑️ ';
+            clearBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.3rem; cursor:pointer; display:flex; align-items:center;">delete</span>';
             clearBtn.title = 'Borrar historial';
-            clearBtn.style.cursor = 'pointer';
-            clearBtn.style.marginLeft = '10px';
             clearBtn.onclick = () => {
                 chatHistory = [];
                 messagesContainer.innerHTML = '<div class="message ai">Historial borrado. ¿En qué puedo ayudarte?</div>';
                 typingIndicator.style.display = 'none';
                 messagesContainer.appendChild(typingIndicator);
             };
-            header.insertBefore(clearBtn, closeBtn);
+            header.appendChild(actionsDiv);
+            header.appendChild(clearBtn);
+            header.appendChild(closeBtn);
         };
         setupClearButton();
 
@@ -200,7 +206,7 @@
                 div.appendChild(textSpan);
             }
 
-            // [NUEVO] Soporte para Ficha de Acción de Facturación en el Widget
+            // Soporte para Ficha de Acción de Facturación en el Widget
             if (tool_calls) {
                 tool_calls.forEach(tool => {
                     const actionDiv = document.createElement('div');
@@ -211,7 +217,7 @@
 
                     if (toolName === 'createInvoice') {
                         actionDiv.innerHTML = `
-                            <div style="background: #eef2ff; border-left: 3px solid #4f46e5; padding: 8px; margin-top: 8px; border-radius: 4px; font-size: 0.9em;">
+                            <div style="background: #eef2ff; border-left: 3px solid #4f46e5; padding: 8px; margin-top: 8px; border-radius: 4px; font-size: 0.9em; color: #333;">
                                 <strong style="color: #4f46e5;">🔧 Factura Disponible</strong><br>
                                 <small>Pedido: #${args.pedido_id}</small><br>
                                 <button class="confirm-btn" onclick="confirmarFacturaWidget(${args.pedido_id}, this)" 
@@ -222,7 +228,7 @@
                         `;
                     } else {
                         actionDiv.innerHTML = `
-                            <div style="background: #f3f4f6; border-left: 3px solid #9ca3af; padding: 5px; margin-top: 8px; border-radius: 4px; font-size: 0.8em;">
+                            <div style="background: #f3f4f6; border-left: 3px solid #9ca3af; padding: 5px; margin-top: 8px; border-radius: 4px; font-size: 0.8em; color: #333;">
                                 <strong>🔧 Acción: ${toolName}</strong>
                             </div>
                         `;
@@ -340,10 +346,10 @@
                 toast.style.position = 'fixed';
                 toast.style.bottom = '80px';
                 toast.style.right = '20px';
-                toast.style.background = actionType === 'remove' ? '#dc2626' : '#059669';
+                toast.style.background = actionType === 'remove' ? '#dc2626' : 'var(--primary-color, #059669)';
                 toast.style.color = 'white';
                 toast.style.padding = '12px 24px';
-                toast.style.borderRadius = '8px';
+                toast.style.borderRadius = '4px'; /* Consistencia industrial recta */
                 toast.style.zIndex = '10000';
                 toast.style.boxShadow = '0 10px 25px rgba(0,0,0,0.15)';
                 toast.style.fontFamily = 'sans-serif';
