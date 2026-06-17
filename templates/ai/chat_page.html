@@ -6,7 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asistente AI Qwen | {{ config_web.nombre_tienda if config_web else 'Tienda' }}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <!-- FUENTES E ICONOS DE GOOGLE (APROBADOS POR TU CSP) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <!-- TU CSS UNIFICADO DE PUROS IDs -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
+    
     <style>
         :root {
             --primary-color: {{ config_web.color_primario if config_web else '#6366f1' }};
@@ -26,7 +35,7 @@
             align-items: center;
         }
 
-        /* Reutilizamos el estilo pero lo hacemos pantalla completa */
+        /* Formato relativo amplio para la tarjeta de pantalla completa */
         #chatbot-window {
             position: relative;
             bottom: auto;
@@ -37,17 +46,15 @@
             height: 90vh;
             margin: 20px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            border: 1px solid #eee;
+            border: 1px solid #e5e7eb;
         }
 
         #chatbot-bubble {
-            display: none !important;
-            /* Ocultar burbuja en esta página */
+            display: none !important; /* Ocultar la burbuja flotante en esta página específica */
         }
 
         .chatbot-close {
-            display: none;
-            /* No cerrar en esta página dedicada */
+            display: none !important; /* Ocultar el botón de cerrar en la vista fija */
         }
 
         .chat-container-full {
@@ -63,13 +70,12 @@
     <div id="chatbot-window">
         <div class="chat-container-full">
             <div class="chatbot-header">
-                <h3>🤖 Asistente AI Qwen</h3>
+                <h3><span class="material-symbols-outlined">forum</span> Asistente AI Qwen</h3>
             </div>
             <div class="chatbot-model-select">
                 <select id="chatbot-model">
-                    <option value="qwen3.6-plus">Qwen 3.6 Plus (General)</option>
-                    <option value="qwen3-32b">Qwen 3-32b (Razonamiento)</option>
-                    <option value="qwen3-coder-480b-a35b-instruct">Qwen 3-Coder (Código)</option>
+                    <option value="qwen-plus">Qwen Plus (Lógica y Ventas)</option>
+                    <option value="qwen-vl-max">Qwen VL Max (Visión y OCR)</option>
                 </select>
             </div>
             <div id="chatbot-messages" class="chatbot-messages">
@@ -78,14 +84,15 @@
             </div>
             <div class="chatbot-input">
                 <input type="text" id="chatbot-input-field" placeholder="Escribe tu consulta aquí..." autofocus>
-                <button id="chatbot-send">➤</button>
+                <button id="chatbot-send"><span class="material-symbols-outlined">send</span></button>
             </div>
         </div>
     </div>
 
+    <!-- CARGA DE TU SCRIPT ORIGINAL SANO -->
     <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
     <script>
-        // Pequeño ajuste para que siempre esté abierto el chat
+        // Forzar despliegue flex nativo para la persistencia del contenedor amplio
         document.getElementById('chatbot-window').style.display = 'flex';
     </script>
 </body>

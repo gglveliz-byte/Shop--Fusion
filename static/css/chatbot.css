@@ -1,4 +1,8 @@
-/* Chatbot Floating Button */
+/* ==========================================================================
+   CHATBOT AI MODERN - ESTÁNDAR DE DISEÑO ESTÁTICO (MARCA BLANCA)
+   ========================================================================== */
+
+/* 1. Botón Flotante del Chatbot (Circular y Limpio) */
 #chatbot-bubble {
     position: fixed;
     bottom: 20px;
@@ -6,23 +10,30 @@
     width: 60px;
     height: 60px;
     background-color: var(--primary-color, #6366f1);
-    border-radius: 50%;
+    border-radius: 50% !important; /* Fuerza la figura circular */
+    border: none !important;        /* Elimina bordes exteriores */
+    font-size: 0px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 30px;
+    font-size: 30px; 
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     z-index: 1000;
     transition: transform 0.3s ease;
 }
 
+#chatbot-bubble .material-symbols-outlined {
+    font-size: 28px; /* Reduce ligeramente para que no choque con los bordes del círculo */
+    display: block;  /* Quita la alineación de línea por defecto */
+}
+
 #chatbot-bubble:hover {
     transform: scale(1.1);
 }
 
-/* Chat Window */
+/* 2. Chat Window (Esquinas Cuadradas Modernas e Industriales) */
 #chatbot-window {
     position: fixed;
     bottom: 90px;
@@ -30,7 +41,7 @@
     width: 350px;
     height: 500px;
     background: white;
-    border-radius: 15px;
+    border-radius: 0; /* Cambio a diseño cuadrado */
     box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
     display: none;
     flex-direction: column;
@@ -39,6 +50,7 @@
     border: 1px solid #eee;
 }
 
+/* 3. Cabecera (Jerarquía visual moderna) */
 .chatbot-header {
     background-color: var(--primary-color, #6366f1);
     color: white;
@@ -50,15 +62,35 @@
 
 .chatbot-header h3 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1.125rem; /* Estándar moderno (18px) */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;    /* Grosor pesado para destacar */
+    font-family: inherit;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
 .chatbot-close {
     cursor: pointer;
     font-size: 1.5rem;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    transition: opacity 0.2s;
 }
 
-/* Model Selector */
+.chatbot-close:hover {
+    opacity: 0.7;
+}
+
+.chatbot-close .material-symbols-outlined {
+    font-size: 1.3rem;
+    display: block;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+/* 4. Selector de Modelos */
 .chatbot-model-select {
     padding: 10px;
     background: #f9f9f9;
@@ -68,12 +100,14 @@
 .chatbot-model-select select {
     width: 100%;
     padding: 5px;
-    border-radius: 5px;
+    border-radius: 0; /* Cuadrado */
     border: 1px solid #ccc;
-    font-size: 0.9rem;
+    font-size: 0.875rem; /* Estándar moderno (14px) */
+    font-family: inherit;
+    outline: none;
 }
 
-/* Messages Area */
+/* 5. Área de Mensajes */
 .chatbot-messages {
     flex: 1;
     overflow-y: auto;
@@ -84,41 +118,67 @@
     background-color: #f5f7f9;
 }
 
+/* 6. Globos de Mensaje (Estilizados a 14px con piquitos) */
 .message {
     max-width: 85%;
     padding: 10px 15px;
-    border-radius: 15px;
-    font-size: 0.95rem;
-    line-height: 1.4;
+    border-radius: 4px;
+    font-size: 0.875rem; /* Estándar moderno (14px) */
+    line-height: 1.5;   /* Altura de línea moderna y legible */
     word-wrap: break-word;
+    position: relative;
+    margin-bottom: 5px;
+    font-family: inherit;
 }
 
 .message.user {
     align-self: flex-end;
     background-color: var(--primary-color, #6366f1);
     color: white;
-    border-bottom-right-radius: 2px;
+    border-bottom-right-radius: 0;
+}
+
+.message.user::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: -8px;
+    border-left: 8px solid var(--primary-color, #6366f1);
+    border-top: 8px solid transparent;
+    border-bottom: 0px solid transparent;
 }
 
 .message.ai {
     align-self: flex-start;
-    background-color: #e9ecef;
+    background-color: #e9ecef; 
     color: #333;
-    border-bottom-left-radius: 2px;
+    border-bottom-left-radius: 0;
+    margin-left: 8px;
+}
+
+.message.ai::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: -8px;
+    border-right: 8px solid #e9ecef;
+    border-top: 8px solid transparent;
+    border-bottom: 0px solid transparent;
+    z-index: 2;
 }
 
 .reasoning {
-    font-size: 0.8rem;
+    font-size: 0.75rem; /* Tamaño optimizado para notas/pensamiento */
     color: #666;
     background: #fffbe6;
     padding: 8px;
-    border-left: 3px solid #ffe58f;
+    border-left: 3px solid var(--secondary-color, #ffe58f); /* Usa color dinámico si existe */
     margin-bottom: 5px;
     font-style: italic;
     border-radius: 4px;
 }
 
-/* Input Area */
+/* 7. Área de Entrada de Texto (Esquinas Rectas e Inputs a 14px) */
 .chatbot-input {
     padding: 15px;
     display: flex;
@@ -130,8 +190,14 @@
     flex: 1;
     padding: 10px;
     border: 1px solid #ddd;
-    border-radius: 20px;
+    border-radius: 0; /* Cuadrado */
     outline: none;
+    font-size: 0.875rem; /* Estándar moderno (14px) */
+    font-family: inherit;
+}
+
+.chatbot-input input:focus {
+    border-color: var(--primary-color, #6366f1);
 }
 
 .chatbot-input button {
@@ -139,18 +205,28 @@
     color: white;
     border: none;
     padding: 10px 15px;
-    border-radius: 50%;
+    border-radius: 0; /* Cuadrado */
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0px;
+    font-family: inherit;
     transition: background 0.3s;
+}
+
+.chatbot-input button .material-symbols-outlined {
+    font-size: 20px; /* Tamaño perfecto y estilizado para la flecha */
+    display: block;
 }
 
 .chatbot-input button:hover {
     background-color: var(--primary-dark, #4f46e5);
 }
 
-/* Typing indicator */
+/* Indicador de carga */
 .typing {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: #888;
     margin-bottom: 5px;
     display: none;
