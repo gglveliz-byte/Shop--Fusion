@@ -3,107 +3,127 @@
 {% block title %}Dashboard Admin{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>📊 Dashboard Administrador</h1>
+<div class="m-admin-container">
+    <div class="m-admin-header">
+        <span class="material-symbols-outlined m-admin-icon-title">space_dashboard</span>
+        <h1>Dashboard Administrador</h1>
+    </div>
 
-    <div class="dashboard-grid">
-        <div class="stat-card">
-            <div class="stat-icon">📦</div>
-            <div class="stat-info">
-                <h3>{{ total_productos }}</h3>
+    <div class="m-kpi-grid">
+        <div class="m-kpi-card">
+            <div class="m-kpi-info">
                 <p>Productos Activos</p>
+                <h3>{{ total_productos }}</h3>
+            </div>
+            <div class="m-kpi-icon-wrapper blue">
+                <span class="material-symbols-outlined">inventory_2</span>
             </div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-icon">🛒</div>
-            <div class="stat-info">
-                <h3>{{ total_pedidos }}</h3>
+        <div class="m-kpi-card">
+            <div class="m-kpi-info">
                 <p>Total Pedidos</p>
+                <h3>{{ total_pedidos }}</h3>
+            </div>
+            <div class="m-kpi-icon-wrapper blue">
+                <span class="material-symbols-outlined">shopping_cart</span>
             </div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-icon">⏳</div>
-            <div class="stat-info">
-                <h3>{{ pedidos_pendientes }}</h3>
+        <div class="m-kpi-card">
+            <div class="m-kpi-info">
                 <p>Pedidos Pendientes</p>
+                <h3>{{ pedidos_pendientes }}</h3>
+            </div>
+            <div class="m-kpi-icon-wrapper orange">
+                <span class="material-symbols-outlined">hourglass_empty</span>
             </div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-icon">✅</div>
-            <div class="stat-info">
-                <h3>{{ pedidos_pagados }}</h3>
+        <div class="m-kpi-card">
+            <div class="m-kpi-info">
                 <p>Pedidos Pagados</p>
+                <h3>{{ pedidos_pagados }}</h3>
+            </div>
+            <div class="m-kpi-icon-wrapper green">
+                <span class="material-symbols-outlined">check_circle</span>
             </div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-icon">👥</div>
-            <div class="stat-info">
-                <h3>{{ total_afiliados }}</h3>
+        <div class="m-kpi-card">
+            <div class="m-kpi-info">
                 <p>Afiliados Activos</p>
+                <h3>{{ total_afiliados }}</h3>
+            </div>
+            <div class="m-kpi-icon-wrapper blue">
+                <span class="material-symbols-outlined">group</span>
             </div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-icon">💰</div>
-            <div class="stat-info">
-                <h3>${{ "%.2f"|format(comisiones_pendientes) }}</h3>
+        <div class="m-kpi-card">
+            <div class="m-kpi-info">
                 <p>Comisiones por Pagar</p>
+                <h3>${{ "%.2f"|format(comisiones_pendientes) }}</h3>
+            </div>
+            <div class="m-kpi-icon-wrapper blue">
+                <span class="material-symbols-outlined">payments</span>
             </div>
         </div>
     </div>
 
-    <div class="dashboard-section">
-        <h2>Últimos Pedidos</h2>
-
+    <div class="m-admin-card">
+        <div class="m-admin-card-header">
+            <h2>Últimos Pedidos</h2>
+            <a href="{{ url_for('admin.pedidos') }}" class="m-btn-link">Ver Todos</a>
+        </div>
+        
         {% if ultimos_pedidos %}
-            <table class="table">
+        <div class="m-table-responsive">
+            <table class="m-admin-table">
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Cliente</th>
-                        <th>Total</th>
-                        <th>Afiliado</th>
-                        <th>Estado</th>
-                        <th>Fecha</th>
-                        <th>Acciones</th>
+                        <th>CLIENTE</th>
+                        <th>TOTAL</th>
+                        <th>AFILIADO</th>
+                        <th>ESTADO</th>
+                        <th>FECHA</th>
+                        <th>ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for pedido in ultimos_pedidos %}
                         <tr>
-                            <td>#{{ pedido.id }}</td>
+                            <td>ORD-{{ '%03d' % pedido.id }}</td>
                             <td>{{ pedido.cliente_nombre }}</td>
-                            <td>${{ "%.2f"|format(pedido.total) }}</td>
+                            <td style="font-weight: 600;">${{ "%.2f"|format(pedido.total) }}</td>
                             <td>
                                 {% if pedido.afiliado %}
-                                    {{ pedido.afiliado.codigo }}
+                                    {{ pedido.afiliado.nombre }}
                                 {% else %}
-                                    -
+                                    <span style="color:#94a3b8;">-</span>
                                 {% endif %}
                             </td>
                             <td>
                                 {% if pedido.estado == 'pendiente' %}
-                                    <span class="badge badge-warning">Pendiente</span>
+                                    <span class="m-badge m-badge-pending">Pendiente</span>
                                 {% else %}
-                                    <span class="badge badge-success">Pagado</span>
+                                    <span class="m-badge m-badge-success">Pagado</span>
                                 {% endif %}
                             </td>
-                            <td>{{ pedido.creado_en.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ pedido.creado_en.strftime('%d %b, %H:%M') }}</td>
                             <td>
-                                <a href="{{ url_for('admin.ver_pedido', id=pedido.id) }}" class="btn btn-sm btn-primary">Ver</a>
+                                <a href="{{ url_for('admin.ver_pedido', id=pedido.id) }}" class="m-btn-outline-sm">Ver Detalle</a>
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
-
-            <a href="{{ url_for('admin.pedidos') }}" class="btn btn-secondary">Ver todos los pedidos →</a>
+        </div>
         {% else %}
-            <p class="text-muted">No hay pedidos todavía.</p>
+        <div style="padding: 3rem; text-align: center; color: #64748b;">
+            <p>No hay pedidos recientes.</p>
+        </div>
         {% endif %}
     </div>
 </div>

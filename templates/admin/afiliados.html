@@ -3,62 +3,74 @@
 {% block title %}Afiliados - Admin{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="page-header">
-        <h1>👥 Gestión de Afiliados</h1>
-        <a href="{{ url_for('admin.crear_afiliado') }}" class="btn btn-success">+ Nuevo Afiliado</a>
+<div class="m-admin-container">
+    <div class="page-header-actions">
+        <div class="m-admin-header" style="margin:0;">
+            <span class="material-symbols-outlined m-admin-icon-title">group</span>
+            <h1>Gestión de Afiliados</h1>
+        </div>
+        <a href="{{ url_for('admin.crear_afiliado') }}" class="m-btn-primary-sm">+ Nuevo Afiliado</a>
     </div>
 
-    {% if afiliados_data %}
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Email</th>
-                    <th>Código</th>
-                    <th>% Comisión</th>
-                    <th>Ventas</th>
-                    <th>💰 Ganado</th>
-                    <th>⏳ Pendiente</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for data in afiliados_data %}
-                    {% set afiliado = data.afiliado %}
-                    <tr>
-                        <td>{{ afiliado.id }}</td>
-                        <td><strong>{{ afiliado.nombre }}</strong></td>
-                        <td>{{ afiliado.email }}</td>
-                        <td><span class="badge badge-info">{{ afiliado.codigo }}</span></td>
-                        <td><span class="badge badge-warning">{{ afiliado.porcentaje_comision }}%</span></td>
-                        <td><span class="badge badge-primary">{{ data.num_ventas }}</span></td>
-                        <td><strong class="text-success">${{ "%.2f"|format(data.total_ganado) }}</strong></td>
-                        <td><strong class="text-warning">${{ "%.2f"|format(data.total_pendiente) }}</strong></td>
-                        <td>
-                            {% if afiliado.activo %}
-                                <span class="badge badge-success">Activo</span>
-                            {% else %}
-                                <span class="badge badge-secondary">Inactivo</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a href="{{ url_for('admin.editar_afiliado', id=afiliado.id) }}" class="btn btn-sm btn-primary">Editar</a>
-                            {% if data.total_pendiente > 0 %}
-                                {% set monto = '%.2f'|format(data.total_pendiente) %}
-                                <form method="POST" action="{{ url_for('admin.pagar_comisiones_afiliado', id=afiliado.id) }}" style="display: inline;" onsubmit="return confirm('Confirmar pago de ${{ monto }} a {{ afiliado.nombre }}?')">
-                                    <button type="submit" class="btn btn-sm btn-success">💵 Pagar</button>
-                                </form>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p class="text-muted">No hay afiliados creados todavía.</p>
-    {% endif %}
+    <div class="m-admin-card">
+        {% if afiliados %}
+            <div class="m-table-responsive">
+                <table class="m-admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>NOMBRE</th>
+                            <th>CÓDIGO</th>
+                            <th>EMAIL</th>
+                            <th>WHATSAPP</th>
+                            <th>COMISIÓN</th>
+                            <th>ESTADO</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for afiliado in afiliados %}
+                            <tr>
+                                <td>AFI-{{ '%03d' % afiliado.id }}</td>
+                                <td style="font-weight: 500;">{{ afiliado.nombre }}</td>
+                                <td><span class="m-badge m-badge-neutral">{{ afiliado.codigo }}</span></td>
+                                <td style="color:#64748b;">{{ afiliado.email }}</td>
+                                <td>
+                                    {% if afiliado.whatsapp %}
+                                        <a href="https://wa.me/{{ afiliado.whatsapp|replace(' ', '')|replace('+', '') }}" target="_blank" style="color:#10b981; text-decoration:none; display:flex; align-items:center; gap:4px;">
+                                            <span class="material-symbols-outlined" style="font-size:16px;">chat</span> WhatsApp
+                                        </a>
+                                    {% else %}
+                                        <span style="color:#94a3b8;">-</span>
+                                    {% endif %}
+                                </td>
+                                <td style="font-weight: 600;">{{ afiliado.porcentaje_comision }}%</td>
+                                <td>
+                                    {% if afiliado.activo %}
+                                        <span class="m-badge m-badge-success">Activo</span>
+                                    {% else %}
+                                        <span class="m-badge m-badge-neutral">Inactivo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('admin.editar_afiliado', id=afiliado.id) }}" class="m-btn-outline-sm" style="margin-right: 0.5rem;">Editar</a>
+                                    {% if afiliado.activo %}
+                                        <form method="POST" action="{{ url_for('admin.eliminar_afiliado', id=afiliado.id) }}" style="display:inline;">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="m-btn-outline-sm" style="border-color:#ef4444; color:#ef4444;" onclick="return confirm('¿Desactivar este afiliado?')">Desactivar</button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="padding: 3rem; text-align: center; color: #64748b;">
+                <p>No hay afiliados registrados todavía.</p>
+            </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

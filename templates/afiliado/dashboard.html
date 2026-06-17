@@ -3,106 +3,113 @@
 {% block title %}Dashboard Afiliado{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>👋 Bienvenido, {{ afiliado.nombre }}</h1>
-    <p class="subtitle">Tu código de afiliado: <strong class="codigo-afiliado">{{ afiliado.codigo }}</strong></p>
-
-    <div class="dashboard-grid">
-        <div class="stat-card stat-pendiente">
-            <div class="stat-icon">⏳</div>
-            <div class="stat-info">
-                <h3>${{ "%.2f"|format(total_pendiente) }}</h3>
-                <p>Comisiones Pendientes</p>
-            </div>
-        </div>
-
-        <div class="stat-card stat-generada">
-            <div class="stat-icon">💵</div>
-            <div class="stat-info">
-                <h3>${{ "%.2f"|format(total_generado) }}</h3>
-                <p>Comisiones Generadas</p>
-            </div>
-        </div>
-
-        <div class="stat-card stat-pagada">
-            <div class="stat-icon">💰</div>
-            <div class="stat-info">
-                <h3>${{ "%.2f"|format(total_pagado) }}</h3>
-                <p>Comisiones Pagadas</p>
-            </div>
-        </div>
-
-        <div class="stat-card stat-total">
-            <div class="stat-icon">🎯</div>
-            <div class="stat-info">
-                <h3>${{ "%.2f"|format(total_ganado) }}</h3>
-                <p>Total Ganado</p>
-            </div>
-        </div>
+<div class="m-admin-container">
+    <div class="m-admin-header" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+        <h1 style="display:flex; align-items:center; gap:0.5rem;">
+            <span class="material-symbols-outlined m-admin-icon-title">waving_hand</span> 
+            Bienvenido, {{ afiliado.nombre }}
+        </h1>
+        <p style="color:#64748b; margin:0;">Tu código de afiliado: <strong style="color:#0f172a; background:#f1f5f9; padding:0.25rem 0.5rem; border-radius:2px;">{{ afiliado.codigo }}</strong></p>
     </div>
 
     {% if not afiliado.whatsapp %}
-    <div class="alert alert-warning afiliado-whatsapp-alert">
-        <strong>📱 Configura tu WhatsApp</strong><br>
-        Para que los clientes te contacten al comprar desde tu tienda, agrega tu número en <a href="{{ url_for('afiliado.mi_cuenta') }}">Mi Cuenta</a>.
-        <a href="{{ url_for('afiliado.mi_cuenta') }}" class="btn btn-sm btn-primary">Configurar ahora</a>
+    <div style="background-color:#fffbeb; border-left:4px solid #f59e0b; padding:1.5rem; margin-bottom:2rem; border-radius:2px;">
+        <h3 style="margin:0 0 0.5rem 0; color:#92400e; display:flex; align-items:center; gap:0.5rem;">
+            <span class="material-symbols-outlined">warning</span> Configura tu WhatsApp
+        </h3>
+        <p style="margin:0 0 1rem 0; color:#b45309;">Para que los clientes te contacten al comprar desde tu tienda, agrega tu número.</p>
+        <a href="{{ url_for('afiliado.mi_cuenta') }}" class="m-btn-primary-sm" style="background:#f59e0b; border:none;">Configurar ahora</a>
     </div>
     {% endif %}
 
-    <div class="afiliado-info-card">
-        <h3>📊 Tu Información</h3>
-        <p><strong>Porcentaje de comisión:</strong> {{ afiliado.porcentaje_comision }}% del margen</p>
-        <p><strong>Total de pedidos generados:</strong> {{ total_pedidos }}</p>
-        {% if afiliado.whatsapp %}
-        <p><strong>WhatsApp:</strong> {{ afiliado.whatsapp }} <a href="{{ url_for('afiliado.mi_cuenta') }}">Editar</a></p>
-        {% else %}
-        <p><strong>WhatsApp:</strong> <span class="text-muted">No configurado</span> <a href="{{ url_for('afiliado.mi_cuenta') }}">Configurar</a></p>
-        {% endif %}
-        <p><strong>Miembro desde:</strong> {{ afiliado.creado_en.strftime('%d/%m/%Y') }}</p>
+    <div class="m-kpi-grid">
+        <div class="m-kpi-card">
+            <div class="m-kpi-info">
+                <p>Comisiones Pendientes</p>
+                <h3>${{ "%.2f"|format(total_pendiente) }}</h3>
+            </div>
+            <div class="m-kpi-icon-wrapper orange">
+                <span class="material-symbols-outlined">hourglass_empty</span>
+            </div>
+        </div>
+
+        <div class="m-kpi-card">
+            <div class="m-kpi-info">
+                <p>Comisiones Generadas</p>
+                <h3>${{ "%.2f"|format(total_generado) }}</h3>
+            </div>
+            <div class="m-kpi-icon-wrapper blue">
+                <span class="material-symbols-outlined">payments</span>
+            </div>
+        </div>
+
+        <div class="m-kpi-card">
+            <div class="m-kpi-info">
+                <p>Comisiones Pagadas</p>
+                <h3>${{ "%.2f"|format(total_pagado) }}</h3>
+            </div>
+            <div class="m-kpi-icon-wrapper green">
+                <span class="material-symbols-outlined">account_balance_wallet</span>
+            </div>
+        </div>
+
+        <div class="m-kpi-card">
+            <div class="m-kpi-info">
+                <p>Total Ganado Histórico</p>
+                <h3>${{ "%.2f"|format(total_ganado) }}</h3>
+            </div>
+            <div class="m-kpi-icon-wrapper blue">
+                <span class="material-symbols-outlined">emoji_events</span>
+            </div>
+        </div>
     </div>
 
-    {% if ultimas_comisiones %}
-        <div class="dashboard-section">
-            <h2>💰 Últimas Comisiones</h2>
-
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Pedido</th>
-                        <th>Fecha</th>
-                        <th>Margen</th>
-                        <th>Comisión</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for comision in ultimas_comisiones %}
+    <div class="m-admin-card" style="margin-bottom: 2rem;">
+        <div class="m-admin-card-header">
+            <h2>Últimas Comisiones Generadas</h2>
+            <a href="{{ url_for('afiliado.comisiones') }}" class="m-btn-link">Ver Todas</a>
+        </div>
+        
+        {% if ultimas_comisiones %}
+            <div class="m-table-responsive">
+                <table class="m-admin-table">
+                    <thead>
                         <tr>
-                            <td>Pedido #{{ comision.pedido_id }}</td>
-                            <td>{{ comision.creado_en.strftime('%d/%m/%Y') }}</td>
-                            <td>${{ "%.2f"|format(comision.margen) }}</td>
-                            <td><strong>${{ "%.2f"|format(comision.monto) }}</strong></td>
-                            <td>
-                                {% if comision.estado == 'pendiente' %}
-                                    <span class="badge badge-warning">⏳ Pendiente</span>
-                                {% elif comision.estado == 'generada' %}
-                                    <span class="badge badge-info">✅ Generada</span>
-                                {% else %}
-                                    <span class="badge badge-success">💰 Pagada</span>
-                                {% endif %}
-                            </td>
+                            <th>PEDIDO</th>
+                            <th>FECHA</th>
+                            <th>MARGEN BASE</th>
+                            <th>COMISIÓN NETA</th>
+                            <th>ESTADO</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-            <a href="{{ url_for('afiliado.comisiones') }}" class="btn btn-secondary">Ver todas mis comisiones →</a>
-        </div>
-    {% else %}
-        <div class="empty-state">
-            <p>Aún no has generado comisiones. ¡Comparte tus links de productos para comenzar a ganar!</p>
-            <a href="{{ url_for('afiliado.productos') }}" class="btn btn-primary">Ver Productos</a>
-        </div>
-    {% endif %}
+                    </thead>
+                    <tbody>
+                        {% for comision in ultimas_comisiones %}
+                            <tr>
+                                <td>ORD-{{ '%03d' % comision.pedido_id }}</td>
+                                <td style="color:#64748b;">{{ comision.creado_en.strftime('%d %b, %Y') }}</td>
+                                <td style="color:#64748b;">${{ "%.2f"|format(comision.margen) }}</td>
+                                <td style="font-weight: 600; color:#059669;">${{ "%.2f"|format(comision.monto) }}</td>
+                                <td>
+                                    {% if comision.estado == 'pendiente' %}
+                                        <span class="m-badge m-badge-pending">Pendiente</span>
+                                    {% elif comision.estado == 'generada' %}
+                                        <span class="m-badge m-badge-neutral" style="background:#e0f2fe; color:#0369a1;">Generada</span>
+                                    {% else %}
+                                        <span class="m-badge m-badge-success">Pagada</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="padding: 3rem; text-align: center; color: #64748b;">
+                <span class="material-symbols-outlined" style="font-size:3rem; opacity:0.5; margin-bottom:1rem;">inbox</span>
+                <p>Aún no has generado comisiones. ¡Comparte tus links para comenzar a ganar!</p>
+                <a href="{{ url_for('afiliado.productos') }}" class="m-btn-primary-sm" style="margin-top:1rem; display:inline-block;">Ver Catálogo de Productos</a>
+            </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
