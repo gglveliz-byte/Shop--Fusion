@@ -3,134 +3,131 @@
 {% block title %}Configuración de Marca{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="admin-header">
-        <h1>🎨 Configuración de Marca Blanca</h1>
-        <p class="subtitle">Personaliza la identidad visual y datos de contacto de tu plataforma.</p>
+<style>
+    .m-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+    .m-form-group { margin-bottom: 1.5rem; }
+    .m-form-label { display: block; font-size: 0.875rem; font-weight: 600; color: #334155; margin-bottom: 0.5rem; }
+    .m-form-control { width: 100%; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 2px; font-size: 0.875rem; color: #1e293b; background-color: #f8fafc; transition: all 0.2s; }
+    .m-form-control:focus { outline: none; border-color: #3b82f6; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+    .m-color-input { height: 50px; padding: 0.25rem; cursor: pointer; }
+    .m-current-asset { margin-top: 1rem; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 4px; display: inline-block; background-color: #f8fafc; }
+    .m-current-asset img { max-height: 50px; display: block; }
+    .m-current-asset.icon-preview img { max-height: 32px; }
+    @media (max-width: 768px) { .m-form-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="m-admin-container">
+    <div class="m-admin-header">
+        <span class="material-symbols-outlined m-admin-icon-title">palette</span>
+        <h1>Configuración de Marca Blanca</h1>
     </div>
 
-    <div class="config-grid">
-        <form method="POST" enctype="multipart/form-data" class="config-form">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            
-            <!-- SECCIÓN 1: Identidad Visual -->
-            <div class="config-card">
-                <div class="card-header">
-                    <h3>🖼️ Identidad Visual</h3>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- SECCIÓN 1: Identidad Visual -->
+        <div class="m-admin-card">
+            <div class="m-admin-card-header">
+                <h2><span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 0.5rem; color: #64748b;">image</span> Identidad Visual</h2>
+            </div>
+            <div style="padding: 1.5rem;">
+                <div class="m-form-group">
+                    <label class="m-form-label" for="nombre_tienda">Nombre de la Tienda</label>
+                    <input type="text" id="nombre_tienda" name="nombre_tienda" class="m-form-control" 
+                           value="{{ config.nombre_tienda if config else '' }}" required>
+                    <span style="font-size: 0.75rem; color: #64748b;">Este nombre aparecerá en la pestaña del navegador y correos.</span>
                 </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <label for="nombre_tienda">Nombre de la Tienda</label>
-                        <input type="text" id="nombre_tienda" name="nombre_tienda" class="form-control" 
-                               value="{{ config.nombre_tienda if config else '' }}" required>
-                        <small>Este nombre aparecerá en la pestaña del navegador y correos.</small>
+
+                <div class="m-form-grid">
+                    <div class="m-form-group">
+                        <label class="m-form-label" for="logo">Logotipo Actual</label>
+                        <input type="file" id="logo" name="logo" class="m-form-control" accept="image/*">
+                        {% if config and config.logo_path %}
+                            <div class="m-current-asset">
+                                <img src="{{ url_for('static', filename='uploads/' + config.logo_path) }}" alt="Logo">
+                            </div>
+                        {% endif %}
                     </div>
 
-                    <div class="file-inputs">
-                        <div class="form-group">
-                            <label for="logo">Logotipo Actual</label>
-                            {% if config and config.logo_path %}
-                                <div class="current-asset">
-                                    <img src="{{ url_for('static', filename='uploads/' + config.logo_path) }}" alt="Logo">
-                                </div>
-                            {% endif %}
-                            <input type="file" id="logo" name="logo" class="form-control" accept="image/*">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="favicon">Favicon (Icono pestaña)</label>
-                            {% if config and config.favicon_path %}
-                                <div class="current-asset icon-preview">
-                                    <img src="{{ url_for('static', filename='uploads/' + config.favicon_path) }}" alt="Favicon">
-                                </div>
-                            {% endif %}
-                            <input type="file" id="favicon" name="favicon" class="form-control" accept="image/x-icon,image/png">
-                        </div>
+                    <div class="m-form-group">
+                        <label class="m-form-label" for="favicon">Favicon (Icono pestaña)</label>
+                        <input type="file" id="favicon" name="favicon" class="m-form-control" accept="image/x-icon,image/png">
+                        {% if config and config.favicon_path %}
+                            <div class="m-current-asset icon-preview">
+                                <img src="{{ url_for('static', filename='uploads/' + config.favicon_path) }}" alt="Favicon">
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- SECCIÓN 2: Colores y Estética -->
-            <div class="config-card">
-                <div class="card-header">
-                    <h3>🌈 Paleta de Colores</h3>
-                </div>
-                <div class="card-body">
-                    <div class="color-grid">
-                        <div class="form-group color-input">
-                            <label for="color_primario">Color Primario</label>
-                            <input type="color" id="color_primario" name="color_primario" 
-                                   value="{{ config.color_primario if config else '#6366f1' }}">
-                        </div>
-                        <div class="form-group color-input">
-                            <label for="color_secundario">Color Secundario</label>
-                            <input type="color" id="color_secundario" name="color_secundario" 
-                                   value="{{ config.color_secundario if config else '#22c55e' }}">
-                        </div>
-                        <div class="form-group color-input">
-                            <label for="color_acento">Color de Acento</label>
-                            <input type="color" id="color_acento" name="color_acento" 
-                                   value="{{ config.color_acento if config else '#06b6d4' }}">
-                        </div>
+        <!-- SECCIÓN 2: Colores y Estética -->
+        <div class="m-admin-card">
+            <div class="m-admin-card-header">
+                <h2><span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 0.5rem; color: #64748b;">colors</span> Paleta de Colores</h2>
+            </div>
+            <div style="padding: 1.5rem;">
+                <div class="m-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div class="m-form-group">
+                        <label class="m-form-label" for="color_primario">Color Primario</label>
+                        <input type="color" id="color_primario" name="color_primario" class="m-form-control m-color-input" 
+                               value="{{ config.color_primario if config else '#6366f1' }}">
+                    </div>
+                    <div class="m-form-group">
+                        <label class="m-form-label" for="color_secundario">Color Secundario</label>
+                        <input type="color" id="color_secundario" name="color_secundario" class="m-form-control m-color-input"
+                               value="{{ config.color_secundario if config else '#22c55e' }}">
+                    </div>
+                    <div class="m-form-group">
+                        <label class="m-form-label" for="color_acento">Color de Acento</label>
+                        <input type="color" id="color_acento" name="color_acento" class="m-form-control m-color-input"
+                               value="{{ config.color_acento if config else '#06b6d4' }}">
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- SECCIÓN 3: Textos y Contacto -->
-            <div class="config-card">
-                <div class="card-header">
-                    <h3>📞 Contacto y Mensajes</h3>
-                </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <label for="whatsapp_contacto">WhatsApp Central (Soporte)</label>
-                        <input type="text" id="whatsapp_contacto" name="whatsapp_contacto" class="form-control" 
+        <!-- SECCIÓN 3: Textos y Contacto -->
+        <div class="m-admin-card">
+            <div class="m-admin-card-header">
+                <h2><span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 0.5rem; color: #64748b;">contact_support</span> Contacto y Mensajes</h2>
+            </div>
+            <div style="padding: 1.5rem;">
+                <div class="m-form-grid">
+                    <div class="m-form-group">
+                        <label class="m-form-label" for="whatsapp_contacto">WhatsApp Central (Soporte)</label>
+                        <input type="text" id="whatsapp_contacto" name="whatsapp_contacto" class="m-form-control" 
                                value="{{ config.whatsapp_contacto if config else '' }}" placeholder="Ej: 51900000000">
                     </div>
                     
-                    <div class="form-group">
-                        <label for="mensaje_bienvenida">Mensaje de Bienvenida (Banner)</label>
-                        <input type="text" id="mensaje_bienvenida" name="mensaje_bienvenida" class="form-control" 
+                    <div class="m-form-group">
+                        <label class="m-form-label" for="mensaje_bienvenida">Mensaje de Bienvenida (Banner)</label>
+                        <input type="text" id="mensaje_bienvenida" name="mensaje_bienvenida" class="m-form-control" 
                                value="{{ config.mensaje_bienvenida if config else '' }}">
                     </div>
+                </div>
 
-                    <div class="form-group">
-                        <label for="mensaje_footer">Texto de Pie de Página (Copyright)</label>
-                        <input type="text" id="mensaje_footer" name="mensaje_footer" class="form-control" 
-                               value="{{ config.mensaje_footer if config else '' }}">
-                    </div>
+                <div class="m-form-group">
+                    <label class="m-form-label" for="mensaje_footer">Texto de Pie de Página (Copyright)</label>
+                    <input type="text" id="mensaje_footer" name="mensaje_footer" class="m-form-control" 
+                           value="{{ config.mensaje_footer if config else '' }}">
+                </div>
 
-                    <div class="form-group">
-                        <label for="meta_descripcion">Descripción SEO (Google)</label>
-                        <textarea id="meta_descripcion" name="meta_descripcion" class="form-control" rows="3">{{ config.meta_descripcion if config else '' }}</textarea>
-                    </div>
+                <div class="m-form-group">
+                    <label class="m-form-label" for="meta_descripcion">Descripción SEO (Google)</label>
+                    <textarea id="meta_descripcion" name="meta_descripcion" class="m-form-control" rows="3">{{ config.meta_descripcion if config else '' }}</textarea>
                 </div>
             </div>
+        </div>
 
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary btn-lg btn-block">Guardar Cambios ✨</button>
-            </div>
-        </form>
-    </div>
+        <div style="margin-top: 2rem; text-align: right;">
+            <button type="submit" class="m-btn-primary-sm" style="padding: 0.75rem 2.5rem; font-size: 1rem;">Guardar Cambios</button>
+        </div>
+    </form>
 </div>
-
-<style>
-    .admin-header { margin-bottom: 2.5rem; text-align: center; }
-    .config-grid { max-width: 800px; margin: 0 auto; }
-    .config-card { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 2rem; overflow: hidden; border: 1px solid #f1f5f9; }
-    .card-header { background: #f8fafc; padding: 1.2rem 1.5rem; border-bottom: 1px solid #f1f5f9; }
-    .card-header h3 { margin: 0; font-size: 1.1rem; color: #1e293b; }
-    .card-body { padding: 1.5rem; }
-    .current-asset { margin-bottom: 1rem; background: #f1f5f9; padding: 10px; border-radius: 8px; display: inline-block; }
-    .current-asset img { max-height: 50px; display: block; }
-    .icon-preview img { max-height: 32px; }
-    .color-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
-    .color-input input { width: 100%; height: 50px; border: none; cursor: pointer; border-radius: 8px; }
-    .form-actions { margin-top: 2rem; margin-bottom: 4rem; }
-    .file-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-    
-    @media (max-width: 768px) {
-        .color-grid, .file-inputs { grid-template-columns: 1fr; }
-    }
-</style>
 {% endblock %}

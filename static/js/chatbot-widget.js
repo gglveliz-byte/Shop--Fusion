@@ -36,7 +36,6 @@
     posStyle.innerHTML = `
         #chatbot-bubble { 
             ${position}: 20px !important; 
-            border: 2px solid ${isDarkTheme ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.1)'};
             box-shadow: 0 4px 15px ${isDarkTheme ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.3)'} !important;
         }
         #chatbot-window { ${position}: 20px !important; }
@@ -46,35 +45,34 @@
     `;
     document.head.appendChild(posStyle);
 
-    // 2. Inyectar HTML del Chatbot
-    const chatbotHtml = `
-        <div id="chatbot-bubble">🤖</div>
+    // 2. Inyectar HTML del Chatbot (Con etiquetas de iconos y puros IDs)
+    const template = document.createElement('template');
+    template.innerHTML = `
+        <div id="chatbot-bubble">
+            <span class="material-symbols-outlined">forum</span>
+        </div>
         <div id="chatbot-window">
             <div class="chatbot-header">
-                <h3>Asistente AI Qwen</h3>
-                <span class="chatbot-close">&times;</span>
+                <h3><span class="material-symbols-outlined">forum</span> Asistente AI Qwen</h3>
+                <span class="chatbot-close"><span class="material-symbols-outlined">close</span></span>
             </div>
             <div class="chatbot-model-select">
                 <select id="chatbot-model">
-                    <option value="qwen3.6-plus">Qwen 3.6 Plus (General)</option>
-                    <option value="qwen3-32b">Qwen 3-32b (Razonamiento)</option>
-                    <option value="qwen3-coder-480b-a35b-instruct">Qwen 3-Coder (Código)</option>
+                    <option value="qwen-plus">Qwen Plus (Lógica y Ventas)</option>
+                    <option value="qwen-vl-max">Qwen VL Max (Visión y OCR)</option>
                 </select>
             </div>
             <div id="chatbot-messages" class="chatbot-messages">
                 <div class="message ai">¡Hola! Soy un asistente externo. ¿En qué puedo ayudarte?</div>
-                <div id="chatbot-typing" class="typing" style="display:none; font-size:0.8rem; color:#888;">Escribiendo...</div>
+                <div id="chatbot-typing" class="typing" style="display:none;">Escribiendo...</div>
             </div>
             <div class="chatbot-input">
                 <input type="text" id="chatbot-input-field" placeholder="Escribe un mensaje...">
-                <button id="chatbot-send">➤</button>
+                <button id="chatbot-send"><span class="material-symbols-outlined">send</span></button>
             </div>
         </div>
     `;
-
-    const div = document.createElement('div');
-    div.innerHTML = chatbotHtml;
-    document.body.appendChild(div);
+    document.body.appendChild(template.content);
 
     // 3. Lógica del Chatbot
     setTimeout(() => {
@@ -87,6 +85,9 @@
         const modelSelect = document.getElementById('chatbot-model');
         const typingIndicator = document.getElementById('chatbot-typing');
 
+        // Memoria del chat (últimos 10 mensajes)
+        let chatHistory = [];
+
         bubble.addEventListener('click', () => {
             windowChat.style.display = windowChat.style.display === 'flex' ? 'none' : 'flex';
             if (windowChat.style.display === 'flex') input.focus();
@@ -95,6 +96,31 @@
         closeBtn.addEventListener('click', () => {
             windowChat.style.display = 'none';
         });
+
+        // Botón para borrar historial (Adaptado con icono limpio)
+        const setupClearButton = () => {
+            const header = document.querySelector('.chatbot-header');
+            const closeBtn = document.querySelector('.chatbot-close');
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.style.display = 'flex';
+            actionsDiv.style.alignItems = 'center';
+            actionsDiv.style.gap = '15px';
+            
+            const clearBtn = document.createElement('span');
+            clearBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:1.3rem; cursor:pointer; display:flex; align-items:center;">delete</span>';
+            clearBtn.title = 'Borrar historial';
+            clearBtn.onclick = () => {
+                chatHistory = [];
+                messagesContainer.innerHTML = '<div class="message ai">Historial borrado. ¿En qué puedo ayudarte?</div>';
+                typingIndicator.style.display = 'none';
+                messagesContainer.appendChild(typingIndicator);
+            };
+            header.appendChild(actionsDiv);
+            header.appendChild(clearBtn);
+            header.appendChild(closeBtn);
+        };
+        setupClearButton();
 
         const sendMessage = async () => {
             const text = input.value.trim();
@@ -111,7 +137,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         message: text,
-                        model: modelSelect.value
+                        model: modelSelect.value,
+                        history: chatHistory // Enviar historial
                     })
                 });
 
@@ -121,7 +148,35 @@
                 if (data.error) {
                     addMessage("Error: " + data.error, 'ai');
                 } else {
-                    addMessage(data.response, 'ai', data.reasoning);
+                    addMessage(data.response, 'ai', data.reasoning, data.tool_calls);
+
+                    // Interceptar acciones de carrito ejecutadas por la IA
+                    if (data.status === "tool_executed") {
+                        const results = data.db_results || (data.db_result ? [data.db_result] : []);
+                        results.forEach(res => {
+                            if (res.success) {
+                                const action = res.action;
+                                if (action === "addProductToCart" || action === "updateCartItem") {
+                                    ejecutarUpdateCartDesdeIA(res);
+                                } else if (action === "checkoutCart") {
+                                    ejecutarCheckoutDesdeIA();
+                                }
+                            }
+                        });
+                    }
+
+                    // Guardar en el historial
+                    chatHistory.push({ "role": "user", "content": text });
+                    if (data.response) {
+                        chatHistory.push({ "role": "assistant", "content": data.response });
+                    } else if (data.tool_calls) {
+                        chatHistory.push({ "role": "assistant", "content": "Acción de herramienta detectada." });
+                    }
+
+                    // Limitar a los últimos 10 mensajes
+                    if (chatHistory.length > 10) {
+                        chatHistory = chatHistory.slice(-10);
+                    }
                 }
             } catch (error) {
                 typingIndicator.style.display = 'none';
@@ -134,23 +189,191 @@
             if (e.key === 'Enter') sendMessage();
         });
 
-        function addMessage(text, sender, reasoning = null) {
-            const msgDiv = document.createElement('div');
-            msgDiv.classList.add('message', sender);
+        function addMessage(text, sender, reasoning = null, tool_calls = null) {
+            const div = document.createElement('div');
+            div.classList.add('message', sender);
 
             if (reasoning) {
-                const rDiv = document.createElement('div');
-                rDiv.classList.add('reasoning');
-                rDiv.innerText = "Pensamiento: " + reasoning;
-                msgDiv.appendChild(rDiv);
+                const reasoningDiv = document.createElement('div');
+                reasoningDiv.classList.add('reasoning');
+                reasoningDiv.innerText = "Pensamiento: " + reasoning;
+                div.appendChild(reasoningDiv);
             }
 
-            const tSpan = document.createElement('span');
-            tSpan.innerText = text;
-            msgDiv.appendChild(tSpan);
+            if (text) {
+                const textSpan = document.createElement('span');
+                textSpan.innerHTML = text.replace(/\n/g, '<br>');
+                div.appendChild(textSpan);
+            }
 
-            messagesContainer.appendChild(msgDiv);
+            // Soporte para Ficha de Acción de Facturación en el Widget
+            if (tool_calls) {
+                tool_calls.forEach(tool => {
+                    const actionDiv = document.createElement('div');
+                    actionDiv.classList.add('action-box');
+
+                    let toolName = tool.function.name;
+                    let args = JSON.parse(tool.function.arguments);
+
+                    if (toolName === 'createInvoice') {
+                        actionDiv.innerHTML = `
+                            <div style="background: #eef2ff; border-left: 3px solid #4f46e5; padding: 8px; margin-top: 8px; border-radius: 4px; font-size: 0.9em; color: #333;">
+                                <strong style="color: #4f46e5;">🔧 Factura Disponible</strong><br>
+                                <small>Pedido: #${args.pedido_id}</small><br>
+                                <button class="confirm-btn" onclick="confirmarFacturaWidget(${args.pedido_id}, this)" 
+                                        style="background: #4f46e5; color: white; border: none; padding: 4px 8px; border-radius: 4px; margin-top: 5px; cursor: pointer; width: 100%;">
+                                    Emitir Factura
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        actionDiv.innerHTML = `
+                            <div style="background: #f3f4f6; border-left: 3px solid #9ca3af; padding: 5px; margin-top: 8px; border-radius: 4px; font-size: 0.8em; color: #333;">
+                                <strong>🔧 Acción: ${toolName}</strong>
+                            </div>
+                        `;
+                    }
+                    div.appendChild(actionDiv);
+                });
+            }
+
+            messagesContainer.appendChild(div);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Función global para el widget
+        window.confirmarFacturaWidget = async (pedidoId, btn) => {
+            btn.disabled = true;
+            btn.innerText = "Emitiendo...";
+            try {
+                const res = await fetch(`/facturacion/generar/${pedidoId}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    btn.style.background = "#059669";
+                    btn.innerText = "✓ Emitida";
+                    addMessage(`Factura generada: <strong>${data.numero}</strong><br><a href="/facturacion/ver_documento/${data.factura_id}" target="_blank" style="color: #4f46e5; text-decoration: underline;">📄 Ver Factura</a>`, 'ai');
+                } else {
+                    alert("Error: " + data.error);
+                    btn.disabled = false;
+                    btn.innerText = "Reintentar";
+                }
+            } catch (e) {
+                alert("Error de conexión");
+            }
+        };
+
+        // Funciones de integración con Carrito e IA
+        function ejecutarUpdateCartDesdeIA(product) {
+            let currentCart = [];
+            try {
+                currentCart = JSON.parse(localStorage.getItem('carrito')) || [];
+                if (!Array.isArray(currentCart)) currentCart = [];
+            } catch(e) {
+                currentCart = [];
+            }
+
+            const itemExistente = currentCart.find(item => item.id === product.id);
+            const qty = parseInt(product.cantidad);
+            const actionType = product.action_type || 'add';
+
+            if (actionType === 'remove') {
+                if (itemExistente) {
+                    currentCart = currentCart.filter(item => item.id !== product.id);
+                }
+            } else if (actionType === 'set') {
+                if (qty <= 0) {
+                    currentCart = currentCart.filter(item => item.id !== product.id);
+                } else {
+                    if (itemExistente) {
+                        itemExistente.cantidad = qty;
+                    } else {
+                        currentCart.push({
+                            id: product.id,
+                            nombre: product.nombre,
+                            precio: parseFloat(product.precio),
+                            imagen: product.imagen,
+                            cantidad: qty
+                        });
+                    }
+                }
+            } else { // 'add' (por defecto)
+                const addQty = qty || 1;
+                if (itemExistente) {
+                    itemExistente.cantidad += addQty;
+                } else {
+                    currentCart.push({
+                        id: product.id,
+                        nombre: product.nombre,
+                        precio: parseFloat(product.precio),
+                        imagen: product.imagen,
+                        cantidad: addQty
+                    });
+                }
+            }
+
+            localStorage.setItem('carrito', JSON.stringify(currentCart));
+
+            if (typeof carrito !== 'undefined') {
+                carrito = currentCart;
+                if (typeof actualizarCarrito === 'function') actualizarCarrito();
+                if (typeof sincronizarCarritoConServidor === 'function') sincronizarCarritoConServidor();
+            } else {
+                const csrfTokenElement = document.querySelector('meta[name="csrf-token"]') || document.querySelector('input[name="csrf_token"]');
+                const csrfToken = csrfTokenElement ? csrfTokenElement.content || csrfTokenElement.value : '';
+                fetch('/api/actualizar-carrito-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ carrito: currentCart })
+                }).catch(err => console.error("Error al sincronizar carrito desde IA:", err));
+            }
+
+            let toastMsg = "";
+            if (actionType === 'remove') {
+                toastMsg = `❌ Eliminado: ${product.nombre}`;
+            } else if (actionType === 'set') {
+                toastMsg = `✏️ Ajustado: ${product.nombre} a ${qty}x`;
+            } else {
+                toastMsg = `🛒 Agregado: ${qty}x ${product.nombre}`;
+            }
+
+            if (typeof mostrarNotificacion === 'function') {
+                mostrarNotificacion(toastMsg);
+            } else {
+                const toast = document.createElement('div');
+                toast.style.position = 'fixed';
+                toast.style.bottom = '80px';
+                toast.style.right = '20px';
+                toast.style.background = actionType === 'remove' ? '#dc2626' : 'var(--primary-color, #059669)';
+                toast.style.color = 'white';
+                toast.style.padding = '12px 24px';
+                toast.style.borderRadius = '4px'; /* Consistencia industrial recta */
+                toast.style.zIndex = '10000';
+                toast.style.boxShadow = '0 10px 25px rgba(0,0,0,0.15)';
+                toast.style.fontFamily = 'sans-serif';
+                toast.innerHTML = toastMsg;
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.transition = 'opacity 0.5s';
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 500);
+                }, 2500);
+            }
+        }
+
+        function ejecutarCheckoutDesdeIA() {
+            if (typeof mostrarCheckout === 'function') {
+                if (typeof actualizarCarrito === 'function') actualizarCarrito();
+                const panel = document.getElementById('carrito-panel');
+                if (panel && panel.classList.contains('active')) {
+                    if (typeof toggleCarrito === 'function') toggleCarrito();
+                }
+                mostrarCheckout();
+            } else {
+                window.location.href = '/?checkout=true';
+            }
         }
     }, 100);
 })();

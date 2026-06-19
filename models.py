@@ -474,15 +474,15 @@ class Configuracion(db.Model):
         """Cifra el contacto antes de guardarlo en la configuración"""
         self.whatsapp_contacto_encrypted = encrypt_data(value)
     mensaje_bienvenida = db.Column(db.String(255), default='¡Bienvenido a nuestra tienda!')
-    mensaje_footer = db.Column(db.String(255), default='© 2024 Todos los derechos reservados.')
-    
+    mensaje_footer = db.Column(db.String(255), default='Tu tienda online de confianza')
+    mensaje_copyright = db.Column(db.String(255), default='© 2026 Todos los derechos reservados.')
     # Metadatos SEO
     meta_descripcion = db.Column(db.Text, nullable=True)
     
     actualizado_en = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # [PASO 2 - SANITIZACIÓN]
-    @validates('nombre_tienda', 'mensaje_bienvenida', 'mensaje_footer', 'meta_descripcion')
+    @validates('nombre_tienda', 'mensaje_bienvenida', 'mensaje_footer', 'mensaje_copyright', 'meta_descripcion')
     def validate_config_text(self, key, value):
         """Sanitiza la configuración de marca blanca (Anti-XSS)"""
         return sanitize_html(value)
