@@ -367,18 +367,45 @@
             </div>
         </div>
 
-        <div class="split-footer">
-            <div class="split-footer-text">
-                © 2024 Shop-Fusion Enterprise. Reservados todos los derechos.
+        <!-- Footer Moderno -->
+        <footer class="m-footer" style="width: 100%; margin-top: auto; border-left: none; border-right: none; border-bottom: none;">
+            <div class="m-footer-top" style="padding: 2rem 2rem 1rem 2rem;">
+                <div class="m-footer-brand">
+                    <h4>{{ config_web.nombre_tienda if config_web else 'Marca Blanca' }}</h4>
+                    <p>{{ config_web.mensaje_footer if config_web else 'Ofrecemos tecnología de vanguardia para compras digitales con confianza y seguridad.' }}</p>
+                    <div class="m-footer-socials">
+                        <a href="#" class="m-social-btn"><span class="material-symbols-outlined">share</span></a>
+                        <a href="#" class="m-social-btn"><span class="material-symbols-outlined">language</span></a>
+                    </div>
+                </div>
+                <div class="m-footer-links-wrapper">
+                    <div class="m-footer-col">
+                        <h5>Empresa</h5>
+                        <ul>
+                            <li><a href="#">Privacidad</a></li>
+                            <li><a href="#">Términos y Condiciones</a></li>
+                        </ul>
+                    </div>
+                    <div class="m-footer-col">
+                        <h5>Sede Central</h5>
+                        <p>
+                            {{ config_web.direccion if config_web and config_web.direccion else 'Avenida de la Innovación, 42' }}<br/>
+                            {{ config_web.email if config_web and config_web.email else 'info@shopfusion.com' }}
+                        </p>
+                    </div>
+                </div>
             </div>
-            <div class="split-footer-links">
-                <a href="#">Soporte Técnico</a>
-                <span>•</span>
-                <a href="#">Políticas de Seguridad</a>
-                <span>•</span>
-                <a href="#">Cumplimiento Legal</a>
+            <div class="m-footer-bottom" style="padding: 1rem 2rem;">
+                <div class="m-footer-bottom-inner" style="padding: 0;">
+                    <p class="m-footer-copy">{{ config_web.mensaje_copyright if config_web else 'Derechos Reservados'}}</p>
+                    <div class="m-footer-badges">
+                        <span class="material-symbols-outlined">credit_card</span>
+                        <span class="material-symbols-outlined">account_balance</span>
+                        <span class="material-symbols-outlined">shield</span>
+                    </div>
+                </div>
             </div>
-        </div>
+        </footer>
     </div>
 </div>
 {% endblock %}

@@ -53,6 +53,11 @@
                 {{ config_web.nombre_tienda if config_web else 'ShopFusion' }}
             </a>
             
+            <!-- Mobile Menu Toggle -->
+            <button class="m-menu-toggle" id="mobile-menu-btn" aria-label="Abrir menú">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+            
             <!-- Opciones del Header -->
             {% if current_user.is_authenticated %}
                 {# [MODIFICACIÓN SEGURIDAD TC015] #}
@@ -71,6 +76,11 @@
                     <a href="{{ url_for('afiliado.comisiones') }}" class="{% if request.endpoint == 'afiliado.comisiones' %}active{% endif %}">Mis Comisiones</a>
                     <a href="{{ url_for('afiliado.mi_cuenta') }}" class="{% if request.endpoint == 'afiliado.mi_cuenta' %}active{% endif %}">Mi Cuenta</a>
                 {% endif %}
+                
+                <!-- Acciones Mobile (Solo visibles en <=767px) -->
+                <div class="m-nav-actions-mobile">
+                    <a href="{{ url_for('auth.logout') }}" class="m-btn m-btn-outline">Cerrar Sesión</a>
+                </div>
                 </nav>
                 
                 <div class="m-header-actions">
@@ -81,6 +91,11 @@
                     <a href="{{ url_for('tienda.index') }}" class="{% if request.endpoint == 'tienda.index' %}active{% endif %}">Inicio</a>
                     <a href="{{ url_for('tienda.carrito') }}" class="{% if request.endpoint == 'tienda.carrito' %}active{% endif %}">Carrito</a>
                     <a href="{{ url_for('tienda.unete') }}" class="{% if request.endpoint == 'tienda.unete' %}active{% endif %}">Trabaja con Nosotros</a>
+                
+                    <!-- Acciones Mobile (Solo visibles en <=767px) -->
+                    <div class="m-nav-actions-mobile">
+                        <a href="{{ url_for('auth.admin_login') }}" class="m-btn m-btn-primary">Acceder</a>
+                    </div>
                 </nav>
                 
                 <div class="m-header-actions">
@@ -150,6 +165,21 @@
 
     <!-- Chatbot Widget de IA Qwen -->
     <script src="{{ url_for('static', filename='js/chatbot-widget.js') }}"></script>
+
+    <!-- Script para Menú Móvil -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var btn = document.getElementById('mobile-menu-btn');
+            if (btn) {
+                btn.addEventListener('click', function() {
+                    var navs = document.querySelectorAll('.m-nav');
+                    navs.forEach(function(nav) {
+                        nav.classList.toggle('m-nav-open');
+                    });
+                });
+            }
+        });
+    </script>
 
     {% block extra_js %}{% endblock %}
 </body>
