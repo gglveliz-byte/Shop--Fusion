@@ -1,132 +1,383 @@
 {% extends 'base.html' %}
+{% block title %}Acceso Afiliados{% endblock %}
 
-{% block title %}Login Afiliado{% endblock %}
-
-{% block content %}
+{% block body %}
 <style>
-    .m-auth-container {
+    /* Reset margins for the body to ensure 100vh works properly */
+    body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background: #fff; }
+    
+    .split-layout {
         display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: calc(100vh - 200px);
-        padding: 2rem 1rem;
-        background-color: #f8fafc;
-    }
-    .m-auth-card {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 4px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        min-height: 100vh;
         width: 100%;
-        max-width: 400px;
-        padding: 2.5rem 2rem;
-        text-align: center;
     }
-    .m-auth-icon {
-        color: #3b82f6;
-        font-size: 3rem;
-        margin-bottom: 1rem;
+
+    /* Panel Izquierdo */
+    .left-panel {
+        width: 50%;
+        background-color: #001540;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem;
+        overflow: hidden;
     }
-    .m-auth-title {
+    
+    /* Patrón geométrico sutil */
+    .left-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: linear-gradient(30deg, #001b54 12%, transparent 12.5%, transparent 87%, #001b54 87.5%, #001b54),
+                          linear-gradient(150deg, #001b54 12%, transparent 12.5%, transparent 87%, #001b54 87.5%, #001b54),
+                          linear-gradient(30deg, #001b54 12%, transparent 12.5%, transparent 87%, #001b54 87.5%, #001b54),
+                          linear-gradient(150deg, #001b54 12%, transparent 12.5%, transparent 87%, #001b54 87.5%, #001b54),
+                          linear-gradient(60deg, #002266 25%, transparent 25.5%, transparent 75%, #002266 75%, #002266),
+                          linear-gradient(60deg, #002266 25%, transparent 25.5%, transparent 75%, #002266 75%, #002266);
+        background-size: 80px 140px;
+        background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
+        opacity: 0.05;
+    }
+    
+    /* Overlay inclinado tipo diagonal (como en la imagen) */
+    .left-panel::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 30%;
+        background: linear-gradient(to right, transparent, rgba(0,0,0,0.2));
+        clip-path: polygon(100% 0, 100% 100%, 0 100%);
+    }
+
+    .branding-content {
+        position: relative;
+        z-index: 10;
+        max-width: 500px;
+        color: white;
+    }
+
+    .branding-content h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
+    }
+
+    .branding-content p {
+        font-size: 1.125rem;
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.6;
+    }
+
+    /* Panel Derecho */
+    .right-panel {
+        width: 50%;
+        background-color: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .form-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .login-box {
+        width: 100%;
+        max-width: 440px;
+    }
+
+    .logo-text {
         font-size: 1.5rem;
-        font-weight: 700;
-        color: #0f172a;
-        margin: 0 0 0.5rem 0;
+        font-weight: 800;
+        color: #2563eb;
+        margin-bottom: 3rem;
+        position: relative;
+        display: inline-block;
     }
-    .m-auth-subtitle {
-        font-size: 0.875rem;
-        color: #64748b;
-        margin: 0 0 2rem 0;
+    .logo-text::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 30px;
+        height: 3px;
+        background-color: #2563eb;
     }
-    .m-auth-form-group {
-        margin-bottom: 1.25rem;
-        text-align: left;
+
+    .form-header {
+        margin-bottom: 2rem;
     }
-    .m-auth-label {
-        display: block;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #334155;
+
+    .form-title-group {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
         margin-bottom: 0.5rem;
     }
-    .m-auth-input {
+
+    .form-icon {
+        color: #2563eb;
+        font-size: 2rem;
+    }
+
+    .form-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+    }
+
+    .form-subtitle {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin: 0;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .input-wrapper {
+        position: relative;
+    }
+
+    .form-control {
         width: 100%;
-        padding: 0.75rem 1rem;
-        border: 1px solid #cbd5e1;
-        border-radius: 2px;
+        padding: 0.875rem 1rem;
+        background-color: #f1f5f9;
+        border: 1px solid transparent;
+        border-bottom: 1px solid #cbd5e1;
+        border-radius: 4px 4px 0 0;
         font-size: 0.875rem;
         color: #1e293b;
-        background-color: #f8fafc;
         transition: all 0.2s;
+        box-sizing: border-box;
     }
-    .m-auth-input:focus {
+
+    .form-control:focus {
         outline: none;
-        border-color: #3b82f6;
         background-color: #ffffff;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        border-bottom-color: #2563eb;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }
-    .m-auth-btn {
+
+    .form-control::placeholder {
+        color: #94a3b8;
+    }
+
+    .forgot-link {
+        position: absolute;
+        right: 0;
+        top: -1.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #2563eb;
+        text-decoration: none;
+    }
+    .forgot-link:hover { text-decoration: underline; }
+
+    .btn-submit {
         width: 100%;
-        background-color: #3b82f6;
+        background-color: #0044cc;
         color: white;
-        padding: 0.75rem 1rem;
-        font-size: 0.875rem;
+        padding: 1rem;
+        font-size: 1rem;
         font-weight: 600;
         border: none;
         border-radius: 2px;
         cursor: pointer;
-        transition: all 0.2s;
-        margin-top: 0.5rem;
+        transition: background-color 0.2s;
+        margin-top: 1rem;
     }
-    .m-auth-btn:hover {
-        background-color: #2563eb;
+
+    .btn-submit:hover {
+        background-color: #1d4ed8;
     }
-    .m-auth-footer {
+
+    .form-footer-links {
         margin-top: 2rem;
         padding-top: 1.5rem;
         border-top: 1px solid #e2e8f0;
-        font-size: 0.875rem;
-        color: #64748b;
         display: flex;
         flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .footer-link {
+        display: flex;
+        align-items: center;
         gap: 0.5rem;
-    }
-    .m-auth-footer a {
-        color: #3b82f6;
+        font-size: 0.875rem;
+        color: #475569;
         text-decoration: none;
-        font-weight: 500;
     }
-    .m-auth-footer a:hover {
-        text-decoration: underline;
+
+    .footer-link .material-symbols-outlined {
+        font-size: 1.125rem;
+        color: #64748b;
+    }
+
+    .footer-link:hover, .footer-link:hover .material-symbols-outlined {
+        color: #2563eb;
+    }
+
+    /* Footer Inferior Derecho */
+    .split-footer {
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid #e2e8f0;
+        background-color: #ffffff;
+    }
+
+    .split-footer-text {
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .split-footer-links {
+        display: flex;
+        gap: 1.5rem;
+    }
+    
+    .split-footer-links a {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748b;
+        text-decoration: none;
+    }
+    .split-footer-links a:hover { color: #0f172a; }
+
+    /* Flash Messages en la pantalla dividida */
+    .alert-float {
+        position: absolute;
+        top: 2rem;
+        right: 2rem;
+        z-index: 50;
+        min-width: 300px;
+        background: #fee2e2;
+        border-left: 4px solid #ef4444;
+        color: #b91c1c;
+        padding: 1rem;
+        border-radius: 4px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .alert-float.alert-success { background: #dcfce7; border-color: #22c55e; color: #166534; }
+
+    @media (max-width: 900px) {
+        .split-layout { flex-direction: column; }
+        .left-panel { width: 100%; padding: 3rem 2rem; min-height: 40vh; }
+        .right-panel { width: 100%; min-height: 60vh; }
+        .split-footer { flex-direction: column; gap: 1rem; text-align: center; }
     }
 </style>
 
-<div class="m-auth-container">
-    <div class="m-auth-card">
-        <span class="material-symbols-outlined m-auth-icon">assignment_ind</span>
-        <h1 class="m-auth-title">Acceso Afiliados</h1>
-        <p class="m-auth-subtitle">Ingresa a tu panel para ver tus comisiones</p>
+<div class="split-layout">
+    <!-- Panel Izquierdo: Branding -->
+    <div class="left-panel">
+        <div class="branding-content">
+            <h1>Portal de Afiliados Shop-Fusion</h1>
+            <p>Accede a tu panel personal para gestionar enlaces de referidos, revisar comisiones en tiempo real y optimizar tus ventas.</p>
+        </div>
+    </div>
 
-        <form method="POST" action="{{ url_for('auth.afiliado_login') }}">
-            <!-- Token CSRF -->
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            
-            <div class="m-auth-form-group">
-                <label for="codigo" class="m-auth-label">Código de Afiliado</label>
-                <input type="text" id="codigo" name="codigo" class="m-auth-input" required autofocus>
+    <!-- Panel Derecho: Formulario -->
+    <div class="right-panel">
+        
+        <!-- Alertas Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert-float alert-{{ category }}">
+                        <span>{{ message }}</span>
+                        <span class="material-symbols-outlined" style="cursor:pointer;" onclick="this.parentElement.style.display='none'">close</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="form-container">
+            <div class="login-box">
+                <div class="logo-text">Shop-Fusion</div>
+
+                <div class="form-header">
+                    <div class="form-title-group">
+                        <span class="material-symbols-outlined form-icon">assignment_ind</span>
+                        <h2 class="form-title">Acceso Afiliados</h2>
+                    </div>
+                    <p class="form-subtitle">Ingresa a tu panel para ver tus comisiones y métricas.</p>
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.afiliado_login') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="form-group">
+                        <label for="codigo" class="form-label">Código de Afiliado</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="codigo" name="codigo" class="form-control" placeholder="Ej: AFI-001" required autofocus>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <div class="input-wrapper">
+                            <a href="#" class="forgot-link">¿Olvidó su clave?</a>
+                            <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit">Ingresar al Panel</button>
+                </form>
+
+                <div class="form-footer-links">
+                    <a href="{{ url_for('tienda.unete') }}" class="footer-link">
+                        <span class="material-symbols-outlined">person_add</span>
+                        ¿Aún no eres afiliado? Únete aquí
+                    </a>
+                    <a href="{{ url_for('auth.admin_login') }}" class="footer-link">
+                        <span class="material-symbols-outlined">admin_panel_settings</span>
+                        Acceso Administrativo
+                    </a>
+                </div>
             </div>
+        </div>
 
-            <div class="m-auth-form-group">
-                <label for="password" class="m-auth-label">Contraseña</label>
-                <input type="password" id="password" name="password" class="m-auth-input" required>
+        <div class="split-footer">
+            <div class="split-footer-text">
+                © 2024 Shop-Fusion Enterprise. Reservados todos los derechos.
             </div>
-
-            <button type="submit" class="m-auth-btn">Ingresar al Panel</button>
-        </form>
-
-        <div class="m-auth-footer">
-            <p>¿Aún no eres afiliado? <a href="{{ url_for('tienda.unete') }}">Únete aquí</a></p>
-            <p><a href="{{ url_for('auth.admin_login') }}">Login Administrador</a></p>
+            <div class="split-footer-links">
+                <a href="#">Soporte Técnico</a>
+                <span>•</span>
+                <a href="#">Políticas de Seguridad</a>
+                <span>•</span>
+                <a href="#">Cumplimiento Legal</a>
+            </div>
         </div>
     </div>
 </div>
