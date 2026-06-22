@@ -20,13 +20,16 @@ def sanitize_html(text):
 
 # [FASE 3 / HARDENING - CIFRADO PII]
 
-# Obtener la llave maestra desde el entorno (Fase 1)
+# Obtener la llave maestra desde el entorno
 _fernet_key = os.environ.get('FERNET_KEY')
 if not _fernet_key:
-    # Si no existe, generamos una solo para desarrollo (esto dará error en producción Fase 1)
-    if os.environ.get('FLASK_ENV') == 'production':
-        raise EnvironmentError("ERROR DE SEGURIDAD: FERNET_KEY no configurada en producción.")
-    _fernet_key = Fernet.generate_key().decode()
+    # SEGURIDAD CRÍTICA: Jamás generar una llave efímera en memoria.
+    # Si el servidor se reinicia, la llave cambia y toda la base de datos se vuelve irrecuperable.
+    raise EnvironmentError(
+        "ERROR CRÍTICO DE PÉRDIDA DE DATOS: FERNET_KEY no está configurada en el entorno. "
+        "Debes generar una llave permanente (ej. con python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\") "
+        "y guardarla en tu archivo .env para evitar destrucción de datos encriptados al reiniciar."
+    )
 
 cipher_suite = Fernet(_fernet_key.encode())
 

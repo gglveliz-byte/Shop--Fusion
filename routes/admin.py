@@ -508,29 +508,42 @@ def afiliados():
     from sqlalchemy import func
 
     afiliados_data = []
+    
+    # 1. OPTIMIZACIÓN N+1: Agrupar comisiones (pagadas y generadas) en una sola consulta
+    comisiones_stats = db.session.query(
+        Comision.afiliado_id,
+        Comision.estado,
+        func.sum(Comision.monto).label('total')
+    ).group_by(Comision.afiliado_id, Comision.estado).all()
+    
+    # Diccionario rápido para mapear comisiones: { afiliado_id: {'pagada': X, 'generada': Y} }
+    stats_dict = {}
+    for af_id, estado, total in comisiones_stats:
+        if af_id not in stats_dict:
+            stats_dict[af_id] = {'pagada': 0, 'generada': 0}
+        stats_dict[af_id][estado] = total or 0
+
+    # 2. OPTIMIZACIÓN N+1: Contar todos los pedidos pagados agrupados por afiliado en una sola consulta
+    ventas_stats = db.session.query(
+        Pedido.afiliado_id,
+        func.count(Pedido.id).label('num_ventas')
+    ).filter(Pedido.estado == 'pagado').group_by(Pedido.afiliado_id).all()
+
+    ventas_dict = {af_id: count for af_id, count in ventas_stats}
+
+    # 3. Obtener afiliados y mapear (Solo 3 consultas en total para toda la tabla)
     afiliados = Afiliado.query.order_by(Afiliado.creado_en.desc()).all()
 
     for afiliado in afiliados:
-        # Total ganado (comisiones pagadas)
-        total_ganado = db.session.query(func.sum(Comision.monto))\
-            .filter(Comision.afiliado_id == afiliado.id, Comision.estado == 'pagada')\
-            .scalar() or 0
-
-        # Total generado pero no pagado (comisiones generadas)
-        total_generado = db.session.query(func.sum(Comision.monto))\
-            .filter(Comision.afiliado_id == afiliado.id, Comision.estado == 'generada')\
-            .scalar() or 0
-
-        # Número de ventas (pedidos pagados)
-        num_ventas = Pedido.query.filter(
-            Pedido.afiliado_id == afiliado.id,
-            Pedido.estado == 'pagado'
-        ).count()
-
+        af_stats = stats_dict.get(afiliado.id, {})
+        total_ganado = af_stats.get('pagada', 0)
+        total_generado = af_stats.get('generada', 0)
+        num_ventas = ventas_dict.get(afiliado.id, 0)
+        
         afiliados_data.append({
             'afiliado': afiliado,
             'total_ganado': float(total_ganado),
-            'total_pendiente': float(total_generado),  # Comisiones generadas pero no pagadas
+            'total_pendiente': float(total_generado),
             'num_ventas': num_ventas
         })
 

@@ -29,6 +29,19 @@ def init_database():
         logger.info("Creando tablas en la base de datos...")
 
         # Eliminar tablas existentes (¡CUIDADO en producción!)
+        import os
+        
+        # SEGURIDAD CRÍTICA: Prevenir borrado accidental de la base de datos en producción
+        if os.environ.get('FLASK_ENV') == 'production':
+            print("\n" + "!"*60)
+            print("¡ADVERTENCIA CRÍTICA: MODO PRODUCCIÓN DETECTADO!")
+            print("Esta acción DESTRUIRÁ TODA LA BASE DE DATOS (Usuarios, Pedidos, etc).")
+            print("!"*60 + "\n")
+            confirmacion = input("¿ESTÁS SEGURO? (escribe 'YES'): ")
+            if confirmacion != 'YES':
+                logger.error("Abortando inicialización. La base de datos no fue tocada.")
+                sys.exit(1)
+
         logger.info("Eliminando tablas existentes...")
         db.drop_all()
 

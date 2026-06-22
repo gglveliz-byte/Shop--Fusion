@@ -796,9 +796,16 @@ def pedido_exitoso(pedido_id):
 
 
 @bp.route('/api/get-vendedor-whatsapp')
+@limiter.limit("5 per minute", error_message='Límite de solicitudes excedido. Intenta más tarde.')
 def get_vendedor_whatsapp():
-    """Obtener WhatsApp del vendedor por código"""
+    """Obtener WhatsApp del vendedor por código (Protegido contra scraping)"""
     from models import Afiliado
+    
+    # SEGURIDAD CRÍTICA: Prevenir el scraping automatizado limitando llamadas externas
+    referer = request.headers.get('Referer', '')
+    if not referer or request.host not in referer:
+        log_security_event('SCRAPING_ATTEMPT', 'BLOCKED', details="Intento de extracción de número de WhatsApp desde origen no autorizado")
+        return jsonify({'error': 'Acceso denegado por políticas de seguridad (Restricción de Origen)'}), 403
     
     codigo = request.args.get('codigo')
     if not codigo:
