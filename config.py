@@ -68,6 +68,7 @@ class Config:
     PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')
     PAYPAL_SECRET = os.environ.get('PAYPAL_SECRET')
     PAYPAL_MODE = os.environ.get('PAYPAL_MODE', 'sandbox')  # 'sandbox' o 'live'
+    PAYPAL_WEBHOOK_ID = os.environ.get('PAYPAL_WEBHOOK_ID')  # ID del Webhook para validación criptográfica
 
     # [FASE 3 / E39 - ERRORES MEDIOS] Seguridad de Cookies de Sesión
     # HTTPOnly: Impide que JavaScript acceda a la cookie (Protección XSS)
