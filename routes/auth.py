@@ -8,6 +8,8 @@ from flask_login import login_user, logout_user, current_user
 from datetime import datetime, timedelta  
 from utils.security_logger import log_security_event
 from utils.rate_limit import limiter
+# FASE 2: Integración de Redis para prevención de evasiones multi-worker.
+from utils.rate_limit import redis_client
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -27,15 +29,15 @@ def admin_login():
 
 
     #INICIA LOS CAMBIOS INDICADOS EN FASE 1
-    # SEGURIDAD: Verificar si el usuario está bloqueado temporalmente por demasiados intentos fallidos
-    # Ayuda a mitigar ataques de fuerza bruta al forzar un tiempo de espera
-    if 'admin_login_lock' in session:
-        lock_until = datetime.fromisoformat(session['admin_login_lock'])
-        if datetime.now() < lock_until:
-            minutos_restantes = int((lock_until - datetime.now()).total_seconds() // 60) + 1
-            log_security_event('LOGIN_ATTEMPT', 'BLOCKED', details=f"Admin login blocked for {minutos_restantes}m")
-            flash(f'Demasiados intentos fallidos. Por seguridad, espera {minutos_restantes} minuto(s).', 'error')
-            return render_template('auth/admin_login.html')
+    # SEGURIDAD: Verificar si la IP está bloqueada temporalmente por demasiados intentos fallidos
+    # FASE 2: Rastreo por IP estricta y Redis (Spoofing mitigado por ProxyFix en app.py)
+    ip = request.remote_addr
+    lock_key = f"admin_login_lock:{ip}"
+    if redis_client.exists(lock_key):
+        minutos_restantes = int(redis_client.ttl(lock_key) // 60) + 1
+        log_security_event('LOGIN_ATTEMPT', 'BLOCKED', details=f"Admin login blocked for {minutos_restantes}m from {ip}")
+        flash(f'Demasiados intentos fallidos. Por seguridad, espera {minutos_restantes} minuto(s).', 'error')
+        return render_template('auth/admin_login.html')
 
     if request.method == 'POST':
         username = request.form.get('username')
@@ -92,8 +94,8 @@ def admin_login():
             session['user_id'] = f'admin_{admin.id}'
 
             # Login exitoso: Limpiar rastros de intentos fallidos previos
-            session.pop('admin_login_attempts', None)
-            session.pop('admin_login_lock', None)
+            redis_client.delete(f"admin_failed_attempts:{ip}")
+            redis_client.delete(lock_key)
 
             log_security_event('LOGIN', 'SUCCESS', user_id=admin.username, details="Admin login successful")
             flash(f'¡Bienvenido {admin.username}!', 'success')
@@ -102,19 +104,21 @@ def admin_login():
             next_page = request.args.get('next')
             return redirect(next_page if next_page else url_for('admin.dashboard'))
         else:
-            # SEGURIDAD: Incrementar contador de intentos fallidos
-            attempts = session.get('admin_login_attempts', 0) + 1
-            session['admin_login_attempts'] = attempts
+            # SEGURIDAD: Incrementar contador de intentos fallidos vinculados a la IP
+            attempts_key = f"admin_failed_attempts:{ip}"
+            attempts = redis_client.incr(attempts_key)
+            if attempts == 1:
+                redis_client.expire(attempts_key, 3600) # Expirar contador tras 1 hora
             
-            # Si se supera el límite definido en config.py, se bloquea la sesión temporalmente
+            # Si se supera el límite definido en config.py, se bloquea la IP en Redis
             if attempts >= current_app.config.get('LOGIN_ATTEMPTS_LIMIT', 5):
                 lock_time = current_app.config.get('LOGIN_LOCK_MINUTES', 5)
-                session['admin_login_lock'] = (datetime.now() + timedelta(minutes=lock_time)).isoformat()
-                log_security_event('LOGIN_BRUTE_FORCE', 'BLOCKED', user_id=username, details=f"Admin locked for {lock_time}m after {attempts} attempts")
+                redis_client.setex(lock_key, lock_time * 60, "locked")
+                log_security_event('LOGIN_BRUTE_FORCE', 'BLOCKED', user_id=username, details=f"Admin locked IP {ip} for {lock_time}m after {attempts} attempts")
                 flash(f'Has superado el límite de intentos. Bloqueado por {lock_time} minutos.', 'error')
             else:
                 intentos_restantes = current_app.config.get('LOGIN_ATTEMPTS_LIMIT', 5) - attempts
-                log_security_event('LOGIN_ATTEMPT', 'FAILURE', user_id=username, details=f"Wrong admin credentials. Attempt {attempts}")
+                log_security_event('LOGIN_ATTEMPT', 'FAILURE', user_id=username, details=f"Wrong admin credentials from {ip}. Attempt {attempts}")
                 flash(f'Usuario o contraseña incorrectos. Intentos restantes: {intentos_restantes}', 'error')
 
     return render_template('auth/admin_login.html')
@@ -126,14 +130,14 @@ def afiliado_login():
     """Login de afiliado"""
     from models import Afiliado
 
-    # SEGURIDAD (E21): Verificar si el usuario está bloqueado temporalmente
-    if 'afiliado_login_lock' in session:
-        lock_until = datetime.fromisoformat(session['afiliado_login_lock'])
-        if datetime.now() < lock_until:
-            minutos_restantes = int((lock_until - datetime.now()).total_seconds() // 60) + 1
-            log_security_event('LOGIN_ATTEMPT', 'BLOCKED', details=f"Affiliate login blocked for {minutos_restantes}m")
-            flash(f'Demasiados intentos fallidos. Por seguridad, espera {minutos_restantes} minuto(s).', 'error')
-            return render_template('auth/afiliado_login.html')
+    # SEGURIDAD (E21): Verificar si la IP está bloqueada temporalmente
+    ip = request.remote_addr
+    lock_key = f"afiliado_login_lock:{ip}"
+    if redis_client.exists(lock_key):
+        minutos_restantes = int(redis_client.ttl(lock_key) // 60) + 1
+        log_security_event('LOGIN_ATTEMPT', 'BLOCKED', details=f"Affiliate login blocked for {minutos_restantes}m from {ip}")
+        flash(f'Demasiados intentos fallidos. Por seguridad, espera {minutos_restantes} minuto(s).', 'error')
+        return render_template('auth/afiliado_login.html')
 
     if request.method == 'POST':
         email = request.form.get('email')
@@ -158,8 +162,8 @@ def afiliado_login():
             session['user_id'] = f'afiliado_{afiliado.id}'
             
             # Limpiar rastros de intentos fallidos
-            session.pop('afiliado_login_attempts', None)
-            session.pop('afiliado_login_lock', None)
+            redis_client.delete(f"afiliado_failed_attempts:{ip}")
+            redis_client.delete(lock_key)
 
             log_security_event('LOGIN', 'SUCCESS', user_id=afiliado.email, details="Affiliate login successful")
             flash(f'¡Bienvenido {afiliado.nombre}!', 'success')
@@ -168,19 +172,21 @@ def afiliado_login():
             next_page = request.args.get('next')
             return redirect(next_page if next_page else url_for('afiliado.dashboard'))
         else:
-            # SEGURIDAD (E21): Incrementar contador de intentos fallidos
-            attempts = session.get('afiliado_login_attempts', 0) + 1
-            session['afiliado_login_attempts'] = attempts
+            # SEGURIDAD (E21): Incrementar contador de intentos fallidos vinculados a la IP
+            attempts_key = f"afiliado_failed_attempts:{ip}"
+            attempts = redis_client.incr(attempts_key)
+            if attempts == 1:
+                redis_client.expire(attempts_key, 3600) # Expirar contador tras 1 hora
             
             limit = current_app.config.get('LOGIN_ATTEMPTS_LIMIT', 5)
             if attempts >= limit:
                 lock_time = current_app.config.get('LOGIN_LOCK_MINUTES', 5)
-                session['afiliado_login_lock'] = (datetime.now() + timedelta(minutes=lock_time)).isoformat()
-                log_security_event('LOGIN_BRUTE_FORCE', 'BLOCKED', user_id=email, details=f"Affiliate locked for {lock_time}m after {attempts} attempts")
+                redis_client.setex(lock_key, lock_time * 60, "locked")
+                log_security_event('LOGIN_BRUTE_FORCE', 'BLOCKED', user_id=email, details=f"Affiliate locked IP {ip} for {lock_time}m after {attempts} attempts")
                 flash(f'Has superado el límite de intentos. Bloqueado por {lock_time} minutos.', 'error')
             else:
                 intentos_restantes = limit - attempts
-                log_security_event('LOGIN_ATTEMPT', 'FAILURE', user_id=email, details=f"Wrong affiliate credentials. Attempt {attempts}")
+                log_security_event('LOGIN_ATTEMPT', 'FAILURE', user_id=email, details=f"Wrong affiliate credentials from {ip}. Attempt {attempts}")
                 flash(f'Email o contraseña incorrectos. Intentos restantes: {intentos_restantes}', 'error')
 
     return render_template('auth/afiliado_login.html')

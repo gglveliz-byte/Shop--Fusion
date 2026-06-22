@@ -42,6 +42,11 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    # FASE 2: Integrar ProxyFix para resolver la vulnerabilidad de Spoofing de IP
+    # Asegura que request.remote_addr contenga la IP real del cliente detrás de Render/Nginx
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
     # Permitir CORS para el widget externo
     CORS(app, resources={r"/ai/*": {"origins": "*"}})
 
