@@ -52,23 +52,8 @@ def index():
                     break
             categorias_activas[cat] = {'nombre': nombre_cat, 'count': count}
 
-    # Convertir productos a diccionarios para JSON
-    productos = []
-    for p in productos_db:
-        # Obtener todas las imágenes usando el método helper
-        todas_imagenes = p.obtener_todas_imagenes()
-
-        productos.append({
-            'id': p.id,
-            'nombre': p.nombre,
-            'descripcion': p.descripcion,
-            'categoria': p.categoria or 'otros',
-            'precio_final': float(p.precio_final),
-            'precio_oferta': float(p.precio_oferta) if p.precio_oferta else None,
-            'imagen': todas_imagenes[0] if todas_imagenes else None,
-            'imagenes': todas_imagenes,
-            'stock': p.stock
-        })
+    # FASE 4: Serialización optimizada y unificada (DRY)
+    productos = [p.to_dict() for p in productos_db]
 
     # Número de WhatsApp del admin
     whatsapp_numero = format_whatsapp(current_app.config.get('WHATSAPP_NUMBER', ''))
@@ -100,12 +85,9 @@ def producto_detalle(id):
         flash('Este producto no está disponible', 'error')
         return redirect(url_for('tienda.index'))
 
-    # WhatsApp del admin
-    whatsapp_numero = current_app.config.get('WHATSAPP_NUMBER', '')
-    if whatsapp_numero.startswith('0'):
-        whatsapp_numero = '593' + whatsapp_numero[1:]
-    elif not whatsapp_numero.startswith('+') and not whatsapp_numero.startswith('593'):
-        whatsapp_numero = '593' + whatsapp_numero
+    # WhatsApp del admin (FASE 4: Reutilización de utils/validators.py)
+    from utils.validators import format_whatsapp
+    whatsapp_numero = format_whatsapp(current_app.config.get('WHATSAPP_NUMBER', ''))
 
     return render_template('tienda/producto.html',
                          producto=producto,
@@ -349,11 +331,9 @@ def checkout():
             if afiliado and afiliado.whatsapp:
                 whatsapp_numero = afiliado.whatsapp
         
-        # Formatear número
-        if whatsapp_numero.startswith('0'):
-            whatsapp_numero = '593' + whatsapp_numero[1:]
-        elif not whatsapp_numero.startswith('+') and not whatsapp_numero.startswith('593'):
-            whatsapp_numero = '593' + whatsapp_numero
+        # Formatear número (FASE 4: Reutilización de utils/validators.py)
+        from utils.validators import format_whatsapp
+        whatsapp_numero = format_whatsapp(whatsapp_numero)
 
         import urllib.parse
         mensaje_encoded = urllib.parse.quote(mensaje)
@@ -858,27 +838,12 @@ def tienda_vendedor(codigo):
                     break
             categorias_activas[cat] = {'nombre': nombre_cat, 'count': count}
 
-    # Convertir productos a diccionarios para JSON
-    productos = []
-    for p in productos_db:
-        todas_imagenes = p.obtener_todas_imagenes()
-        productos.append({
-            'id': p.id,
-            'nombre': p.nombre,
-            'descripcion': p.descripcion,
-            'categoria': p.categoria or 'otros',
-            'precio_final': float(p.precio_final),
-            'precio_oferta': float(p.precio_oferta) if p.precio_oferta else None,
-            'imagen': todas_imagenes[0] if todas_imagenes else None,
-            'imagenes': todas_imagenes
-        })
+    # FASE 4: Serialización optimizada y unificada (DRY)
+    productos = [p.to_dict() for p in productos_db]
 
-    # WhatsApp del vendedor
-    whatsapp_numero = vendedor.whatsapp or current_app.config.get('WHATSAPP_NUMBER', '')
-    if whatsapp_numero.startswith('0'):
-        whatsapp_numero = '593' + whatsapp_numero[1:]
-    elif not whatsapp_numero.startswith('+') and not whatsapp_numero.startswith('593'):
-        whatsapp_numero = '593' + whatsapp_numero
+    # WhatsApp del vendedor (FASE 4: Reutilización de utils/validators.py)
+    from utils.validators import format_whatsapp
+    whatsapp_numero = format_whatsapp(vendedor.whatsapp or current_app.config.get('WHATSAPP_NUMBER', ''))
 
     return render_template('tienda/index.html',
                          productos=productos,

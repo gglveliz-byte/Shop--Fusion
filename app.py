@@ -36,6 +36,10 @@ csrf = CSRFProtect()
 # [FASE 3 / SOPORTE] Instancia global de Flask-Mail
 mail = Mail()
 
+# FASE 4: Inicialización de Flask-Migrate para gestión segura de esquemas BD
+from flask_migrate import Migrate
+migrate = Migrate()
+
 
 def create_app(config_class=Config):
     """Factory para crear la aplicación Flask"""
@@ -52,6 +56,7 @@ def create_app(config_class=Config):
 
     # Inicializar extensiones con la app
     db.init_app(app)
+    migrate.init_app(app, db)
     login_manager.init_app(app)
     
     # [FASE 3 / SEGURIDAD E22]
@@ -200,28 +205,9 @@ def create_app(config_class=Config):
             error_message='La solicitud no pudo ser procesada.'
         ), 400
 
-    # Crear tablas en la base de datos
-    with app.app_context():
-        # ---------- MIGRACIÓN SEGURA DE CAMPOS DE PAGO ----------
-        # Si la tabla ya existe, añadimos columnas faltantes sin perder datos.
-        # Compatible con SQLite (ALTER TABLE permite ADD COLUMN) y PostgreSQL.
-        from sqlalchemy import inspect, text
-        insp = inspect(db.engine)
-        if 'pedidos' in insp.get_table_names():
-            cols = [c['name'] for c in insp.get_columns('pedidos')]
-            if 'metodo_pago' not in cols:
-                db.session.execute(text('ALTER TABLE pedidos ADD COLUMN metodo_pago VARCHAR(30)'))
-                app.logger.info('Columna metodo_pago añadida a pedidos')
-            if 'pago_referencia' not in cols:
-                db.session.execute(text('ALTER TABLE pedidos ADD COLUMN pago_referencia VARCHAR(100)'))
-                app.logger.info('Columna pago_referencia añadida a pedidos')
-                # Crear índice único si la DB lo permite (SQLite acepta UNIQUE en columna separada)
-                try:
-                    db.session.execute(text('CREATE UNIQUE INDEX ix_pedido_pago_ref ON pedidos(pago_referencia)'))
-                except Exception:
-                    pass
-        db.session.commit()
-        # -----------------------------------------------------
+    # FASE 4: Se eliminó db.create_all() y las migraciones manuales.
+    # Ahora el esquema de base de datos se gestionará profesionalmente con Flask-Migrate (Alembic)
+    # mediante los comandos: flask db init, flask db migrate, flask db upgrade.
 
     return app
 

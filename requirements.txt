@@ -18,3 +18,4 @@ beautifulsoup4==4.12.3
 Flask-Mail==0.10.0
 markdown==3.5.1
 redis==5.0.3
+Flask-Migrate==4.0.5

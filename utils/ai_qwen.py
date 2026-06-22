@@ -528,13 +528,14 @@ Tu tono global es altamente profesional y transparente. Eres servicial y persuas
         # Configuración del cliente con el endpoint de Singapore (International)
         api_key = os.environ.get('DASHSCOPE_API_KEY')
         
-        # Inicializamos el cliente solo si la API KEY existe
-        self.client = None
-        if api_key:
-            self.client = OpenAI(
-                api_key=api_key,
-                base_url="https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
-            )
+        # FASE 4: Validación de seguridad de la API Key para evitar excepciones no controladas.
+        if not api_key or len(api_key) < 10 or not api_key.startswith('sk-'):
+            raise ValueError("DASHSCOPE_API_KEY no configurada o inválida en las variables de entorno.")
+            
+        self.client = OpenAI(
+            api_key=api_key,
+            base_url="https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+        )
 
     def get_response(self, prompt, model=None, system_instruction=None, history=None, tools=None):
         """Envía consulta a la IA con protección total (Try-Catch) y 
