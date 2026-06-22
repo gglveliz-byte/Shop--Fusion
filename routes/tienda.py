@@ -312,7 +312,10 @@ def checkout():
         #INICIA LOS CAMBIOS INDICADOS EN FASE 3
         # SUSTRACCIÓN FORZOSA (Mitiga E41): Descontar inventario tras creación exitosa
         for item in carrito:
-            producto = Producto.query.get(item['id'])
+            """Correccion grave models.py, bloqueo pesimista:
+            Usamos .with_for_update() para bloquear el registro y evitar que otro usuario
+            compre el mismo producto al mismo tiempo. Luego verificamos que el producto este activo"""
+            producto = Producto.query.filter_by(id=item['id'], activo=True).with_for_update().first()
             if producto:
                 producto.reducir_stock(int(item['cantidad']))
         #FIN DE LOS CAMBIOS INDICADOS EN FASE 3
