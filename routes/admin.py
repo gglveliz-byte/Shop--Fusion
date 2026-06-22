@@ -111,30 +111,22 @@ def dashboard():
     """Dashboard principal del admin"""
     # Estadísticas generales
     total_productos = Producto.query.filter_by(activo=True).count()
+    total_afiliados = Afiliado.query.filter_by(activo=True).count()
     
-    # Solo pedidos sin vendedor o validados por vendedores
-    total_pedidos = Pedido.query.filter(
+    # FASE 3: Optimización - Consultas agrupadas para métricas (Reduce 3 roundtrips a PostgreSQL a 1)
+    pedidos_stats = db.session.query(
+        Pedido.estado,
+        db.func.count(Pedido.id)
+    ).filter(
         db.or_(
             Pedido.afiliado_id.is_(None),
             Pedido.validado_por_vendedor == True
         )
-    ).count()
+    ).group_by(Pedido.estado).all()
     
-    pedidos_pendientes = Pedido.query.filter(
-        db.or_(
-            db.and_(Pedido.afiliado_id.is_(None), Pedido.estado == 'pendiente'),
-            db.and_(Pedido.validado_por_vendedor == True, Pedido.estado == 'pendiente')
-        )
-    ).count()
-    
-    pedidos_pagados = Pedido.query.filter(
-        db.or_(
-            db.and_(Pedido.afiliado_id.is_(None), Pedido.estado == 'pagado'),
-            db.and_(Pedido.validado_por_vendedor == True, Pedido.estado == 'pagado')
-        )
-    ).count()
-    
-    total_afiliados = Afiliado.query.filter_by(activo=True).count()
+    total_pedidos = sum(count for _, count in pedidos_stats)
+    pedidos_pendientes = next((count for estado, count in pedidos_stats if estado == 'pendiente'), 0)
+    pedidos_pagados = next((count for estado, count in pedidos_stats if estado == 'pagado'), 0)
 
     # Comisiones pendientes de pago
     comisiones_pendientes = db.session.query(db.func.sum(Comision.monto))\

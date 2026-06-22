@@ -44,11 +44,17 @@ def dashboard():
     ultimas_comisiones = Comision.query.filter_by(afiliado_id=afiliado.id)\
         .order_by(Comision.creado_en.desc()).limit(5).all()
 
-    # Estadísticas de pedidos
-    total_pedidos = Pedido.query.filter_by(afiliado_id=afiliado.id).count()
-    pedidos_pendientes = Pedido.query.filter_by(afiliado_id=afiliado.id, estado='pendiente').count()
-    pedidos_pagados = Pedido.query.filter_by(afiliado_id=afiliado.id, estado='pagado').count()
-    pedidos_validados = Pedido.query.filter_by(afiliado_id=afiliado.id, validado_por_vendedor=True).count()
+    # FASE 3: Optimización - Consultas agrupadas para métricas
+    from sqlalchemy import func
+    estados = db.session.query(Pedido.estado, func.count(Pedido.id))\
+        .filter(Pedido.afiliado_id == afiliado.id)\
+        .group_by(Pedido.estado).all()
+
+    total_pedidos = sum(count for _, count in estados)
+    pedidos_pendientes = next((count for est, count in estados if est == 'pendiente'), 0)
+    pedidos_pagados = next((count for est, count in estados if est == 'pagado'), 0)
+    pedidos_validados = db.session.query(func.count(Pedido.id))\
+        .filter(Pedido.afiliado_id == afiliado.id, Pedido.validado_por_vendedor == True).scalar() or 0
 
     # Link de la tienda del vendedor
     link_tienda = url_for('tienda.tienda_vendedor', codigo=afiliado.codigo, _external=True)
@@ -76,7 +82,11 @@ def productos():
     from models import db
 
     afiliado = current_user
-    productos = Producto.query.filter_by(activo=True).order_by(Producto.creado_en.desc()).all()
+    
+    # FASE 3: Paginación de productos en vista de afiliado
+    page = request.args.get('page', 1, type=int)
+    pagination = Producto.query.filter_by(activo=True).order_by(Producto.creado_en.desc()).paginate(page=page, per_page=12, error_out=False)
+    productos = pagination.items
 
     # Obtener categorías que tienen productos activos
     categorias_con_productos = db.session.query(
@@ -112,7 +122,8 @@ def productos():
     return render_template('afiliado/productos.html',
                          productos=productos_con_comision,
                          categorias=categorias_activas,
-                         afiliado=afiliado)
+                         afiliado=afiliado,
+                         pagination=pagination)
 
 
 @bp.route('/comisiones')
@@ -164,11 +175,17 @@ def pedidos():
 
     pedidos = query.order_by(Pedido.creado_en.desc()).all()
 
-    # Estadísticas
-    total_pedidos = Pedido.query.filter_by(afiliado_id=afiliado.id).count()
-    pedidos_pendientes = Pedido.query.filter_by(afiliado_id=afiliado.id, estado='pendiente').count()
-    pedidos_pagados = Pedido.query.filter_by(afiliado_id=afiliado.id, estado='pagado').count()
-    pedidos_validados = Pedido.query.filter_by(afiliado_id=afiliado.id, validado_por_vendedor=True).count()
+    # FASE 3: Optimización - Consultas agrupadas para métricas
+    from sqlalchemy import func
+    estados = db.session.query(Pedido.estado, func.count(Pedido.id))\
+        .filter(Pedido.afiliado_id == afiliado.id)\
+        .group_by(Pedido.estado).all()
+
+    total_pedidos = sum(count for _, count in estados)
+    pedidos_pendientes = next((count for est, count in estados if est == 'pendiente'), 0)
+    pedidos_pagados = next((count for est, count in estados if est == 'pagado'), 0)
+    pedidos_validados = db.session.query(func.count(Pedido.id))\
+        .filter(Pedido.afiliado_id == afiliado.id, Pedido.validado_por_vendedor == True).scalar() or 0
 
     return render_template('afiliado/pedidos.html', 
                          pedidos=pedidos,
