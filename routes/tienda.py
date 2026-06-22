@@ -921,39 +921,90 @@ def paypal_webhook():
     """
     [FASE 4 / E43 - ERRORES MEDIOS] Blindaje Transaccional
     Maneja notificaciones asíncronas de PayPal para evitar pérdida de pedidos.
+    ¡SEGURIDAD CRÍTICA APLICADA!: Verificación criptográfica de la firma del webhook.
     """
     from models import Pedido
     from app import db
+    import requests
     
-    # PayPal envía los datos en formato JSON
+    # 1. Extraer cabeceras criptográficas de PayPal
+    auth_algo = request.headers.get('PAYPAL-AUTH-ALGO')
+    cert_url = request.headers.get('PAYPAL-CERT-URL')
+    transmission_id = request.headers.get('PAYPAL-TRANSMISSION-ID')
+    transmission_sig = request.headers.get('PAYPAL-TRANSMISSION-SIG')
+    transmission_time = request.headers.get('PAYPAL-TRANSMISSION-TIME')
+
+    # 2. Validación: Si falta alguna cabecera, bloquear el intento (posible spoofing)
+    if not all([auth_algo, cert_url, transmission_id, transmission_sig, transmission_time]):
+        log_security_event('PAYPAL_WEBHOOK', 'BLOCKED', details="Intento de webhook sin cabeceras criptográficas válidas.")
+        return jsonify({'error': 'Violación de seguridad: Faltan firmas criptográficas'}), 403
+
     try:
         data = request.get_json()
         if not data:
             current_app.logger.warning("Webhook de PayPal recibido sin datos JSON")
             return jsonify({'status': 'no_data'}), 400
 
+        # 3. Verificación Criptográfica mediante API oficial de PayPal
+        access_token = get_paypal_access_token()
+        webhook_id = current_app.config.get('PAYPAL_WEBHOOK_ID')
+
+        if not access_token:
+            current_app.logger.error("No se pudo obtener el token de PayPal para verificar el webhook")
+            return jsonify({'error': 'Error de autenticación interna'}), 500
+            
+        if not webhook_id:
+            current_app.logger.error("VULNERABILIDAD CRÍTICA: PAYPAL_WEBHOOK_ID no está configurado. Rechazando webhook por seguridad.")
+            return jsonify({'error': 'Sistema no configurado para validación criptográfica'}), 500
+
+        # Validación estricta obligatoria contra PayPal
+        mode = current_app.config.get('PAYPAL_MODE', 'sandbox')
+        verify_url = "https://api-m.paypal.com/v1/notifications/verify-webhook-signature" if mode == 'live' else "https://api-m.sandbox.paypal.com/v1/notifications/verify-webhook-signature"
+        
+        verify_payload = {
+            "auth_algo": auth_algo,
+            "cert_url": cert_url,
+            "transmission_id": transmission_id,
+            "transmission_sig": transmission_sig,
+            "transmission_time": transmission_time,
+            "webhook_id": webhook_id,
+            "webhook_event": data
+        }
+        
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+        
+        resp = requests.post(verify_url, headers=headers, json=verify_payload)
+        if resp.status_code == 200:
+            verification_status = resp.json().get('verification_status')
+            if verification_status != 'SUCCESS':
+                log_security_event('PAYPAL_WEBHOOK', 'BLOCKED', details="Firma criptográfica manipulada (rechazada por PayPal)")
+                return jsonify({'error': 'Firma criptográfica inválida. Pago falso detectado.'}), 403
+        else:
+            current_app.logger.error(f"Fallo verificando firma de PayPal: {resp.text}")
+            return jsonify({'error': 'Error comunicando con PayPal para validación'}), 502
+
+        # 4. Procesamiento Seguro del Evento (Solo si la validación criptográfica pasó o no está configurado el webhook_id)
         event_type = data.get('event_type')
         resource = data.get('resource', {})
-        current_app.logger.info(f"Webhook PayPal recibido: {event_type}")
+        current_app.logger.info(f"Webhook PayPal recibido y validado: {event_type}")
 
         # Verificamos eventos de pago completado
         if event_type in ['PAYMENT.CAPTURE.COMPLETED', 'CHECKOUT.ORDER.APPROVED']:
-            # El ID de la transacción o el ID personalizado ayuda a rastrear el pedido
             paypal_id = resource.get('id')
-            custom_id = resource.get('custom_id') # Campo clave para vincular con nuestra DB
+            custom_id = resource.get('custom_id') 
             
-            current_app.logger.info(f"Pago confirmado por Webhook. PayPal ID: {paypal_id}, Custom ID: {custom_id}")
-            
-            # Si logramos vincularlo con un pedido existente que no esté marcado como pagado
             if custom_id:
                 pedido = Pedido.query.get(custom_id)
                 if pedido and pedido.estado != 'pagado':
                     pedido.estado = 'pagado'
                     pedido.marcar_como_pagado()
                     db.session.commit()
-                    current_app.logger.info(f"Pedido {custom_id} actualizado a 'pagado' vía Webhook")
+                    current_app.logger.info(f"Pedido {custom_id} actualizado a 'pagado' vía Webhook Seguro")
             
-            return jsonify({'status': 'procesado'}), 200
+            return jsonify({'status': 'procesado_seguro'}), 200
 
         return jsonify({'status': 'evento_no_critico'}), 200
 

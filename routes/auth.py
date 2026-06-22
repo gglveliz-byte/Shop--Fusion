@@ -59,9 +59,13 @@ def admin_login():
             return render_template('auth/admin_login.html')
 
         # 1. Validar contra las credenciales de administrador mediante .env
+        from werkzeug.security import check_password_hash
+        
+        # SEGURIDAD CRÍTICA (FASE 1): Reemplazo de comparación en texto plano
+        # La contraseña ahora se valida exclusivamente contra el hash criptográfico del .env
         is_correct_admin = (
             username == admin_user_config and 
-            password == admin_pass_config
+            check_password_hash(admin_pass_config, password)
         )
 
         if is_correct_admin:
