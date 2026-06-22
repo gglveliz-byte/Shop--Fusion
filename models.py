@@ -122,8 +122,8 @@ class Afiliado(UserMixin, db.Model):
         return False
 
     # [FASE 3 / E11 - ERRORES MEDIOS] Relaciones optimizadas con carga ansiosa
-    pedidos = db.relationship('Pedido', backref='afiliado', lazy='joined')
-    comisiones = db.relationship('Comision', backref='afiliado', lazy='joined')
+    pedidos = db.relationship('Pedido', backref='afiliado', lazy='dynamic')
+    comisiones = db.relationship('Comision', backref='afiliado', lazy='dynamic')
     oportunidades = db.relationship('Oportunidad', backref='vendedor', lazy='dynamic')
 
     def set_password(self, password):
@@ -812,4 +812,4 @@ class Recordatorio(db.Model):
     en lugar de mostrar únicamente una dirección de memoria."""
     
     def __repr__(self):
-        return f'<Recordatorio {self.id}: {self.texto_tarea[:20]}...>'    
+        return f'<Recordatorio {self.id}: {self.texto_tarea[:20]}...>'

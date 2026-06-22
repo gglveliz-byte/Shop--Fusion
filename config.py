@@ -19,9 +19,9 @@ class Config:
 
     # Secret key para sesiones y CSRF - OBLIGATORIO
     SECRET_KEY = os.environ.get('SECRET_KEY')
-    if not SECRET_KEY:
-        # Error crítico: El sistema no debe arrancar sin su secreto principal
-        raise EnvironmentError("ERROR DE SEGURIDAD CRÍTICO: La variable 'SECRET_KEY' no está configurada en el entorno (.env).")
+    if not SECRET_KEY or len(SECRET_KEY) < 32:
+        # Error crítico: El sistema no debe arrancar sin su SECRET KEY o si esta es muy débil
+        raise EnvironmentError("ERROR DE SEGURIDAD CRÍTICO: La variable 'SECRET_KEY' no está configurada o es demasiado débil (mínimo 32 caracteres).")
 
     # Credenciales de Administrador Único (Blindaje E21)
     ADMIN_USER = os.environ.get('ADMIN_USER')
@@ -36,6 +36,17 @@ class Config:
     # Configuración de base de datos
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    """Pool de conexiones para evitar agotar las conexiones bajo carga:
+        pool_size: crea un máximo de N conexiones a la base de datos al mismo tiempo.
+        pool_recycle: reinicia la conexión cada N segundos para evitar problemas de expiración.
+        pool_pre_ping True: verifica si la conexión está activa antes de usarla.
+    """
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_size": 20,
+        "pool_recycle": 3600,
+        "pool_pre_ping": True,
+    }
     #FIN DE LOS CAMBIOS INDICADOS EN FASE 1 DE HARDENING
 
     # Modo Debug (Controlado estrictamente por entorno)
