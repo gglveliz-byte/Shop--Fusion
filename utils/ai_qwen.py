@@ -532,9 +532,12 @@ Tu tono global es altamente profesional y transparente. Eres servicial y persuas
         if not api_key or len(api_key) < 10 or not api_key.startswith('sk-'):
             raise ValueError("DASHSCOPE_API_KEY no configurada o inválida en las variables de entorno.")
             
+        # FASE 7: Política de reintentos y Timeout explícito (Previene bloqueo indefinido del servidor)
         self.client = OpenAI(
             api_key=api_key,
-            base_url="https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+            base_url="https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+            timeout=30.0,
+            max_retries=2
         )
 
     def get_response(self, prompt, model=None, system_instruction=None, history=None, tools=None):

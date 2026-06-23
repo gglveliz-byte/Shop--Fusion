@@ -56,8 +56,11 @@ class Config:
     
     #FIN DE LOS CAMBIOS INDICADOS EN FASE 1
 
-    # Configuración de WhatsApp
-    WHATSAPP_NUMBER = ''  # CAMBIAR POR TU NÚMERO (sin espacios, con código de país)
+    # FASE 7: Configuración robusta de WhatsApp (Evitar cadena vacía silenciosa)
+    WHATSAPP_NUMBER = os.environ.get('WHATSAPP_NUMBER', '').strip()
+    if not WHATSAPP_NUMBER:
+        import logging
+        logging.warning("⚠️ ALERTA FASE 7: WHATSAPP_NUMBER no está configurado. Las funciones de redirección a WhatsApp de la tienda principal podrían fallar.")
 
     # Configuración de archivos
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
