@@ -75,7 +75,10 @@
                 </nav>
                 
                 <div class="m-header-actions">
-                    <a href="{{ url_for('auth.logout') }}" class="m-btn m-btn-outline">Cerrar Sesión</a>
+                    <form action="{{ url_for('auth.logout') }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="m-btn m-btn-outline">Cerrar Sesión</button>
+                    </form>
                 </div>
             {% else %}
                 <nav class="m-nav">

@@ -186,9 +186,9 @@ def afiliado_login():
     return render_template('auth/afiliado_login.html')
 
 
-@bp.route('/logout')
+@bp.route('/logout', methods=['POST'])
 def logout():
-    """Logout general"""
+    """Logout general — Solo POST para prevenir CSRF de cierre de sesión"""
     user_type = session.get('user_type')
     logout_user()
     session.clear()

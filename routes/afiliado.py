@@ -5,6 +5,7 @@ Ver productos con comisiones, ver comisiones ganadas
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from sqlalchemy.orm import joinedload
+from sqlalchemy import func, case
 from flask_login import login_required, current_user
 from decimal import Decimal
 from models import db
@@ -29,26 +30,54 @@ def afiliado_required(f):
 @bp.route('/dashboard')
 @afiliado_required
 def dashboard():
-    """Dashboard del vendedor"""
+    """Dashboard del vendedor - Optimizado: 3 consultas en lugar de 10 (Feedback L153-163)"""
     from models import Comision, Pedido
 
     afiliado = current_user
 
-    # Estadísticas de comisiones
-    total_pendiente = afiliado.total_comisiones_pendientes()
-    total_generado = afiliado.total_comisiones_generadas()
-    total_pagado = afiliado.total_comisiones_pagadas()
-    total_ganado = afiliado.total_ganado()
+    # --- CONSULTA 1: Todas las estadísticas de comisiones en UNA sola query ---
+    # Reemplaza: total_comisiones_pendientes(), total_comisiones_generadas(),
+    #            total_comisiones_pagadas(), total_ganado() (que internamente llamaba 2 más)
+    comision_stats = db.session.query(
+        Comision.estado,
+        func.sum(Comision.monto).label('total')
+    ).filter(
+        Comision.afiliado_id == afiliado.id
+    ).group_by(Comision.estado).all()
 
-    # Últimas comisiones
+    # Mapear resultados a un diccionario rápido
+    stats = {estado: float(total or 0) for estado, total in comision_stats}
+    total_pendiente = Decimal(str(stats.get('pendiente', 0)))
+    total_generado = Decimal(str(stats.get('generada', 0)))
+    total_pagado = Decimal(str(stats.get('pagada', 0)))
+    total_ganado = total_generado + total_pagado
+
+    # --- CONSULTA 2: Últimas comisiones (esta es necesaria, no se puede agregar) ---
     ultimas_comisiones = Comision.query.filter_by(afiliado_id=afiliado.id)\
         .order_by(Comision.creado_en.desc()).limit(5).all()
 
-    # Estadísticas de pedidos
-    total_pedidos = Pedido.query.filter_by(afiliado_id=afiliado.id).count()
-    pedidos_pendientes = Pedido.query.filter_by(afiliado_id=afiliado.id, estado='pendiente').count()
-    pedidos_pagados = Pedido.query.filter_by(afiliado_id=afiliado.id, estado='pagado').count()
-    pedidos_validados = Pedido.query.filter_by(afiliado_id=afiliado.id, validado_por_vendedor=True).count()
+    # --- CONSULTA 3: Todas las estadísticas de pedidos en UNA sola query ---
+    # Reemplaza: 4 consultas COUNT individuales
+    pedido_stats = db.session.query(
+        Pedido.estado,
+        func.count(Pedido.id).label('total'),
+        func.sum(case((Pedido.validado_por_vendedor == True, 1), else_=0)).label('validados')
+    ).filter(
+        Pedido.afiliado_id == afiliado.id
+    ).group_by(Pedido.estado).all()
+
+    # Mapear resultados
+    total_pedidos = 0
+    pedidos_pendientes = 0
+    pedidos_pagados = 0
+    pedidos_validados = 0
+    for estado, count, validados in pedido_stats:
+        total_pedidos += count
+        if estado == 'pendiente':
+            pedidos_pendientes = count
+        elif estado == 'pagado':
+            pedidos_pagados = count
+        pedidos_validados += int(validados or 0)
 
     # Link de la tienda del vendedor
     link_tienda = url_for('tienda.tienda_vendedor', codigo=afiliado.codigo, _external=True)
@@ -133,11 +162,19 @@ def comisiones():
 
     comisiones = query.order_by(Comision.creado_en.desc()).all()
 
-    # Totales
-    total_pendiente = afiliado.total_comisiones_pendientes()
-    total_generado = afiliado.total_comisiones_generadas()
-    total_pagado = afiliado.total_comisiones_pagadas()
-    total_ganado = afiliado.total_ganado()
+    # Totales - Optimizado: 1 consulta agregada en lugar de 5 (Feedback L153-163)
+    comision_stats = db.session.query(
+        Comision.estado,
+        func.sum(Comision.monto).label('total')
+    ).filter(
+        Comision.afiliado_id == afiliado.id
+    ).group_by(Comision.estado).all()
+
+    stats = {estado: float(total or 0) for estado, total in comision_stats}
+    total_pendiente = Decimal(str(stats.get('pendiente', 0)))
+    total_generado = Decimal(str(stats.get('generada', 0)))
+    total_pagado = Decimal(str(stats.get('pagada', 0)))
+    total_ganado = total_generado + total_pagado
 
     return render_template('afiliado/comisiones.html',
                          comisiones=comisiones,
@@ -164,11 +201,26 @@ def pedidos():
 
     pedidos = query.order_by(Pedido.creado_en.desc()).all()
 
-    # Estadísticas
-    total_pedidos = Pedido.query.filter_by(afiliado_id=afiliado.id).count()
-    pedidos_pendientes = Pedido.query.filter_by(afiliado_id=afiliado.id, estado='pendiente').count()
-    pedidos_pagados = Pedido.query.filter_by(afiliado_id=afiliado.id, estado='pagado').count()
-    pedidos_validados = Pedido.query.filter_by(afiliado_id=afiliado.id, validado_por_vendedor=True).count()
+    # Estadísticas - Optimizado: 1 consulta agregada en lugar de 4 (Feedback L138-150)
+    pedido_stats = db.session.query(
+        Pedido.estado,
+        func.count(Pedido.id).label('total'),
+        func.sum(case((Pedido.validado_por_vendedor == True, 1), else_=0)).label('validados')
+    ).filter(
+        Pedido.afiliado_id == afiliado.id
+    ).group_by(Pedido.estado).all()
+
+    total_pedidos = 0
+    pedidos_pendientes = 0
+    pedidos_pagados = 0
+    pedidos_validados = 0
+    for estado, count, validados in pedido_stats:
+        total_pedidos += count
+        if estado == 'pendiente':
+            pedidos_pendientes = count
+        elif estado == 'pagado':
+            pedidos_pagados = count
+        pedidos_validados += int(validados or 0)
 
     return render_template('afiliado/pedidos.html', 
                          pedidos=pedidos,
