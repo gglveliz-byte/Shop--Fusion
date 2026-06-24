@@ -249,6 +249,21 @@ class Producto(db.Model):
         """Obtener precio de venta (con oferta si existe)"""
         return self.precio_oferta if self.precio_oferta else self.precio_final
 
+    def to_dict(self):
+        """FASE 4: Centralizar la serialización del producto (DRY)"""
+        todas_imagenes = self.obtener_todas_imagenes()
+        return {
+            'id': self.id,
+            'nombre': self.nombre,
+            'descripcion': self.descripcion,
+            'categoria': self.categoria or 'otros',
+            'precio_final': float(self.precio_final),
+            'precio_oferta': float(self.precio_oferta) if self.precio_oferta else None,
+            'imagen': todas_imagenes[0] if todas_imagenes else None,
+            'imagenes': todas_imagenes,
+            'stock': self.stock
+        }
+
     def calcular_comision_afiliado(self, porcentaje_comision):
         """Calcular comisión que ganaría un afiliado con cierto porcentaje"""
         margen = self.calcular_margen()
