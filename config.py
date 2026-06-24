@@ -9,12 +9,13 @@ class Config:
     """Configuración de la aplicación blindada (Hardening Fase 1)"""
 
     @staticmethod
-    def get_required_env(name):
-        """Obtiene una variable de entorno o lanza error fatal si falta."""
+    def get_required_env(name, production_only=False):
+        """FASE 8: Obtiene una variable de entorno o lanza error fatal si falta (Obligatorio en Producción)."""
         val = os.environ.get(name)
         if not val:
-            # Error crítico: El sistema no debe arrancar sin sus secretos
-            raise EnvironmentError(f"ERROR DE SEGURIDAD CRÍTICO: La variable de entorno '{name}' es obligatoria.")
+            if production_only and os.environ.get('FLASK_ENV') != 'production':
+                return None
+            raise EnvironmentError(f"ERROR DE SEGURIDAD CRÍTICO: La variable de entorno '{name}' es obligatoria en este entorno.")
         return val
 
     # Secret key para sesiones y CSRF - OBLIGATORIO
@@ -78,11 +79,11 @@ class Config:
         'amazon.com'
     ]
 
-    # Configuración de PayPal
-    PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')
-    PAYPAL_SECRET = os.environ.get('PAYPAL_SECRET')
+    # Configuración de PayPal (FASE 8: Validación estricta en producción)
+    PAYPAL_CLIENT_ID = get_required_env.__func__('PAYPAL_CLIENT_ID', production_only=True)
+    PAYPAL_SECRET = get_required_env.__func__('PAYPAL_SECRET', production_only=True)
     PAYPAL_MODE = os.environ.get('PAYPAL_MODE', 'sandbox')  # 'sandbox' o 'live'
-    PAYPAL_WEBHOOK_ID = os.environ.get('PAYPAL_WEBHOOK_ID')  # ID del Webhook para validación criptográfica
+    PAYPAL_WEBHOOK_ID = get_required_env.__func__('PAYPAL_WEBHOOK_ID', production_only=True)  # ID del Webhook para validación criptográfica
 
     # [FASE 3 / E39 - ERRORES MEDIOS] Seguridad de Cookies de Sesión
     # HTTPOnly: Impide que JavaScript acceda a la cookie (Protección XSS)

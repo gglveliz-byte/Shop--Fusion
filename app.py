@@ -51,8 +51,9 @@ def create_app(config_class=Config):
     from werkzeug.middleware.proxy_fix import ProxyFix
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-    # Permitir CORS para el widget externo
-    CORS(app, resources={r"/ai/*": {"origins": "*"}})
+    # FASE 9: Restringir CORS de la API de IA para evitar robo de cuota desde embebidos externos
+    allowed_origins = os.environ.get('ALLOWED_ORIGINS').split(',')
+    CORS(app, resources={r"/ai/*": {"origins": [origin.strip() for origin in allowed_origins]}})
 
     # Inicializar extensiones con la app
     db.init_app(app)
@@ -161,10 +162,14 @@ def create_app(config_class=Config):
             # Si falla (ej: tabla no creada aún), devolvemos un diccionario vacío para evitar errores 500
             return dict(config_web=None)
 
-    # [FASE 3 / E43] Eximir el webhook de PayPal, el chat de AI y Facturación de la protección CSRF
-    csrf.exempt('routes.tienda.paypal_webhook')
-    csrf.exempt('routes.ai.chat')
-    csrf.exempt('routes.facturacion.generar_factura')
+    # FASE 9: Centralización declarativa de exclusiones CSRF (Previene olvidos en futuros endpoints)
+    csrf_exempt_endpoints = [
+        'routes.tienda.paypal_webhook',
+        'routes.ai.chat',
+        'routes.facturacion.generar_factura'
+    ]
+    for endpoint in csrf_exempt_endpoints:
+        csrf.exempt(endpoint)
 
     # Manejadores de errores
     @app.errorhandler(404)

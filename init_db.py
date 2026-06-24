@@ -146,14 +146,21 @@ def init_database():
             }
         ]
 
-        if Producto.query.count() == 0:
-            logger.info("Creando productos de ejemplo...")
-            for prod_data in productos_ejemplo:
-                producto = Producto(**prod_data)
-                db.session.add(producto)
-
+        # FASE 11: Inserción modular y selectiva de artículos de prueba
+        # Permite restablecer productos específicos sin vaciar toda la tabla.
+        logger.info("Verificando productos de ejemplo...")
+        productos_creados = 0
+        for prod_data in productos_ejemplo:
+            existe = Producto.query.filter_by(nombre=prod_data['nombre']).first()
+            if not existe:
+                db.session.add(Producto(**prod_data))
+                productos_creados += 1
+                
+        if productos_creados > 0:
             db.session.commit()
-            logger.info(f"{len(productos_ejemplo)} productos creados")
+            logger.info(f"Se reinsertaron {productos_creados} productos de prueba selectivamente.")
+        else:
+            logger.info("Los productos de prueba ya se encuentran en la base de datos.")
 
         # SEGURIDAD (FASE 1): Se deshabilita la creación de afiliados de ejemplo con claves hardcoded.
         # Sirve para: Evitar el Error E10 y asegurar que todos los afiliados sean creados con claves seguras.

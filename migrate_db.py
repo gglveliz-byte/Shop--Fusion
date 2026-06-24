@@ -31,13 +31,22 @@ def migrate_database():
         try:
             # Verificar si los campos ya existen
             inspector = db.inspect(db.engine)
+            tablas_existentes = inspector.get_table_names()
+
+            # FASE 11: Prevenir errores de SQLAlchemy si la base de datos está vacía
+            if 'afiliados' not in tablas_existentes or 'pedidos' not in tablas_existentes:
+                print("\n❌ ERROR FASE 11: Las tablas 'afiliados' o 'pedidos' no existen.")
+                print("Por favor, inicializa primero la base de datos ejecutando 'python init_db.py'.\n")
+                return False
+
             columns_afiliados = [col['name'] for col in inspector.get_columns('afiliados')]
             columns_pedidos = [col['name'] for col in inspector.get_columns('pedidos')]
 
             # Agregar campo whatsapp a afiliados
             if 'whatsapp' not in columns_afiliados:
                 print("\n[1/3] Agregando campo 'whatsapp' a tabla 'afiliados'...")
-                db.session.execute(text("ALTER TABLE afiliados ADD COLUMN whatsapp VARCHAR(20)"))
+                # FASE 12: Cambio a VARCHAR(500) para asegurar compatibilidad con models.py
+                db.session.execute(text("ALTER TABLE afiliados ADD COLUMN whatsapp VARCHAR(500)"))
                 db.session.commit()
                 print("   ✓ Campo 'whatsapp' agregado exitosamente")
             else:

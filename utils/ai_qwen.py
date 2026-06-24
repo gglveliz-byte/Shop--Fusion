@@ -580,7 +580,9 @@ Tu tono global es altamente profesional y transparente. Eres servicial y persuas
             final_tools = tools if tools is not None else self.TOOLS
 
             extra_params = {}
-            if target_model == "qwen-max": 
+            # FASE 8: Listado dinámico para modelos que soportan razonamiento (Thinking Models)
+            thinking_models = os.environ.get('THINKING_MODELS', 'qwen-max').split(',')
+            if target_model in [m.strip() for m in thinking_models]:
                 extra_params["extra_body"] = {"enable_thinking": True}
 
             # 5. Llamada a la API

@@ -19,12 +19,12 @@ def sanitize_html(text):
     return bleach.clean(text, tags=[], attributes={}, strip=True)
 
 # [FASE 3 / HARDENING - CIFRADO PII]
-
-# Obtener la llave maestra desde el entorno
-_fernet_key = os.environ.get('FERNET_KEY')
-if not _fernet_key:
+# FASE 8: Reutilización de get_required_env para variables críticas
+from config import Config
+try:
+    _fernet_key = Config.get_required_env('FERNET_KEY')
+except EnvironmentError:
     # SEGURIDAD CRÍTICA: Jamás generar una llave efímera en memoria.
-    # Si el servidor se reinicia, la llave cambia y toda la base de datos se vuelve irrecuperable.
     raise EnvironmentError(
         "ERROR CRÍTICO DE PÉRDIDA DE DATOS: FERNET_KEY no está configurada en el entorno. "
         "Debes generar una llave permanente (ej. con python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\") "
@@ -296,6 +296,9 @@ class Producto(db.Model):
             for img in self.imagenes:
                 todas.append(f'/static/uploads/{img}')
 
+        # FASE 10: Eliminar duplicados manteniendo el orden de prioridad
+        todas = list(dict.fromkeys(todas))
+
         return todas if todas else ['/static/img/no-image.png']
 
     def __repr__(self):
@@ -401,8 +404,13 @@ class Pedido(db.Model):
         # Calcular margen total del pedido
         margen_total = Decimal('0.00')
 
+        # FASE 10: Evitar el problema de N+1 consultas (Optimización de Base de Datos)
+        ids_productos = [item['id'] for item in self.productos_json]
+        productos_db = Producto.query.filter(Producto.id.in_(ids_productos)).all()
+        productos_dict = {p.id: p for p in productos_db}
+
         for item in self.productos_json:
-            producto = Producto.query.get(item['id'])
+            producto = productos_dict.get(item['id'])
             if producto:
                 margen_unitario = producto.calcular_margen()
                 margen_total += margen_unitario * Decimal(str(item['cantidad']))
