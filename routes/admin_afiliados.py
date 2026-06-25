@@ -174,5 +174,3 @@ def editar_afiliado(id):
         return redirect(url_for('admin.afiliados'))
 
     return render_template('admin/editar_afiliado.html', afiliado=afiliado)
-
-
