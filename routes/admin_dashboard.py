@@ -1,4 +1,4 @@
-﻿from flask import render_template, request, redirect, url_for, flash, current_app, session
+from flask import render_template, request, redirect, url_for, flash, current_app, session
 from decimal import Decimal
 import os
 import time
@@ -27,7 +27,14 @@ def configuracion():
         config.nombre_tienda = request.form.get('nombre_tienda', 'Mi Tienda Online')
         config.mensaje_bienvenida = request.form.get('mensaje_bienvenida')
         config.mensaje_footer = request.form.get('mensaje_footer')
+        config.mensaje_copyright = request.form.get('mensaje_copyright')
         config.meta_descripcion = request.form.get('meta_descripcion')
+        
+        # Facturación
+        try:
+            config.iva_porcentaje = float(request.form.get('iva_porcentaje', 15.00))
+        except (TypeError, ValueError):
+            pass
         
         # Colores
         config.color_primario = request.form.get('color_primario', '#6366f1')

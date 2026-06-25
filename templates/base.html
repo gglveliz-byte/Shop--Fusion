@@ -58,7 +58,7 @@
                 {# [MODIFICACIÓN SEGURIDAD TC015] #}
                 <nav class="m-nav">
                 {% if current_user.is_admin %}
-                    <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">Dashboard</a>
+                    <a href="{{ url_for('admin.dashboard_admin') }}" class="{% if request.endpoint == 'admin.dashboard_admin' %}active{% endif %}">Dashboard</a>
                     <a href="{{ url_for('admin.productos') }}" class="{% if request.endpoint == 'admin.productos' %}active{% endif %}">Productos</a>
                     <a href="{{ url_for('admin.pedidos') }}" class="{% if request.endpoint == 'admin.pedidos' %}active{% endif %}">Pedidos</a>
                     <a href="{{ url_for('admin.configuracion') }}" class="{% if request.endpoint == 'admin.configuracion' %}active{% endif %}">Configuración</a>
