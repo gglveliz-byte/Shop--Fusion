@@ -50,6 +50,5 @@ logs/
 
 nul
 
-# TestSprite, docs y migrations
+# TestSprite
 testsprite_tests/
-migrations/
