@@ -73,7 +73,7 @@ def configuracion():
 
 @bp.route('/contabilidad')
 @admin_required
-def contabilidad():
+def contabilidad_dashboard():
     """Libro Diario y Balance General"""
     from utils.accounting import get_account_balance
     from models import Transaccion
@@ -88,7 +88,7 @@ def contabilidad():
 
 @bp.route('/dashboard')
 @admin_required
-def dashboard():
+def dashboard_admin():
     """Dashboard principal del admin"""
     # Estadísticas generales
     total_productos = Producto.query.filter_by(activo=True).count()
