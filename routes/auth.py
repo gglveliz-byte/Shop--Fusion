@@ -23,7 +23,7 @@ def admin_login():
     if current_user.is_authenticated:
         # Si ya está logueado, redirigir al dashboard correspondiente
         if isinstance(current_user, Admin):
-            return redirect(url_for('admin.dashboard'))
+            return redirect(url_for('admin.dashboard_admin'))
         else:
             return redirect(url_for('afiliado.dashboard'))
 
@@ -47,47 +47,11 @@ def admin_login():
             flash('Por favor completa todos los campos', 'error')
             return render_template('auth/admin_login.html')
 
-        # [MODIFICACIÓN SEGURIDAD TC015]
-        # Se añadió validación para prevenir Error 500 si falta configuración en .env
-        # Archivos relacionados: config.py (donde se cargan estas variables)
-        # CÓDIGO ANTERIOR REEMPLAZADO:
-        # is_correct_admin = (username == current_app.config['ADMIN_USER'] and password == current_app.config['ADMIN_PASS'])
-        admin_user_config = current_app.config.get('ADMIN_USER')
-        admin_pass_config = current_app.config.get('ADMIN_PASS')
+        # SEGURIDAD CRÍTICA (CORRECCIÓN FINAL): Validación exclusiva contra Base de Datos
+        # Se elimina la validación en texto plano contra el archivo .env, previniendo exposición de credenciales.
+        admin = Admin.query.filter_by(username=username).first()
 
-        if not admin_user_config or not admin_pass_config:
-            flash('Error de configuración: El administrador no ha sido configurado en el servidor.', 'error')
-            current_app.logger.error("ADMIN_USER o ADMIN_PASS no están definidos en las variables de entorno.")
-            return render_template('auth/admin_login.html')
-
-        # 1. Validar contra las credenciales de administrador mediante .env
-        from werkzeug.security import check_password_hash
-        
-        # SEGURIDAD CRÍTICA (FASE 1): Reemplazo de comparación en texto plano
-        # La contraseña ahora se valida exclusivamente contra el hash criptográfico del .env
-        is_correct_admin = (
-            username == admin_user_config and 
-            check_password_hash(admin_pass_config, password)
-        )
-
-        if is_correct_admin:
-            # 2. Sincronizar con el ÚNICO registro permitido en la base de datos
-            from models import db
-            # Siempre intentamos obtener el primer administrador (ID 1 o cualquiera que exista)
-            admin = Admin.query.first()
-            
-            if not admin:
-                # Crear el registro único si la tabla está vacía
-                admin = Admin(username=username)
-                db.session.add(admin)
-            else:
-                # Sincronizar nombre de usuario con el registro existente
-                admin.username = username
-            
-            # Sincronizar siempre el hash de la contraseña por seguridad y consistencia
-            admin.set_password(password)
-            db.session.commit()
-
+        if admin and admin.check_password(password):
             # Login exitoso
             login_user(admin)
             session['user_type'] = 'admin'
@@ -102,7 +66,7 @@ def admin_login():
 
             # Redirigir a la página solicitada o al dashboard
             next_page = request.args.get('next')
-            return redirect(next_page if next_page else url_for('admin.dashboard'))
+            return redirect(next_page if next_page else url_for('admin.dashboard_admin'))
         else:
             # SEGURIDAD: Incrementar contador de intentos fallidos vinculados a la IP
             attempts_key = f"admin_failed_attempts:{ip}"
@@ -208,41 +172,3 @@ def logout():
         return redirect(url_for('auth.afiliado_login'))
     else:
         return redirect(url_for('tienda.index'))
-
-# =====================================================================
-# CÓDIGO COMENTADO Y DESACTIVADO POR SEGURIDAD (Error Crítico E39):
-# Se desactiva este endpoint porque permitía Fuga de Información 
-# y exposición pasiva de IDs de sesión (Information Disclosure).
-# =====================================================================
-# @bp.route('/check-session')
-# def check_session():
-#     """Endpoint para verificar sesión (útil para debugging)"""
-#     if current_user.is_authenticated:
-#         return {
-#             'authenticated': True,
-#             'user_type': session.get('user_type'),
-#             'user_id': session.get('user_id')
-#         }
-#     return {'authenticated': False}
-
-"""
-======================================================================
-REPORTE DE AUDITORÍA Y CORRECCIÓN (FASE 1)
-======================================================================
-Error Mitigado: E39 - Fuga de Información (Information Disclosure).
-
-¿Qué se hizo?
-- Se comentó y desactivó permanentemente el endpoint `/check-session`.
-
-¿A qué afecta operacionalmente?
-- Afectación: CERO (0). 
-- Justificación: Se verificó el código del frontend (Jinja/JS) y ninguna 
-  vista consume esta API. La tienda funciona puramente por renderizado 
-  desde el servidor validando con `current_user.is_authenticated`.
-
-¿Qué riesgos se eliminaron?
-- Se neutralizó la enumeración de roles. Un atacante ya no puede 
-  consultar externamente qué 'user_id' o 'user_type' posee una sesión,
-  bloqueando una fase vital de reconocimiento para el secuestro de cuentas.
-======================================================================
-"""
