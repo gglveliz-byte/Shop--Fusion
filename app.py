@@ -164,7 +164,7 @@ def create_app(config_class=Config):
 
     # FASE 9: Centralización declarativa de exclusiones CSRF (Previene olvidos en futuros endpoints)
     csrf_exempt_endpoints = [
-        'routes.tienda.paypal_webhook',
+        'routes.paypal.paypal_webhook',
         'routes.ai.chat',
         'routes.facturacion.generar_factura'
     ]
