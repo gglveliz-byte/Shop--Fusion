@@ -165,6 +165,21 @@ def chat():
         "NUNCA reutilices ni dupliques los datos de transacciones u operaciones pasadas que estén en tu historial."
     )
 
+    # CORRECCION: Cargar el FAQ aqui, DENTRO del contexto Flask, antes de lanzar el hilo.
+    # De esta forma evitamos el error "Working outside of application context" que ocurria
+    # cuando ai_qwen.py intentaba consultar la BD desde un ThreadPoolExecutor (hilo secundario).
+    from models import DocumentoConocimiento
+    faq_context = ""
+    try:
+        documentos = DocumentoConocimiento.query.all()
+        if documentos:
+            faq_context = "\n\n".join([
+                f"[{doc.categoria.upper()}] {doc.titulo}:\n{doc.contenido_texto}"
+                for doc in documentos
+            ])
+    except Exception:
+        pass  # Si la tabla no existe aun, la IA funciona sin el FAQ
+
     # 2. Bucle de Razonamiento (ReAct) Multistep
     max_iteraciones = 3
     iteracion_actual = 0
@@ -220,7 +235,8 @@ def chat():
                             model=modelo_actual,
                             history=historial_bucle,
                             tools=herramientas_disponibles,
-                            system_instruction=system_msg
+                            system_instruction=system_msg,
+                            faq_context=faq_context
                         )
                         result = future.result(timeout=30)
                 except concurrent.futures.TimeoutError:
@@ -239,7 +255,8 @@ def chat():
                         model=modelo_actual,
                         history=historial_bucle,
                         tools=herramientas_disponibles,
-                        system_instruction=system_msg
+                        system_instruction=system_msg,
+                        faq_context=faq_context
                     )
                     result = future.result(timeout=30)
             except concurrent.futures.TimeoutError:

@@ -540,34 +540,22 @@ Tu tono global es altamente profesional y transparente. Eres servicial y persuas
             max_retries=2
         )
 
-    def get_response(self, prompt, model=None, system_instruction=None, history=None, tools=None):
-        """Envía consulta a la IA con protección total (Try-Catch) y 
-        Base de Conocimiento inyectada."""
+    def get_response(self, prompt, model=None, system_instruction=None, history=None, tools=None, faq_context=""):
+        """Envía consulta a la IA con protección total (Try-Catch) y
+        Base de Conocimiento inyectada desde el contexto de la ruta (evita error app_context en hilos)."""
         if not self.client: return "Error: API KEY no configurada."
 
         try:
-            #1. Cargar documentos FAQ desde la BD de forma segura
-            from models import DocumentoConocimiento
-            from flask import current_app
-            
-            faq_texto = ""
-            with current_app.app_context():
-                documentos = DocumentoConocimiento.query.all()
-                if documentos:
-                    faq_texto = "\n\n".join([
-                        f"[{doc.categoria.upper()}] {doc.titulo}:\n{doc.contenido_texto}"
-                        for doc in documentos
-                    ])
-
-            # 2. Configuración de mensajes base
+            # 1. Configuración de mensajes base
             base_prompt = system_instruction if system_instruction else self.SYSTEM_PROMPT
             
-            # Inyectamos el FAQ al final del prompt para que Qwen lo lea
+            # Inyectamos el FAQ al final del prompt para que Qwen lo lea.
+            # El faq_context ya viene pre-construido desde routes/ai.py (dentro del contexto Flask correcto).
             sys_msg = f"""{base_prompt}
             === BASE DE CONOCIMIENTO INTERNA (FAQ) ===
-            Las siguientes son las políticas estrictas de la empresa.
+            Las siguientes son las politicas estrictas de la empresa.
             Úsalas siempre para responder dudas de clientes sobre estos temas:
-            {faq_texto}
+            {faq_context}
             """
 
             # 3. Construcción de mensajes con historial
