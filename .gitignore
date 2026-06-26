@@ -50,5 +50,6 @@ logs/
 
 nul
 
-# TestSprite
+# TestSprite y docs/
 testsprite_tests/
+docs/
