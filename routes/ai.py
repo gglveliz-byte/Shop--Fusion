@@ -131,7 +131,7 @@ def chat():
     historial = data.get('history', [])
     
     # FASE 4.1: Validación del modelo mediante lista blanca
-    ALLOWED_MODELS = {'qwen-turbo', 'qwen-plus', 'qwen-max', 'qwen-long'}
+    ALLOWED_MODELS = {'qwen-plus', 'qwen-max'}
     if modelo not in ALLOWED_MODELS:
         return jsonify({"error": "Modelo no autorizado o inválido"}), 403
     
