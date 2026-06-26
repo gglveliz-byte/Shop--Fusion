@@ -18,7 +18,7 @@ Cuenta para probar el flujo de tienda y gestión de productos propios.
 - **Usuario/Email:** `ejemplo@gmail.com`
 - **Contraseña:** `Hola 12345`
 - **Rol:** Afiliado
-ruta para afiliado: auth/afiliado/login
+- ruta para afiliado: auth/afiliado/login
 
 ---
 
