@@ -34,10 +34,17 @@ El panel de administración es el centro de control principal de Shop Fusion. Pe
   - Ver todas las comisiones (generadas, pagadas, pendientes)
   - Marcar comisiones individuales como pagadas
   - Pagar todas las comisiones de un afiliado de una vez
-- **Gestión de Marca (White-Label)**: [NUEVO]
-  - Configuración de identidad: Nombre de tienda, Logo y mensajes globales.
-  - Personalización visual: Control total de colores (Primario, Secundario, Acento).
-  - Contacto directo: Configuración de WhatsApp de soporte global.
+- **Módulo de Contabilidad**: [NUEVO]
+  - Visualización del Balance General (Ingresos, Gastos, Utilidad).
+  - Libro Diario (Historial de transacciones de PayPal, comisiones pagadas, etc.).
+- **Gestión de Marca (White-Label) y Configuración**: [ACTUALIZADO]
+  - Configuración de identidad: Nombre de tienda, Logo y Favicon.
+  - Personalización visual: Control de colores (Primario, Secundario, Acento).
+  - Contacto directo y Textos: WhatsApp de soporte, Copyright, Pie de Página.
+  - SEO y Finanzas: Descripción SEO y Tasa de IVA (Impuestos) dinámica.
+- **Gestión de Atención al Cliente (Tickets y FAQ)**: [NUEVO]
+  - Sistema de Tickets de Soporte categorizados por prioridad y estado (asignación de agentes).
+  - Base de Conocimiento Institucional (FAQ) que alimenta al Asistente de IA (Qwen) mediante Embeddings Vectoriales.
 
 ### Casos de Uso Principales
 1. **Subir productos**: Administrador crea nuevos productos con imágenes y precios
@@ -52,7 +59,7 @@ El panel de administración es el centro de control principal de Shop Fusion. Pe
 ## Panel Afiliados
 
 ### Descripción
-El panel de afiliados está diseñado para vendedores independientes que promocionan productos de Shop Fusion. Permite generar enlaces personalizados, calcular comisiones y gestionar pedidos generados por sus ventas.
+El panel de afiliados está diseñado para vendedores independientes que promocionan productos de Marca Blanca. Permite generar enlaces personalizados, calcular comisiones y gestionar pedidos generados por sus ventas.
 
 ### Funciones y Opciones Disponibles
 - **Dashboard Personal**: Estadísticas de comisiones (pendientes, generadas, pagadas, total ganado)
@@ -71,6 +78,9 @@ El panel de afiliados está diseñado para vendedores independientes que promoci
 - **Historial de Comisiones**:
   - Ver todas las comisiones generadas y pagadas
   - Filtrar por estado (pendiente, generada, pagada)
+- **CRM y Pipeline de Ventas**: [NUEVO]
+  - Gestión de Oportunidades con clientes potenciales (Prospecto, Negociación, etc.).
+  - Sistema de Agenda y Recordatorios para realizar seguimiento oportuno.
 - **Perfil Personal**:
   - Editar nombre, WhatsApp y contraseña
   - Ver enlace de tienda personal
@@ -152,10 +162,11 @@ La tienda pública es la interfaz principal para clientes finales. Incluye naveg
 - **PayPal**: Procesamiento automático de pagos con comisión del 5.4% integrada en el checkout.
 - **WhatsApp**: Comunicación directa y automatizada para confirmación de pedidos y soporte.
 - **Marca Blanca (White-Label)**: Motor de plantillas dinámico que adapta colores y logos según la configuración del administrador.
-- **Protección PII (Fase 3)**: Blindaje de datos sensibles mediante cifrado Fernet (AES-256) en campos críticos (`whatsapp`, `cliente_direccion`, etc.).
-- **Asistente de IA (Qwen)**: Integración vía API para soporte inteligente y orquestación de herramientas.
-- **Logging y Auditoría (Fase 5)**: Sistema de logs rotativos para trazabilidad total de operaciones y errores.
-- **Base de Datos**: PostgreSQL con esquema optimizado y relaciones de integridad para Afiliados, Productos y Pedidos.
+- **Sistema de Facturación**: [NUEVO] Generación automática de facturas (PDF o vista web) con desglose de impuestos (IVA dinámico).
+- **Protección PII y Sesiones Seguras**: Blindaje de datos sensibles mediante cifrado Fernet (AES-256) y autenticación segura con Hashes.
+- **Asistente de IA (Qwen)**: Integración vía API para soporte inteligente (con restricciones CORS para evitar abusos).
+- **Redis y Rate Limiting**: Protección contra ataques de fuerza bruta usando almacenamiento en memoria persistente para contadores de login.
+- **Base de Datos y Transacciones**: PostgreSQL gestionado con Flask-Migrate y bloqueos transaccionales pesimistas (Race Conditions mitigadas).
 
 ---
 
