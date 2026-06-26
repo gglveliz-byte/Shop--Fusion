@@ -8,6 +8,7 @@
 
 - Flask-SQLAlchemy==3.1.1
 - Flask==3.0.0
+- Flask-Migrate==4.0.5
 - PostgreSQL==17
 
 ## 3. Estructura de las tablas:
