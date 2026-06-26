@@ -286,6 +286,11 @@ Para el correcto funcionamiento del sistema, el archivo `.env` debe contener:
 - `FERNET_KEY`: **[CRÍTICO]** Llave para el cifrado de datos PII.
 - `DASHSCOPE_API_KEY`: Llave para la integración con IA Qwen.
 - `PAYPAL_CLIENT_ID` / `PAYPAL_SECRET` / `PAYPAL_MODE`: Credenciales para Paypal
+- `WHATSAPP_NUMBER`: Número de WhatsApp para la integración con la API de WhatsApp Business.
+- `REDIS_URL`: Cadena de conexión para Redis.
+- `THINKING_MODELS`: Modelos de IA a utilizar sus versiones de IA con pensamiento profundo.
+- `ALLOWED_ORIGINS`: Orígenes permitidos para el uso de la API de Dashscope para la IA Qwen, Paypal y otras APIs.
+- `FLASK_ENV`: Modo de ejecución de la app. Indica si se está en modo desarrollo o producción.
 
 ### Apéndice: Verificación de Esquema
 
