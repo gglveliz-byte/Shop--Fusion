@@ -214,6 +214,39 @@ def create_app(config_class=Config):
     # Ahora el esquema de base de datos se gestionará profesionalmente con Flask-Migrate (Alembic)
     # mediante los comandos: flask db init, flask db migrate, flask db upgrade.
 
+    # FASE 6 - SEGURIDAD: Bootstrap automático del administrador desde .env
+    # Garantiza que el .env contiene contraseña en texto plano y la BD almacena el hash,
+    # resolviendo la recomendación del feedback.md de no comparar contraseñas en plaintext.
+    def _sync_admin_from_env():
+        from models import Admin, db
+        admin_user = app.config.get('ADMIN_USER')
+        admin_pass = app.config.get('ADMIN_PASS')
+
+        if not admin_user or not admin_pass:
+            app.logger.warning("[ADMIN SYNC] ADMIN_USER o ADMIN_PASS no configurados. El acceso administrativo no estara disponible.")
+            return
+
+        admin = Admin.query.filter_by(username=admin_user).first()
+
+        if admin is None:
+            # Primera ejecución: crear el admin con contraseña hasheada
+            admin = Admin(username=admin_user)
+            admin.set_password(admin_pass)
+            db.session.add(admin)
+            db.session.commit()
+            app.logger.info(f"[ADMIN SYNC] Admin '{admin_user}' creado automaticamente desde .env con password hasheada.")
+        elif not admin.check_password(admin_pass):
+            # La contraseña del .env cambió: actualizar el hash en BD
+            admin.set_password(admin_pass)
+            db.session.commit()
+            app.logger.info(f"[ADMIN SYNC] Password del admin '{admin_user}' sincronizada desde .env (hash actualizado).")
+
+    try:
+        with app.app_context():
+            _sync_admin_from_env()
+    except Exception as e:
+        app.logger.warning(f"⚠️ No se pudo sincronizar el admin desde .env (posible primera migración pendiente): {e}")
+
     return app
 
 

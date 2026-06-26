@@ -63,6 +63,14 @@ class Config:
         import logging
         logging.warning("⚠️ ALERTA FASE 7: WHATSAPP_NUMBER no está configurado. Las funciones de redirección a WhatsApp de la tienda principal podrían fallar.")
 
+    # FASE 5.1: Configuración dinámica de código de país para internacionalización
+    DEFAULT_COUNTRY_CODE = os.environ.get('DEFAULT_COUNTRY_CODE', '593').strip()
+
+    # FASE 6.2: Lista de proxies de confianza para validar X-Forwarded-For
+    # En producción (Render/Cloudflare), añadir IPs o rangos CIDR reales separados por coma.
+    _trusted_raw = os.environ.get('TRUSTED_PROXIES', '127.0.0.1,::1')
+    TRUSTED_PROXIES = {ip.strip() for ip in _trusted_raw.split(',') if ip.strip()}
+
     # Configuración de archivos
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
     UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')

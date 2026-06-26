@@ -3,6 +3,9 @@ Funciones de utilidad y validación para la Plataforma (Hardening Fase 3)
 Mapeado desde el antiguo utils.py para mejor organización.
 """
 
+import os
+import string
+
 def format_whatsapp(num):
     """
     Formatea un número de teléfono para que sea compatible con los enlaces de WhatsApp.
@@ -11,12 +14,13 @@ def format_whatsapp(num):
     if not num:
         return ""
     
+    country_code = os.environ.get('DEFAULT_COUNTRY_CODE', '593').strip()
     num = str(num).strip().replace(" ", "").replace("-", "").replace("+", "")
     
     if num.startswith('0'):
-        return '593' + num[1:]
-    elif not num.startswith('593'):
-        return '593' + num
+        return country_code + num[1:]
+    elif not num.startswith(country_code):
+        return country_code + num
         
     return num
 
@@ -40,6 +44,6 @@ def is_strong_password(password):
         return False, "La contraseña debe tener al menos una letra mayúscula."
     if not any(c.isdigit() for c in password):
         return False, "La contraseña debe tener al menos un número."
-    if not any(c in "!@#$%^&*()-_+=[]{}|;:,.<>?/" for c in password):
+    if not any(c in string.punctuation for c in password):
         return False, "La contraseña debe tener al menos un carácter especial."
     return True, ""

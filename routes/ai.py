@@ -130,6 +130,11 @@ def chat():
     modelo = data.get('model', 'qwen-plus')
     historial = data.get('history', [])
     
+    # FASE 4.1: Validación del modelo mediante lista blanca
+    ALLOWED_MODELS = {'qwen-turbo', 'qwen-plus', 'qwen-max', 'qwen-long'}
+    if modelo not in ALLOWED_MODELS:
+        return jsonify({"error": "Modelo no autorizado o inválido"}), 403
+    
     if not mensaje:
         return jsonify({"error": "El mensaje es obligatorio"}), 400
     
@@ -206,24 +211,40 @@ def chat():
             else:
                 # Token inválido o sin tool_calls, dejar que la IA responda
                 prompt_actual = "El usuario aprobó la acción crítica. Continúa con el flujo."
-                result = qwen_service.get_response(
-                    prompt_actual,
-                    model=modelo_actual,
-                    history=historial_bucle,
-                    tools=herramientas_disponibles,
-                    system_instruction=system_msg
-                )
+                import concurrent.futures
+                try:
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                        future = executor.submit(
+                            qwen_service.get_response,
+                            prompt_actual,
+                            model=modelo_actual,
+                            history=historial_bucle,
+                            tools=herramientas_disponibles,
+                            system_instruction=system_msg
+                        )
+                        result = future.result(timeout=30)
+                except concurrent.futures.TimeoutError:
+                    return jsonify({"error": "La IA no respondió a tiempo (Timeout de 30s). Por favor, intenta de nuevo."}), 504
+                
                 if isinstance(result, str):
                     return jsonify({"error": result}), 500
         else:
             # Llamada normal a la IA
-            result = qwen_service.get_response(
-                prompt_actual,
-                model=modelo_actual,
-                history=historial_bucle,
-                tools=herramientas_disponibles,
-                system_instruction=system_msg
-            )
+            import concurrent.futures
+            try:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(
+                        qwen_service.get_response,
+                        prompt_actual,
+                        model=modelo_actual,
+                        history=historial_bucle,
+                        tools=herramientas_disponibles,
+                        system_instruction=system_msg
+                    )
+                    result = future.result(timeout=30)
+            except concurrent.futures.TimeoutError:
+                return jsonify({"error": "La IA no respondió a tiempo (Timeout de 30s). Por favor, intenta de nuevo."}), 504
+
             if isinstance(result, str):
                 return jsonify({"error": result}), 500
         
