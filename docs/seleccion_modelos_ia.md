@@ -35,3 +35,20 @@ Utilizado específicamente para la herramienta restante:
 2.  **Fase 2: Herramientas de Datos**: Conectar la IA con las tablas de Productos e Inventario.
 3.  **Fase 3: Integración Financiera**: Conexión con PayPal y sistema de facturación.
 4.  **Fase 4: Inteligencia Visual**: Implementación del validador de boucher con el modelo VL.
+
+---
+
+## Variable de Entorno: `THINKING_MODELS` (Razonamiento Profundo)
+
+En `utils/ai_qwen.py`, la aplicación tiene definidos los modelos base a usar (ej. `MODEL_LOGICA = "qwen-plus"`).
+
+La variable `THINKING_MODELS` **no cambia qué modelo usas**, sino que actúa como una **"Lista VIP" de autorizaciones**. Habilitar el parámetro "Thinking" (razonamiento profundo) aumenta los costos y el tiempo de respuesta, por lo que está desacoplado del código y es configurable desde el `.env`.
+
+**Cómo funciona:**
+
+| Configuración en `.env` | Modelo en uso | ¿Se activa Thinking? |
+|---|---|---|
+| `THINKING_MODELS=qwen-max` | `qwen-plus` | ❌ No (`qwen-plus` no está en la lista) |
+| `THINKING_MODELS=qwen-max,qwen-plus` | `qwen-plus` | ✅ Sí (está en la lista VIP) |
+
+Esto permite encender o apagar capacidades avanzadas de razonamiento en producción al instante, **sin necesidad de tocar el código ni redesplegar la aplicación**.

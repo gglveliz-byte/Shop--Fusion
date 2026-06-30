@@ -281,16 +281,39 @@ Actualmente coexisten dos formas de interactuar con la estructura de la base de 
 Para el correcto funcionamiento del sistema, el archivo `.env` debe contener:
 
 - `DATABASE_URL`: Conexión a PostgreSQL.
-- `SECRET_KEY`: Seguridad de sesiones.
-- `ADMIN_USER` / `ADMIN_PASS`: Credenciales maestras.
-- `FERNET_KEY`: **[CRÍTICO]** Llave para el cifrado de datos PII.
+- `SECRET_KEY`: Seguridad de sesiones (mínimo 32 caracteres).
+- `ADMIN_USER` / `ADMIN_PASS`: Credenciales maestras del administrador (solo se leen en `init_db.py` para la creación inicial).
+- `FERNET_KEY`: **[CRÍTICO]** Llave para el cifrado de datos PII. Sin esta llave, los datos de clientes y afiliados no pueden cifrarse ni descifrarse.
 - `DASHSCOPE_API_KEY`: Llave para la integración con IA Qwen.
-- `PAYPAL_CLIENT_ID` / `PAYPAL_SECRET` / `PAYPAL_MODE`: Credenciales para Paypal
+- `PAYPAL_CLIENT_ID` / `PAYPAL_SECRET` / `PAYPAL_MODE`: Credenciales para PayPal.
 - `WHATSAPP_NUMBER`: Número de WhatsApp para la integración con la API de WhatsApp Business.
-- `REDIS_URL`: Cadena de conexión para Redis.
-- `THINKING_MODELS`: Modelos de IA a utilizar sus versiones de IA con pensamiento profundo.
-- `ALLOWED_ORIGINS`: Orígenes permitidos para el uso de la API de Dashscope para la IA Qwen, Paypal y otras APIs.
-- `FLASK_ENV`: Modo de ejecución de la app. Indica si se está en modo desarrollo o producción.
+- `REDIS_URL`: Cadena de conexión para Redis (ver detalle abajo).
+- `THINKING_MODELS`: Modelos de IA con razonamiento profundo habilitado (ver detalle en `seleccion_modelos_ia.md`).
+- `ALLOWED_ORIGINS`: Dominios autorizados para usar la API de IA Qwen y otras APIs sensibles (ver detalle abajo).
+- `FLASK_ENV`: Modo de ejecución. `development` para local, `production` para Render/Servidor.
+
+### Detalle: `ALLOWED_ORIGINS` (Protección de API)
+
+**El Problema:** La API de IA conectada a Qwen (Alibaba) tiene un costo asociado. Sin restricciones, un atacante podría insertar el chat en su propia página web y gastar el saldo de la API key.
+
+**La Solución:** Se implementó una política estricta de CORS en `app.py`. Si la petición no proviene de un dominio de la lista blanca, el servidor la bloquea de inmediato.
+
+| Entorno | Ejemplo de valor |
+|---|---|
+| Desarrollo (Local) | `http://localhost:5000,http://127.0.0.1:5000` |
+| Producción (Render) | `https://mi-tienda.onrender.com,https://mi-dominio.com` |
+
+### Detalle: `REDIS_URL` (Rate Limiting Persistente)
+
+**El Problema:** El limitador de intentos de login usaba la RAM del servidor (`memory://`). Si el servidor se reiniciaba (algo frecuente en Render Free Tier), los contadores se borraban y un atacante podía reiniciar su ataque de fuerza bruta.
+
+**La Solución:** Se migró el Rate Limiting a **Redis** con estrategia `moving-window`. Los contadores sobreviven reinicios del servidor.
+
+> [!WARNING]
+> **Error frecuente en Windows:** Si al ejecutar la app en local ves `ConnectionRefusedError: [WinError 10061]`, significa que Flask busca Redis en `localhost:6379` pero no está instalado localmente. **Solución:** Usa un proveedor gratuito en la nube como [Upstash o Key Value en Render (para usar la URL externa de Redis en Render, se debe agregar tu IPs pública para que funcione)](https://upstash.com/) y configura su URL en el `.env`:
+> ```env
+> REDIS_URL=rediss://default:tu_contraseña@tu-servidor.upstash.io:6379
+> ```
 
 ### Apéndice: Verificación de Esquema
 
