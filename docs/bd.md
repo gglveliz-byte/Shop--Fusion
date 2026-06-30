@@ -8,6 +8,7 @@
 
 - Flask-SQLAlchemy==3.1.1
 - Flask==3.0.0
+- Flask-Migrate==4.0.5
 - PostgreSQL==17
 
 ## 3. Estructura de las tablas:
@@ -200,6 +201,12 @@
 | referencia_id | String(50)     | NULL                     |
 | fecha         | DateTime       | default=datetime.utcnow  |
 
+### O. Alembic_version (Creada automáticamente por Flask-Migrate para manejar versiones)
+
+| Campo       | Tipo       | Restricciones / Default |
+| ----------- | ---------- | ----------------------- |
+| version_num | String(32) | NOT NULL                |
+
 ## 4. Relaciones y Seguridad:
 
 FOREIGN KEYS:
@@ -218,11 +225,50 @@ PROTECCIÓN PII (Cifrado Fernet):
 
 ## 5. Scripts para iniciar la Base de Datos:
 
+### A. `init_db.py` (Punto de Partida)
+Este script se utiliza **exclusivamente para la configuración inicial** o cuando se desea reinyectar datos perdidos.
+- **Funcionamiento actual:** Gracias a la Fase 11, este script ahora es "inteligente y selectivo". Si borras un producto de prueba desde el Panel de Administrador, puedes volver a correr en tu terminal el siguiente comando. 
+
 ```python
 python init_db.py
 ```
 
-NOTA 1: El archivo _init_db.py_ se encarga de crear las tablas, generar seed data e inicializar la configuración de marca blanca por defecto.
+El script buscará únicamente los elementos que faltan y los insertará sin alterar los que ya existen ni destruir la base de datos.
+- **¿Cuándo usarlo?** Al clonar el proyecto por primera vez o para recuperar productos de demostración eliminados por accidente.
+
+### B. Flask-Migrate (Evolución de la Base de Datos)
+Reemplaza scripts manuales peligrosos como `migrate_db.py`. Es la herramienta oficial para modificar tablas sin perder los registros de los clientes.
+
+**Flujo de Trabajo Básico:**
+1. **El "Punto Cero" (Se hace solo una vez en un proyecto que ya tiene tablas):**
+   ```bash
+   flask db init
+   flask db stamp head
+   ```
+   *(El comando `stamp head` es crucial porque le dice a Flask-Migrate: "La base de datos ya existe y está sincronizada con el código actual, no intentes crear todo de nuevo. Se creará una nueva tabla para manejar las versiones de las migraciones").*
+
+2. **Cuando modificas `models.py` (ej. agregas un campo nuevo):**
+   ```bash
+   flask db migrate -m "Mensaje descriptivo del cambio"
+   ```
+   *(Alembic detecta los cambios automáticamente y genera un archivo .py con la migración a realizar).*
+
+3. **Para aplicar los cambios a la base de datos real:**
+   ```bash
+   flask db upgrade
+   ```
+
+### C. Recomendación Oficial de Flujo de Trabajo (¡IMPORTANTE!)
+
+Actualmente coexisten dos formas de interactuar con la estructura de la base de datos. Para evitar conflictos, de momento se está siguiendo esta regla de oro:
+
+1. **Para crear el proyecto desde cero (Entorno Local/Nuevo):** 
+   Utiliza `python init_db.py`. Este script es un "todo en uno": crea las tablas desde cero (`db.create_all()`), inyecta los productos de prueba y configura la marca blanca y el administrador inicial.
+   
+2. **Para modificar el proyecto en el futuro (Agregar columnas, cambiar tablas):**
+   **NUNCA** usar `init_db.py` (porque borraría tus datos) y **NUNCA** usar `migrate_db.py` (es obsoleto). Se recomienda usar **ÚNICAMENTE** Flask-Migrate (`flask db migrate` y `flask db upgrade`).
+
+*Nota: Si estás usando Flask-Migrate activamente en producción, puedes usar `python init_db.py` únicamente para re-inyectar productos de prueba perdidos, ya que gracias a las correcciones realizadas, ya no destruye tu base de datos si rechazas el borrado de la BD.*
 
 ## 6. Buenas Prácticas para la Base de Datos:
 
@@ -240,6 +286,11 @@ Para el correcto funcionamiento del sistema, el archivo `.env` debe contener:
 - `FERNET_KEY`: **[CRÍTICO]** Llave para el cifrado de datos PII.
 - `DASHSCOPE_API_KEY`: Llave para la integración con IA Qwen.
 - `PAYPAL_CLIENT_ID` / `PAYPAL_SECRET` / `PAYPAL_MODE`: Credenciales para Paypal
+- `WHATSAPP_NUMBER`: Número de WhatsApp para la integración con la API de WhatsApp Business.
+- `REDIS_URL`: Cadena de conexión para Redis.
+- `THINKING_MODELS`: Modelos de IA a utilizar sus versiones de IA con pensamiento profundo.
+- `ALLOWED_ORIGINS`: Orígenes permitidos para el uso de la API de Dashscope para la IA Qwen, Paypal y otras APIs.
+- `FLASK_ENV`: Modo de ejecución de la app. Indica si se está en modo desarrollo o producción.
 
 ### Apéndice: Verificación de Esquema
 
