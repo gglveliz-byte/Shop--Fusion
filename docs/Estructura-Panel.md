@@ -1,5 +1,8 @@
 # Documento de Investigación: Paneles en e-commerce
 
+> **Historial de Revisiones (Última actualización)**
+> * **Fase 6 Completada:** Refactorización, seguridad de red y validación de endpoints aplicadas exitosamente. El documento refleja el estado actual de la plataforma modularizada.
+
 ## Objetivo
 Analizar y documentar la estructura y funcionamiento de los paneles de Administrador, Afiliados y Cliente, describiendo sus casos de uso y el flujo de compra desde la perspectiva del cliente.
 
