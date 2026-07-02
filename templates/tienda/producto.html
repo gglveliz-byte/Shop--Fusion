@@ -17,7 +17,7 @@
     }
 
     .breadcrumb-nav a {
-        color: #667eea;
+        color: var(--primary-color, #2563eb);
         text-decoration: none;
     }
 
@@ -33,9 +33,10 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 40px;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        background: var(--bg-surface, white);
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: var(--radius, 2px);
+        box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1));
         padding: 30px;
         margin-bottom: 30px;
     }
@@ -47,7 +48,8 @@
     .imagen-principal {
         width: 100%;
         aspect-ratio: 1;
-        border-radius: 12px;
+        border-radius: var(--radius, 2px);
+        border: 1px solid var(--border-color, #e2e8f0);
         overflow: hidden;
         background: #f8f9fa;
         display: flex;
@@ -59,13 +61,8 @@
         width: 100%;
         height: 100%;
         object-fit: contain;
-        transition: transform 0.3s ease;
         image-rendering: -webkit-optimize-contrast;
         image-rendering: crisp-edges;
-    }
-
-    .imagen-principal:hover img {
-        transform: scale(1.05);
     }
 
     .sin-imagen-placeholder {
@@ -88,26 +85,21 @@
     }
 
     .precio-container {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        background: #f8f9fa;
+        border: 1px solid var(--border-color, #e2e8f0);
         padding: 20px;
-        border-radius: 12px;
+        border-radius: var(--radius, 2px);
     }
 
     .precio-oferta-badge {
         display: inline-block;
-        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+        background: var(--danger-color, #dc2626);
         color: white;
         padding: 5px 12px;
-        border-radius: 20px;
+        border-radius: var(--radius, 2px);
         font-size: 12px;
         font-weight: 600;
         margin-bottom: 10px;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.05); }
     }
 
     .precio-anterior-grande {
@@ -125,10 +117,11 @@
 
     .ahorro-badge {
         display: inline-block;
-        background: #d4edda;
-        color: #155724;
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
         padding: 8px 15px;
-        border-radius: 8px;
+        border-radius: var(--radius, 2px);
         font-size: 14px;
         font-weight: 600;
         margin-top: 10px;
@@ -136,8 +129,9 @@
 
     .descripcion-section {
         background: #f8f9fa;
+        border: 1px solid var(--border-color, #e2e8f0);
         padding: 20px;
-        border-radius: 12px;
+        border-radius: var(--radius, 2px);
     }
 
     .descripcion-section h3 {
@@ -155,10 +149,11 @@
     }
 
     .compra-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--bg-surface, white);
+        border: 1px solid var(--border-color, #e2e8f0);
         padding: 25px;
-        border-radius: 12px;
-        color: white;
+        border-radius: var(--radius, 2px);
+        color: var(--text-primary, #1f2937);
     }
 
     .cantidad-grupo {
@@ -176,8 +171,8 @@
     .cantidad-input {
         width: 80px;
         padding: 12px;
-        border: none;
-        border-radius: 8px;
+        border: 1px solid var(--border-color, #e2e8f0);
+        border-radius: var(--radius, 2px);
         font-size: 16px;
         text-align: center;
         font-weight: 600;
@@ -188,12 +183,12 @@
         padding: 18px 30px;
         font-size: 18px;
         font-weight: 700;
-        background: white;
-        color: #667eea;
+        background: var(--primary-color, #2563eb);
+        color: white;
         border: none;
-        border-radius: 12px;
+        border-radius: var(--radius, 2px);
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: var(--transition, all 0.15s ease);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -201,15 +196,15 @@
     }
 
     .btn-agregar-carrito:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        background: var(--primary-dark, #1d4ed8);
     }
 
     .afiliado-badge-detalle {
-        background: linear-gradient(135deg, #ffd700 0%, #ffed4a 100%);
-        color: #1a1a2e;
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+        color: #047857;
         padding: 12px 20px;
-        border-radius: 10px;
+        border-radius: var(--radius, 2px);
         font-size: 14px;
         text-align: center;
         font-weight: 500;
@@ -221,16 +216,16 @@
         gap: 8px;
         padding: 12px 24px;
         background: white;
-        color: #667eea;
-        border: 2px solid #667eea;
-        border-radius: 10px;
+        color: var(--primary-color, #2563eb);
+        border: 1px solid var(--primary-color, #2563eb);
+        border-radius: var(--radius, 2px);
         text-decoration: none;
         font-weight: 600;
-        transition: all 0.3s ease;
+        transition: var(--transition, all 0.15s ease);
     }
 
     .btn-volver:hover {
-        background: #667eea;
+        background: var(--primary-color, #2563eb);
         color: white;
     }
 

@@ -4,36 +4,42 @@
 
 {% block content %}
 <!-- Banner de Garantía y Pago Contra Entrega -->
-<div class="garantia-banner" id="garantia-banner">
-    <div class="garantia-banner-content">
-        <button class="garantia-close" onclick="cerrarBannerGarantia()">&times;</button>
-        <div class="garantia-icon-main">🛡️</div>
-        <h3 class="garantia-titulo">¡Información Importante para tus Clientes!</h3>
-        <div class="garantia-items">
-            <div class="garantia-item">
-                <span class="garantia-item-icon">🚚</span>
+<div class="garantia-banner" id="garantia-banner" style="position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div class="garantia-banner-content" style="background-color: var(--bg-surface, white); width: 90%; max-width: 500px; padding: 2.5rem; position: relative; border: 1px solid var(--border-color, #e2e8f0); border-radius: var(--radius, 2px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+        <button class="garantia-close" onclick="cerrarBannerGarantia()" style="position: absolute; top: 1rem; right: 1.25rem; font-size: 1.5rem; background: none; border: none; cursor: pointer; color: var(--text-muted, #64748b); transition: color 0.2s;">&times;</button>
+        
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="width: 64px; height: 64px; background-color: var(--primary-light, #dbeafe); color: var(--primary-color, #2563eb); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                <span class="material-symbols-outlined" style="font-size: 2rem;">verified_user</span>
+            </div>
+            <h3 class="garantia-titulo" style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary, #0f172a); margin: 0;">¡Compra con Confianza!</h3>
+        </div>
+
+        <div class="garantia-items" style="display: flex; flex-direction: column; gap: 1rem;">
+            <div class="garantia-item" style="display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; border: 1px solid var(--border-color, #e2e8f0); border-radius: var(--radius, 2px); background-color: white;">
+                <span class="material-symbols-outlined" style="color: var(--primary-color, #2563eb); font-size: 1.5rem; margin-top: 0.125rem;">local_shipping</span>
                 <div class="garantia-item-text">
-                    <strong>Envíos a Todo el País</strong>
-                    <p>Llegamos a cualquier parte de Ecuador</p>
+                    <strong style="display: block; color: var(--text-primary, #0f172a); font-weight: 700; margin-bottom: 0.25rem;">Envíos a Todo el País</strong>
+                    <p style="color: var(--text-muted, #64748b); font-size: 0.875rem; margin: 0;">Llegamos a cualquier parte de Ecuador</p>
                 </div>
             </div>
-            <div class="garantia-item destacado-verde">
-                <span class="garantia-item-icon">📱💻</span>
+            <div class="garantia-item destacado-verde" style="display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; border: 1px solid #bbf7d0; border-radius: var(--radius, 2px); background-color: #f0fdf4;">
+                <span class="material-symbols-outlined" style="color: #166534; font-size: 1.5rem; margin-top: 0.125rem;">verified</span>
                 <div class="garantia-item-text">
-                    <strong>1 Año de Garantía</strong>
-                    <p>Solo en Teléfonos y Computadoras</p>
+                    <strong style="display: block; color: #166534; font-weight: 700; margin-bottom: 0.25rem;">1 Año de Garantía</strong>
+                    <p style="color: #166534; font-size: 0.875rem; margin: 0; opacity: 0.9;">Solo en Teléfonos y Computadoras</p>
                 </div>
             </div>
-            <div class="garantia-item destacado">
-                <span class="garantia-item-icon">💵</span>
+            <div class="garantia-item destacado" style="display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; border: 1px solid #fed7aa; border-radius: var(--radius, 2px); background-color: #fff7ed;">
+                <span class="material-symbols-outlined" style="color: #c2410c; font-size: 1.5rem; margin-top: 0.125rem;">payments</span>
                 <div class="garantia-item-text">
-                    <strong>Pago Contra Entrega</strong>
-                    <p>Excepto celulares y computadoras</p>
+                    <strong style="display: block; color: #c2410c; font-weight: 700; margin-bottom: 0.25rem;">Pago Contra Entrega</strong>
+                    <p style="color: #c2410c; font-size: 0.875rem; margin: 0; opacity: 0.9;">Excepto celulares y computadoras</p>
                 </div>
             </div>
         </div>
-        <p class="garantia-nota">Comparte esta información con tus clientes para generar más confianza</p>
-        <button class="garantia-btn-entendido" onclick="cerrarBannerGarantia()">¡Entendido!</button>
+        <p class="garantia-nota" style="text-align: center; color: var(--text-muted, #64748b); font-size: 0.875rem; margin: 1.5rem 0;">Comparte esta información con tus clientes para generar más confianza</p>
+        <button class="garantia-btn-entendido" onclick="cerrarBannerGarantia()" style="width: 100%; padding: 0.75rem; background-color: var(--primary-color, #2563eb); color: white; border: none; border-radius: var(--radius, 2px); font-weight: 600; cursor: pointer; transition: var(--transition, all 0.15s ease);">¡Entendido!</button>
     </div>
 </div>
 
@@ -1560,15 +1566,15 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
 }
 
 .garantia-banner-content {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-    border-radius: 24px;
+    background: var(--bg-surface, white);
+    border-radius: var(--radius, 2px);
     padding: 2rem;
     max-width: 450px;
     width: 100%;
     position: relative;
-    box-shadow: 0 25px 80px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     animation: bannerEntrada 0.4s ease-out;
-    border: 2px solid rgba(102, 126, 234, 0.2);
+    border: 1px solid var(--border-color, #e2e8f0);
 }
 
 @keyframes bannerEntrada {
@@ -1611,21 +1617,15 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
     font-size: 4rem;
     text-align: center;
     margin-bottom: 0.5rem;
-    animation: escudoPulse 2s ease-in-out infinite;
-}
-
-@keyframes escudoPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+    /* animation removed */
 }
 
 .garantia-titulo {
     text-align: center;
     font-size: 1.4rem;
     font-weight: 800;
-    color: #1a1a2e;
+    color: var(--text-primary, #1a1a2e);
     margin: 0 0 1.5rem 0;
-    background: linear-gradient(135deg, #667eea, #764ba2);
 }
 
 .garantia-items {
@@ -1641,24 +1641,23 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
     gap: 1rem;
     background: white;
     padding: 1rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    border-left: 4px solid #667eea;
-    transition: transform 0.3s ease;
+    border-radius: var(--radius, 2px);
+    border: 1px solid var(--border-color, #e2e8f0);
+    transition: var(--transition, all 0.15s ease);
 }
 
 .garantia-item:hover {
-    transform: translateX(5px);
+    background: #f8fafc;
 }
 
 .garantia-item.destacado {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    border-left-color: #f59e0b;
+    background: #fffbeb;
+    border-color: #fcd34d;
 }
 
 .garantia-item.destacado-verde {
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-    border-left-color: #10b981;
+    background: #f0fdf4;
+    border-color: #bbf7d0;
 }
 
 .garantia-item-icon {
@@ -1690,20 +1689,18 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
 .garantia-btn-entendido {
     width: 100%;
     padding: 1rem 2rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--primary-color, #2563eb);
     color: white;
     border: none;
-    border-radius: 12px;
+    border-radius: var(--radius, 2px);
     font-size: 1.1rem;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    transition: var(--transition, all 0.15s ease);
 }
 
 .garantia-btn-entendido:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+    background: var(--primary-dark, #1d4ed8);
 }
 
 @media (max-width: 500px) {
