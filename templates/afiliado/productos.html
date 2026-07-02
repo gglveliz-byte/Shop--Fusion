@@ -721,8 +721,8 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
    ======================================== */
 .tienda-general-card {
     background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius, 2px);
     padding: 1.5rem;
     margin-bottom: 1.5rem;
     color: #0f172a;
@@ -740,7 +740,7 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
     font-size: 2.5rem;
     background: #f1f5f9;
     padding: 0.75rem;
-    border-radius: 12px;
+    border-radius: var(--radius, 2px);
 }
 
 .tienda-general-header h3 {
@@ -765,10 +765,10 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
 .link-input-grande {
     flex: 1;
     padding: 0.875rem 1rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
+    border: 1px solid var(--border-color, #cbd5e1);
+    border-radius: var(--radius, 2px);
     background: #f8fafc;
-    color: #0f172a;
+    color: var(--text-primary, #0f172a);
     font-size: 0.95rem;
 }
 
@@ -778,13 +778,13 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
 
 .btn-copiar-grande {
     padding: 0.875rem 1.5rem;
-    background: #2563eb;
+    background: var(--primary-color, #2563eb);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius, 2px);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: var(--transition, all 0.15s ease);
     white-space: nowrap;
 }
 
@@ -806,7 +806,7 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
     display: inline-block;
     background: rgba(255,255,255,0.2);
     padding: 0.5rem 1rem;
-    border-radius: 20px;
+    border-radius: var(--radius, 2px);
     font-size: 0.85rem;
 }
 
@@ -818,7 +818,7 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
     border: 1px solid #bbf7d0;
     color: #166534;
     padding: 1rem 1.5rem;
-    border-radius: 12px;
+    border-radius: var(--radius, 2px);
     margin-bottom: 1.5rem;
 }
 
@@ -832,7 +832,7 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
    ======================================== */
 .filtros-afiliado {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius, 2px);
     padding: 1.5rem;
     margin-bottom: 2rem;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
@@ -854,16 +854,16 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
 .search-box input {
     width: 100%;
     padding: 0.875rem 1rem 0.875rem 3rem;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius, 2px);
     font-size: 1rem;
-    transition: all 0.3s ease;
+    transition: var(--transition, all 0.15s ease);
 }
 
 .search-box input:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: var(--primary-color, #2563eb);
+    box-shadow: none;
 }
 
 .btn-clear-search {
@@ -905,24 +905,24 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
     align-items: center;
     gap: 0.35rem;
     padding: 0.5rem 1rem;
-    border: 2px solid #e2e8f0;
+    border: 1px solid var(--border-color, #e2e8f0);
     background: white;
-    border-radius: 25px;
+    border-radius: var(--radius, 2px);
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: 500;
-    transition: all 0.3s ease;
+    transition: var(--transition, all 0.15s ease);
 }
 
 .chip:hover {
-    border-color: #667eea;
+    border-color: var(--primary-color, #2563eb);
     background: #f8fafc;
 }
 
 .chip.active {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: var(--primary-color, #2563eb);
     color: white;
-    border-color: transparent;
+    border-color: var(--primary-color, #2563eb);
 }
 
 .resultados-info {
@@ -940,11 +940,11 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
 }
 
 .btn-limpiar-filtros {
-    background: #ef4444;
+    background: var(--danger-color, #ef4444);
     color: white;
     border: none;
     padding: 0.5rem 1rem;
-    border-radius: 8px;
+    border-radius: var(--radius, 2px);
     cursor: pointer;
     font-size: 0.85rem;
     font-weight: 500;
@@ -966,16 +966,15 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
     display: flex;
     flex-direction: column;
     background: white;
-    border-radius: 20px;
+    border-radius: var(--radius, 2px);
     overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.05));
+    border: 1px solid var(--border-color, #e2e8f0);
+    transition: var(--transition, all 0.15s ease);
 }
 
 .producto-afiliado-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1));
 }
 
 /* Contenedor de imagen */
@@ -1000,7 +999,7 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
 }
 
 .producto-afiliado-card:hover .producto-imagen {
-    transform: scale(1.05);
+    /* Animación removida según solicitud */
 }
 
 .sin-imagen {
@@ -1016,10 +1015,10 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
     position: absolute;
     top: 1rem;
     right: 1rem;
-    background: linear-gradient(135deg, #ef4444, #dc2626);
+    background: var(--danger-color, #ef4444);
     color: white;
     padding: 0.35rem 0.75rem;
-    border-radius: 8px;
+    border-radius: var(--radius, 2px);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.5px;
@@ -1057,7 +1056,7 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
     background: #f1f5f9;
     color: #64748b;
     padding: 0.3rem 0.6rem;
-    border-radius: 6px;
+    border-radius: var(--radius, 2px);
     font-size: 0.7rem;
     font-weight: 600;
     white-space: nowrap;
@@ -1085,7 +1084,7 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
 .precio-box {
     background: #f8fafc;
     padding: 0.6rem 0.75rem;
-    border-radius: 10px;
+    border-radius: var(--radius, 2px);
     text-align: center;
 }
 
@@ -1136,7 +1135,7 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
     background: #f0fdf4;
     border: 1px solid #bbf7d0;
     padding: 1rem;
-    border-radius: 12px;
+    border-radius: var(--radius, 2px);
     color: #0f172a;
 }
 
@@ -1162,15 +1161,15 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
 .comision-barra {
     height: 6px;
     background: #dcfce7;
-    border-radius: 3px;
+    border-radius: var(--radius, 2px);
     overflow: hidden;
 }
 
 .comision-progreso {
     height: 100%;
     background: #166534;
-    border-radius: 3px;
-    transition: width 0.3s ease;
+    border-radius: var(--radius, 2px);
+    transition: var(--transition, width 0.15s ease);
 }
 
 /* Seccion de link */
@@ -1194,8 +1193,8 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
 .link-input {
     flex: 1;
     padding: 0.65rem 0.75rem;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius, 2px);
     font-size: 0.8rem;
     color: #475569;
     background: #f8fafc;
@@ -1205,18 +1204,19 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
 .btn-copiar {
     padding: 0.65rem 1rem;
     background: white;
-    color: #2563eb;
-    border: 1px solid #2563eb;
-    border-radius: 10px;
+    color: var(--primary-color, #2563eb);
+    border: 1px solid var(--primary-color, #2563eb);
+    border-radius: var(--radius, 2px);
     font-weight: 600;
     font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: var(--transition, all 0.15s ease);
     white-space: nowrap;
 }
 
 .btn-copiar:hover {
-    background: #eff6ff;
+    background: var(--primary-color, #2563eb);
+    color: white;
 }
 
 .btn-copiar.copiado {
@@ -1318,14 +1318,14 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
     justify-content: center;
     gap: 0.4rem;
     padding: 0.65rem 0.75rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color, #e2e8f0);
     background: white;
-    border-radius: 8px;
+    border-radius: var(--radius, 2px);
     font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
-    color: #475569;
+    transition: var(--transition, all 0.15s ease);
+    color: var(--text-primary, #1f2937);
 }
 
 .btn-share svg {
@@ -1337,7 +1337,6 @@ document.addEventListener('DOMContentLoaded', verificarBannerGarantia);
 .btn-share:hover {
     background: #f8fafc;
     border-color: #cbd5e1;
-    color: #0f172a;
 }
 
 .btn-share:active {
