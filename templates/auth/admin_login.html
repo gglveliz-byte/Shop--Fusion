@@ -346,7 +346,6 @@
                     <div class="form-group">
                         <label for="password" class="form-label">Contraseña</label>
                         <div class="input-wrapper">
-                            <a href="#" class="forgot-link">¿Olvidó su clave?</a>
                             <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
                         </div>
                     </div>
@@ -367,18 +366,44 @@
             </div>
         </div>
 
-        <div class="split-footer">
-            <div class="split-footer-text">
-                © 2024 Shop-Fusion Enterprise. Reservados todos los derechos.
+        <footer class="m-footer">
+            <div class="m-footer-top">
+                <div class="m-footer-brand">
+                    <h4>{{ config_web.nombre_tienda if config_web else 'Marca Blanca' }}</h4>
+                    <p>{{ config_web.mensaje_footer if config_web else 'Ofrecemos tecnología de vanguardia para compras digitales con confianza y seguridad.' }}</p>
+                    <div class="m-footer-socials">
+                        <a href="#" class="m-social-btn"><span class="material-symbols-outlined">share</span></a>
+                        <a href="#" class="m-social-btn"><span class="material-symbols-outlined">language</span></a>
+                    </div>
+                </div>
+                <div class="m-footer-links-wrapper">
+                    <div class="m-footer-col">
+                        <h5>Empresa</h5>
+                        <ul>
+                            <li><a href="#">Privacidad</a></li>
+                            <li><a href="#">Términos y Condiciones</a></li>
+                        </ul>
+                    </div>
+                    <div class="m-footer-col">
+                        <h5>Sede Central</h5>
+                        <p>
+                            {{ config_web.direccion if config_web and config_web.direccion else 'Avenida de la Innovación, 42' }}<br/>
+                            {{ config_web.email if config_web and config_web.email else 'info@shopfusion.com' }}
+                        </p>
+                    </div>
+                </div>
             </div>
-            <div class="split-footer-links">
-                <a href="#">Soporte Técnico</a>
-                <span>•</span>
-                <a href="#">Políticas de Seguridad</a>
-                <span>•</span>
-                <a href="#">Cumplimiento Legal</a>
+            <div class="m-footer-bottom">
+                <div class="m-footer-bottom-inner">
+                    <p class="m-footer-copy">{{ config_web.mensaje_copyright if config_web else 'Derechos Reservados'}}</p>
+                    <div class="m-footer-badges">
+                        <span class="material-symbols-outlined">credit_card</span>
+                        <span class="material-symbols-outlined">account_balance</span>
+                        <span class="material-symbols-outlined">shield</span>
+                    </div>
+                </div>
             </div>
-        </div>
+        </footer>
     </div>
 </div>
 {% endblock %}
