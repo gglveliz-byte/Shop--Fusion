@@ -39,7 +39,7 @@
                         <div class="item-eliminar">
                             <form method="POST" action="{{ url_for('tienda.eliminar_carrito', id=item.producto.id) }}">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
+                                <button type="submit" class="m-btn m-btn-danger" style="padding: 5px 10px; font-size: 0.9em;">🗑️</button>
                             </form>
                         </div>
                     </div>
@@ -65,14 +65,14 @@
                     </div>
                 {% endif %}
 
-                <a href="{{ url_for('tienda.checkout') }}" class="btn btn-success btn-block btn-lg">Proceder a Comprar y hacer Pedido</a>
-                <a href="{{ url_for('tienda.index') }}" class="btn btn-secondary btn-block">← Seguir Comprando</a>
+                <a href="{{ url_for('tienda.checkout') }}" class="m-btn m-btn-success" style="width: 100%; text-align: center; margin-bottom: 10px;">Proceder a Comprar y hacer Pedido</a>
+                <a href="{{ url_for('tienda.index') }}" class="m-btn" style="width: 100%; text-align: center; background-color: var(--border-color); color: var(--text-color);">← Seguir Comprando</a>
             </div>
         </div>
     {% else %}
         <div class="empty-state">
             <p>Tu carrito está vacío</p>
-            <a href="{{ url_for('tienda.index') }}" class="btn btn-primary">Ir a la tienda</a>
+            <a href="{{ url_for('tienda.index') }}" class="m-btn m-btn-primary">Ir a la tienda</a>
         </div>
     {% endif %}
 </div>
