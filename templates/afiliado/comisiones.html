@@ -3,100 +3,115 @@
 {% block title %}Mis Comisiones - Afiliado{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>💰 Mis Comisiones</h1>
+<div class="m-admin-container">
+    <div class="m-admin-header" style="flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-bottom: 2rem;">
+        <h1 style="display:flex; align-items:center; gap:0.5rem; font-size: 1.8rem; font-weight: 800; color: var(--text-primary, #0f172a); margin: 0;">
+            <span class="material-symbols-outlined" style="color: var(--primary-color, #2563eb); font-size: 2.2rem;">account_balance_wallet</span> 
+            Mis Comisiones
+        </h1>
+        <p style="color:#64748b; margin:0;">Revisa el estado de tus ganancias y pagos de referidos.</p>
+    </div>
 
-    <div class="comisiones-resumen-afiliado">
-        <div class="resumen-card">
-            <div class="resumen-icon">⏳</div>
-            <div class="resumen-info">
-                <p class="resumen-label">Pendientes</p>
-                <p class="resumen-valor">${{ "%.2f"|format(total_pendiente) }}</p>
+    <div class="m-kpi-grid" style="margin-bottom: 2rem;">
+        <div class="m-kpi-card">
+            <div class="m-kpi-info">
+                <p>Pendientes</p>
+                <h3>${{ "%.2f"|format(total_pendiente) }}</h3>
+            </div>
+            <div class="m-kpi-icon-wrapper orange">
+                <span class="material-symbols-outlined">hourglass_empty</span>
             </div>
         </div>
 
-        <div class="resumen-card">
-            <div class="resumen-icon">✅</div>
-            <div class="resumen-info">
-                <p class="resumen-label">Generadas</p>
-                <p class="resumen-valor">${{ "%.2f"|format(total_generado) }}</p>
+        <div class="m-kpi-card">
+            <div class="m-kpi-info">
+                <p>Generadas</p>
+                <h3>${{ "%.2f"|format(total_generado) }}</h3>
+            </div>
+            <div class="m-kpi-icon-wrapper blue">
+                <span class="material-symbols-outlined">verified</span>
             </div>
         </div>
 
-        <div class="resumen-card">
-            <div class="resumen-icon">💰</div>
-            <div class="resumen-info">
-                <p class="resumen-label">Pagadas</p>
-                <p class="resumen-valor">${{ "%.2f"|format(total_pagado) }}</p>
+        <div class="m-kpi-card">
+            <div class="m-kpi-info">
+                <p>Pagadas</p>
+                <h3>${{ "%.2f"|format(total_pagado) }}</h3>
+            </div>
+            <div class="m-kpi-icon-wrapper green">
+                <span class="material-symbols-outlined">payments</span>
             </div>
         </div>
 
-        <div class="resumen-card resumen-total">
-            <div class="resumen-icon">🎯</div>
-            <div class="resumen-info">
-                <p class="resumen-label">Total Ganado</p>
-                <p class="resumen-valor-grande">${{ "%.2f"|format(total_ganado) }}</p>
+        <div class="m-kpi-card" style="background: var(--primary-color, #2563eb);">
+            <div class="m-kpi-info" style="color: white;">
+                <p style="color: rgba(255,255,255,0.8);">Total Ganado</p>
+                <h3 style="color: white;">${{ "%.2f"|format(total_ganado) }}</h3>
+            </div>
+            <div class="m-kpi-icon-wrapper" style="background: rgba(255,255,255,0.2); color: white;">
+                <span class="material-symbols-outlined">emoji_events</span>
             </div>
         </div>
     </div>
 
-    <div class="filtros">
-        <a href="{{ url_for('afiliado.comisiones', estado='todos') }}" class="btn {% if estado_filter == 'todos' %}btn-primary{% else %}btn-secondary{% endif %}">Todas</a>
-        <a href="{{ url_for('afiliado.comisiones', estado='pendiente') }}" class="btn {% if estado_filter == 'pendiente' %}btn-warning{% else %}btn-secondary{% endif %}">Pendientes</a>
-        <a href="{{ url_for('afiliado.comisiones', estado='generada') }}" class="btn {% if estado_filter == 'generada' %}btn-info{% else %}btn-secondary{% endif %}">Generadas</a>
-        <a href="{{ url_for('afiliado.comisiones', estado='pagada') }}" class="btn {% if estado_filter == 'pagada' %}btn-success{% else %}btn-secondary{% endif %}">Pagadas</a>
+    <div class="m-table-actions" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <a href="{{ url_for('afiliado.comisiones', estado='todos') }}" class="m-btn {% if estado_filter == 'todos' %}m-btn-primary{% else %}m-btn-outline{% endif %}" style="padding: 0.5rem 1rem; border-radius: var(--radius, 2px);">Todas</a>
+        <a href="{{ url_for('afiliado.comisiones', estado='pendiente') }}" class="m-btn {% if estado_filter == 'pendiente' %}m-btn-primary{% else %}m-btn-outline{% endif %}" style="padding: 0.5rem 1rem; border-radius: var(--radius, 2px);">Pendientes</a>
+        <a href="{{ url_for('afiliado.comisiones', estado='generada') }}" class="m-btn {% if estado_filter == 'generada' %}m-btn-primary{% else %}m-btn-outline{% endif %}" style="padding: 0.5rem 1rem; border-radius: var(--radius, 2px);">Generadas</a>
+        <a href="{{ url_for('afiliado.comisiones', estado='pagada') }}" class="m-btn {% if estado_filter == 'pagada' %}m-btn-primary{% else %}m-btn-outline{% endif %}" style="padding: 0.5rem 1rem; border-radius: var(--radius, 2px);">Pagadas</a>
     </div>
 
     {% if comisiones %}
-        <div class="comisiones-lista">
-            {% for comision in comisiones %}
-                <div class="comision-card">
-                    <div class="comision-header">
-                        <div>
-                            <h3>Pedido #{{ comision.pedido_id }}</h3>
-                            <p class="comision-fecha">{{ comision.creado_en.strftime('%d/%m/%Y %H:%M') }}</p>
-                        </div>
-                        <div class="comision-estado">
-                            {% if comision.estado == 'pendiente' %}
-                                <span class="badge badge-warning badge-lg">⏳ Pendiente</span>
-                            {% elif comision.estado == 'generada' %}
-                                <span class="badge badge-info badge-lg">✅ Generada</span>
-                            {% else %}
-                                <span class="badge badge-success badge-lg">💰 Pagada</span>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="comision-detalles">
-                        <h4>Productos Vendidos:</h4>
-                        <ul class="productos-vendidos">
-                            {% for item in comision.pedido.productos_json %}
-                                <li>{{ item.nombre }} x{{ item.cantidad }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-
-                    <div class="comision-numeros">
-                        <div class="numero-item">
-                            <span class="numero-label">Margen Total:</span>
-                            <span class="numero-valor">${{ "%.2f"|format(comision.margen) }}</span>
-                        </div>
-                        <div class="numero-item numero-comision">
-                            <span class="numero-label">Tu Comisión:</span>
-                            <span class="numero-valor-grande">${{ "%.2f"|format(comision.monto) }}</span>
-                        </div>
-                    </div>
-
-                    {% if comision.pagada_en %}
-                        <p class="comision-pagada-fecha">Pagada el {{ comision.pagada_en.strftime('%d/%m/%Y') }}</p>
-                    {% endif %}
-                </div>
-            {% endfor %}
+        <div class="m-admin-card">
+            <div class="m-table-responsive">
+                <table class="m-admin-table">
+                    <thead>
+                        <tr>
+                            <th>PEDIDO / FECHA</th>
+                            <th>PRODUCTOS</th>
+                            <th>MARGEN BASE</th>
+                            <th>TU COMISIÓN</th>
+                            <th>ESTADO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for comision in comisiones %}
+                            <tr>
+                                <td>
+                                    <strong>ORD-{{ '%03d' % comision.pedido_id }}</strong><br>
+                                    <span style="color:#64748b; font-size: 0.8rem;">{{ comision.creado_en.strftime('%d/%m/%Y %H:%M') }}</span>
+                                </td>
+                                <td>
+                                    <ul style="margin:0; padding-left:1.2rem; color:#475569; font-size: 0.9rem;">
+                                        {% for item in comision.pedido.productos_json %}
+                                            <li>{{ item.nombre }} (x{{ item.cantidad }})</li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                                <td style="color:#64748b;">${{ "%.2f"|format(comision.margen) }}</td>
+                                <td style="font-weight: 700; color:#059669; font-size: 1.1rem;">${{ "%.2f"|format(comision.monto) }}</td>
+                                <td>
+                                    {% if comision.estado == 'pendiente' %}
+                                        <span class="m-badge m-badge-pending">Pendiente</span>
+                                    {% elif comision.estado == 'generada' %}
+                                        <span class="m-badge m-badge-neutral" style="background:#e0f2fe; color:#0369a1;">Generada</span>
+                                    {% else %}
+                                        <span class="m-badge m-badge-success">Pagada</span><br>
+                                        <span style="font-size:0.75rem; color:#64748b; display:inline-block; margin-top:4px;">{{ comision.pagada_en.strftime('%d/%m/%Y') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     {% else %}
-        <div class="empty-state">
-            <p>No tienes comisiones para mostrar con los filtros seleccionados.</p>
-            <a href="{{ url_for('afiliado.productos') }}" class="btn btn-primary">Ir a Productos</a>
+        <div class="m-admin-card" style="padding: 4rem 2rem; text-align: center;">
+            <span class="material-symbols-outlined" style="font-size: 4rem; color: #cbd5e1; margin-bottom: 1rem;">inbox</span>
+            <h3 style="color: #475569; margin: 0 0 0.5rem 0;">No se encontraron comisiones</h3>
+            <p style="color: #64748b; margin: 0 0 1.5rem 0;">No tienes comisiones para mostrar con los filtros seleccionados.</p>
+            <a href="{{ url_for('afiliado.productos') }}" class="m-btn m-btn-primary">Ir al Catálogo de Productos</a>
         </div>
     {% endif %}
 </div>

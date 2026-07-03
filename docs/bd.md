@@ -281,16 +281,66 @@ Actualmente coexisten dos formas de interactuar con la estructura de la base de 
 Para el correcto funcionamiento del sistema, el archivo `.env` debe contener:
 
 - `DATABASE_URL`: Conexión a PostgreSQL.
-- `SECRET_KEY`: Seguridad de sesiones.
-- `ADMIN_USER` / `ADMIN_PASS`: Credenciales maestras.
-- `FERNET_KEY`: **[CRÍTICO]** Llave para el cifrado de datos PII.
+- `SECRET_KEY`: Seguridad de sesiones (mínimo 32 caracteres).
+- `ADMIN_USER` / `ADMIN_PASS`: Credenciales maestras del administrador (solo se leen en `init_db.py` para la creación inicial).
+- `FERNET_KEY`: **[CRÍTICO]** Llave para el cifrado de datos PII. Sin esta llave, los datos de clientes y afiliados no pueden cifrarse ni descifrarse.
 - `DASHSCOPE_API_KEY`: Llave para la integración con IA Qwen.
-- `PAYPAL_CLIENT_ID` / `PAYPAL_SECRET` / `PAYPAL_MODE`: Credenciales para Paypal
-- `WHATSAPP_NUMBER`: Número de WhatsApp para la integración con la API de WhatsApp Business.
-- `REDIS_URL`: Cadena de conexión para Redis.
-- `THINKING_MODELS`: Modelos de IA a utilizar sus versiones de IA con pensamiento profundo.
-- `ALLOWED_ORIGINS`: Orígenes permitidos para el uso de la API de Dashscope para la IA Qwen, Paypal y otras APIs.
-- `FLASK_ENV`: Modo de ejecución de la app. Indica si se está en modo desarrollo o producción.
+- `PAYPAL_CLIENT_ID` / `PAYPAL_SECRET` / `PAYPAL_MODE`: Credenciales para PayPal.
+- `PAYPAL_WEBHOOK_ID`: ⚠️ (Obligatorio en producción) ID del Webhook para auto-confirmar pagos de PayPal.
+- `WHATSAPP_NUMBER`: Número de WhatsApp de la tienda.
+- `DEFAULT_COUNTRY_CODE`: ✅ (Opcional) Código de país por defecto (ej. 593). Ver detalle abajo.
+- `REDIS_URL`: Cadena de conexión para Redis (ver detalle abajo).
+- `THINKING_MODELS`: Modelos de IA con razonamiento profundo habilitado (ver detalle en `seleccion_modelos_ia.md`).
+- `ALLOWED_ORIGINS`: Dominios autorizados para usar la API de IA Qwen y otras APIs sensibles (ver detalle abajo).
+- `TRUSTED_PROXIES`: ✅ (Opcional) Lista de IPs de proxies de confianza (ver detalle abajo).
+- `FLASK_ENV`: Modo de ejecución. `development` para local, `production` para Render/Servidor.
+- `MAIL_USERNAME` / `MAIL_PASSWORD`: ⚠️ (Recomendadas) Credenciales SMTP (ej. App Password de Gmail) para envío de correos del sistema.
+- `MAIL_SERVER` / `MAIL_PORT`: ✅ (Opcionales) Servidor y puerto SMTP (por defecto Gmail smtp.gmail.com / 587).
+- `SUPPORT_EMAIL`: ✅ (Opcional) Email donde llegan los tickets de soporte escalados.
+- `LOGIN_ATTEMPTS_LIMIT` / `LOGIN_LOCK_MINUTES`: ✅ (Opcionales) Límite de intentos de login y tiempo de bloqueo (por defecto 5 intentos / 5 minutos).
+
+### Detalle: `ALLOWED_ORIGINS` (Protección de API)
+
+**El Problema:** La API de IA conectada a Qwen (Alibaba) tiene un costo asociado. Sin restricciones, un atacante podría insertar el chat en su propia página web y gastar el saldo de la API key.
+
+**La Solución:** Se implementó una política estricta de CORS en `app.py`. Si la petición no proviene de un dominio de la lista blanca, el servidor la bloquea de inmediato.
+
+| Entorno | Ejemplo de valor |
+|---|---|
+| Desarrollo (Local) | `http://localhost:5000,http://127.0.0.1:5000` |
+| Producción (Render) | `https://mi-tienda.onrender.com,https://mi-dominio.com` |
+
+### Detalle: `REDIS_URL` (Rate Limiting Persistente)
+
+**El Problema:** El limitador de intentos de login usaba la RAM del servidor (`memory://`). Si el servidor se reiniciaba (algo frecuente en Render Free Tier), los contadores se borraban y un atacante podía reiniciar su ataque de fuerza bruta.
+
+**La Solución:** Se migró el Rate Limiting a **Redis** con estrategia `moving-window`. Los contadores sobreviven reinicios del servidor.
+
+> [!WARNING]
+> **Error frecuente en Windows:** Si al ejecutar la app en local ves `ConnectionRefusedError: [WinError 10061]`, significa que Flask busca Redis en `localhost:6379` pero no está instalado localmente. **Solución:** Usa un proveedor gratuito en la nube como [Upstash o Key Value en Render (para usar la URL externa de Redis en Render, se debe agregar tu IPs pública para que funcione)](https://upstash.com/) y configura su URL en el `.env`:
+> ```env
+> REDIS_URL=rediss://default:tu_contraseña@tu-servidor.upstash.io:6379
+> ```
+
+### Detalle: `DEFAULT_COUNTRY_CODE` (Formato Internacional)
+
+Esta variable se aplica tanto al **Administrador (tienda principal)** como a todos los **Afiliados**.
+
+**Cómo funciona actualmente:**
+Si un número ingresado empieza con `0` (ej. `0999999999`), el sistema (`utils/validators.py`) automáticamente reemplaza ese cero por el valor de esta variable (ej. `593999999999`). Si el número no empieza con cero y no tiene el código de país, le añade el prefijo configurado al inicio.
+
+**Comportamiento Práctico:** 
+Funciona perfectamente para una tienda que opera exclusivamente a nivel local/nacional. Sin embargo, si en el futuro se afilian vendedores de otros países (ej. México +52) y guardan su número nacional en el panel, el sistema forzará la inserción del prefijo `593` y sus enlaces de WhatsApp se romperán.
+
+### Detalle: `TRUSTED_PROXIES` (Código Fantasma y ProxyFix)
+
+Esta variable define una lista de IPs de proxies confiables (ej. la red interna de Render) para mitigar el Spoofing de IP evaluando los encabezados `X-Forwarded-For`.
+
+**Comportamiento actual ("Código Fantasma"):**
+La aplicación ya cuenta con `ProxyFix` activado globalmente en `app.py`. `ProxyFix` intercepta las peticiones, extrae la IP real del cliente y sobrescribe la variable nativa de IP en Flask.
+Cuando el sistema de logs (`utils/security_logger.py`) intenta usar `TRUSTED_PROXIES` para verificar si la petición viene de un proxy conocido, **siempre falla (da falso)** porque `ProxyFix` ya removió la IP del proxy. Al fallar, el código toma la IP "directa" (que, irónicamente, es la correcta del cliente extraída por `ProxyFix`). 
+
+**Conclusión:** Configurar esta variable no romperá el sistema en Render. Simplemente su validación interna será omitida de forma segura y silenciosa. Puede dejarse configurada en el `.env` (o vacía) sin riesgo.
 
 ### Apéndice: Verificación de Esquema
 
