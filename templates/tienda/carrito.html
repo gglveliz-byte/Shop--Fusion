@@ -27,6 +27,7 @@
 
                         <div class="item-cantidad">
                             <form method="POST" action="{{ url_for('tienda.actualizar_carrito', id=item.producto.id) }}" class="form-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="number" name="cantidad" value="{{ item.cantidad }}" min="1" max="99" class="form-control form-control-sm" onchange="this.form.submit()">
                             </form>
                         </div>
@@ -37,6 +38,7 @@
 
                         <div class="item-eliminar">
                             <form method="POST" action="{{ url_for('tienda.eliminar_carrito', id=item.producto.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-danger btn-sm">🗑️</button>
                             </form>
                         </div>
@@ -74,4 +76,21 @@
         </div>
     {% endif %}
 </div>
+
+<script>
+    // Sincronizar localStorage con la sesión del servidor para mantener consistencia
+    // al volver a la tienda o cambiar cantidades/eliminar productos.
+    const carritoDesdeSesion = [
+        {% for item in productos %}
+        {
+            id: {{ item.producto.id }},
+            nombre: "{{ item.producto.nombre|replace('\"', '\\\"') }}",
+            precio: {{ item.precio }},
+            imagen: "{{ item.producto.imagen or '' }}",
+            cantidad: {{ item.cantidad }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+    localStorage.setItem('carrito', JSON.stringify(carritoDesdeSesion));
+</script>
 {% endblock %}
