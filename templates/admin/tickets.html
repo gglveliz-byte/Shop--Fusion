@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Soporte Técnico - Shop Fusion{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex justify-between items-end">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Panel de Soporte</h1>
+        <p class="text-gray-500 mt-1">Gestión de quejas, dudas y problemas escalados por la IA.</p>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 mb-8">
+    <form method="GET" action="{{ url_for('admin.tickets') }}" class="flex flex-wrap gap-4 items-end">
+        <div class="w-full md:w-auto">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado</label>
+            <select name="estado" class="w-full md:w-48 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <option value="todos" {% if estado_filter == 'todos' %}selected{% endif %}>Todos los estados</option>
+                <option value="abierto" {% if estado_filter == 'abierto' %}selected{% endif %}>🟢 Abierto</option>
+                <option value="en_progreso" {% if estado_filter == 'en_progreso' %}selected{% endif %}>🟡 En Progreso</option>
+                <option value="cerrado" {% if estado_filter == 'cerrado' %}selected{% endif %}>⚫ Cerrado</option>
+            </select>
+        </div>
+        <div class="w-full md:w-auto">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Prioridad</label>
+            <select name="prioridad" class="w-full md:w-48 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <option value="todas" {% if prioridad_filter == 'todas' %}selected{% endif %}>Todas las prioridades</option>
+                <option value="baja" {% if prioridad_filter == 'baja' %}selected{% endif %}>🟢 Baja</option>
+                <option value="media" {% if prioridad_filter == 'media' %}selected{% endif %}>🟡 Media</option>
+                <option value="alta" {% if prioridad_filter == 'alta' %}selected{% endif %}>🔴 Alta</option>
+                <option value="critica" {% if prioridad_filter == 'critica' %}selected{% endif %}>🚨 Crítica</option>
+            </select>
+        </div>
+        <div class="w-full md:w-auto">
+            <button type="submit" class="w-full md:w-auto px-5 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg shadow-sm transition-colors">
+                Filtrar Tickets
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Tabla de Tickets -->
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-300">
+                <tr>
+                    <th scope="col" class="px-6 py-4">Ticket</th>
+                    <th scope="col" class="px-6 py-4">Cliente</th>
+                    <th scope="col" class="px-6 py-4">Asunto</th>
+                    <th scope="col" class="px-6 py-4 text-center">Estado</th>
+                    <th scope="col" class="px-6 py-4 text-center">Prioridad</th>
+                    <th scope="col" class="px-6 py-4">Última Actividad</th>
+                    <th scope="col" class="px-6 py-4 text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tickets %}
+                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                        {{ t.numero }}
+                        {% if t.escalado %}
+                        <span class="inline-flex items-center justify-center w-5 h-5 ml-2 text-xs font-bold text-white bg-red-500 rounded-full" title="Escalado">-!-</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="font-medium text-gray-900 dark:text-white">{{ t.contacto_nombre or 'Anónimo' }}</div>
+                        <div class="text-xs text-gray-500">{{ t.contacto_email or 'Sin email' }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="max-w-xs truncate" title="{{ t.asunto }}">{{ t.asunto }}</div>
+                        <div class="text-xs text-gray-400">Vía: {{ t.canal }}</div>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        {% if t.estado == 'abierto' %}
+                            <span class="px-2.5 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full dark:bg-green-900/30 dark:text-green-400">Abierto</span>
+                        {% elif t.estado == 'en_progreso' %}
+                            <span class="px-2.5 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full dark:bg-yellow-900/30 dark:text-yellow-400">En Progreso</span>
+                        {% else %}
+                            <span class="px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full dark:bg-gray-700 dark:text-gray-300">Cerrado</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        {% if t.prioridad == 'baja' %}
+                            <span class="px-2.5 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900/30 dark:text-blue-400">Baja</span>
+                        {% elif t.prioridad == 'media' %}
+                            <span class="px-2.5 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full dark:bg-yellow-900/30 dark:text-yellow-400">Media</span>
+                        {% elif t.prioridad == 'alta' %}
+                            <span class="px-2.5 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full dark:bg-red-900/30 dark:text-red-400">Alta</span>
+                        {% elif t.prioridad == 'critica' %}
+                            <span class="px-2.5 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full dark:bg-purple-900/30 dark:text-purple-400 animate-pulse">Crítica</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-xs">
+                        {{ t.actualizado_en.strftime('%Y-%m-%d %H:%M') }}
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <div class="flex justify-center items-center gap-2">
+                            {% if t.estado != 'cerrado' %}
+                            <form action="{{ url_for('admin.ticket_resolver', id=t.id) }}" method="POST" class="inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="px-3 py-1 text-xs font-medium text-white bg-green-500 hover:bg-green-600 rounded-md transition-colors" title="Marcar Resuelto">✓ Resuelto</button>
+                            </form>
+                            {% endif %}
+                            
+                            {% if not t.escalado and t.estado != 'cerrado' %}
+                            <form action="{{ url_for('admin.ticket_escalar', id=t.id) }}" method="POST" class="inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="px-3 py-1 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-md transition-colors" title="Escalar Urgente">↑ Escalar</button>
+                            </form>
+                            {% endif %}
+                            
+                            <a href="{{ url_for('admin.ver_ticket', id=t.id) }}" class="px-3 py-1 text-xs font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-md transition-colors" title="Ver Ticket y Añadir Comentario">💬 Comentar</a>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                        <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2m4-2v2m0 16v-2m-3-1l3-1l3 1"></path></svg>
+                        No se encontraron tickets con estos filtros.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -105,7 +105,7 @@
                             <td>{{ item.nombre }}</td>
                             <td>{{ item.cantidad }}</td>
                             <td>${{ "%.2f"|format(item.precio) }}</td>
-                            <td>${{ "%.2f"|format(item.subtotal) }}</td>
+                            <td>${{ "%.2f"|format(item.cantidad * item.precio) }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -172,17 +172,39 @@
                 <div class="alert alert-danger">
                     <strong>✕ Pedido Cancelado</strong>
                 </div>
-            {% elif pedido.estado == 'pagado' and not pedido.validado_por_vendedor %}
+            {% elif pedido.estado == 'pagado' %}
                 <p class="text-success">✅ Este pedido ya fue marcado como pagado</p>
-                {% if not pedido.afiliado_id %}
-                <form method="POST" action="{{ url_for('admin.cancelar_pedido', id=pedido.id) }}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de cancelar este pedido pagado?');">
-                    <!-- [MODIFICACIÓN SEGURIDAD E22] -->
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-danger">✕ Cancelar Pedido</button>
-                </form>
+                
+                {# BOTÓN MANUAL DE FACTURACIÓN (Fallback sin IA) #}
+                {% if not pedido.factura %}
+                    <div style="margin-top: 15px; padding: 15px; background: #f0f7ff; border: 1px solid #bae6fd; border-radius: 8px; width: 100%;">
+                        <h4 style="color: #0369a1; margin-top: 0;">📄 Módulo de Facturación</h4>
+                        <p style="font-size: 0.9em; color: #0c4a6e;">El pedido está listo para ser facturado legalmente.</p>
+                        <form method="POST" action="{{ url_for('facturacion.generar_factura', pedido_id=pedido.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-primary" style="background: #0284c7; border: none; font-weight: bold;">
+                                ⚙️ Generar Factura Oficial
+                            </button>
+                        </form>
+                    </div>
+                {% else %}
+                    <div style="margin-top: 15px; padding: 15px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; width: 100%;">
+                        <h4 style="color: #065f46; margin-top: 0;">✅ Factura Emitida</h4>
+                        <p><strong>Número:</strong> {{ pedido.factura.numero_factura }}</p>
+                        <a href="{{ url_for('facturacion.ver_documento', factura_id=pedido.factura.id) }}" target="_blank" class="btn btn-success">
+                            📄 Ver Factura (PDF/Imprimir)
+                        </a>
+                    </div>
                 {% endif %}
-            {% else %}
-                <p class="text-success">✅ Este pedido ya fue marcado como pagado</p>
+
+                {% if not pedido.validado_por_vendedor and not pedido.afiliado_id %}
+                <div style="margin-top: 10px;">
+                    <form method="POST" action="{{ url_for('admin.cancelar_pedido', id=pedido.id) }}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de cancelar este pedido pagado?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-danger">✕ Cancelar Pedido</button>
+                    </form>
+                </div>
+                {% endif %}
             {% endif %}
 
             <a href="{{ url_for('admin.pedidos') }}" class="btn btn-secondary">← Volver a Pedidos</a>

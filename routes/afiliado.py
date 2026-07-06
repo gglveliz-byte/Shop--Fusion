@@ -5,6 +5,7 @@ Ver productos con comisiones, ver comisiones ganadas
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from sqlalchemy.orm import joinedload
+from sqlalchemy import func, case
 from flask_login import login_required, current_user
 from decimal import Decimal
 from models import db
@@ -29,18 +30,29 @@ def afiliado_required(f):
 @bp.route('/dashboard')
 @afiliado_required
 def dashboard():
-    """Dashboard del vendedor"""
+    """Dashboard del vendedor - Optimizado: 3 consultas en lugar de 10 (Feedback L153-163)"""
     from models import Comision, Pedido
 
     afiliado = current_user
 
-    # Estadísticas de comisiones
-    total_pendiente = afiliado.total_comisiones_pendientes()
-    total_generado = afiliado.total_comisiones_generadas()
-    total_pagado = afiliado.total_comisiones_pagadas()
-    total_ganado = afiliado.total_ganado()
+    # --- CONSULTA 1: Todas las estadísticas de comisiones en UNA sola query ---
+    # Reemplaza: total_comisiones_pendientes(), total_comisiones_generadas(),
+    #            total_comisiones_pagadas(), total_ganado() (que internamente llamaba 2 más)
+    comision_stats = db.session.query(
+        Comision.estado,
+        func.sum(Comision.monto).label('total')
+    ).filter(
+        Comision.afiliado_id == afiliado.id
+    ).group_by(Comision.estado).all()
 
-    # Últimas comisiones
+    # Mapear resultados a un diccionario rápido
+    stats = {estado: float(total or 0) for estado, total in comision_stats}
+    total_pendiente = Decimal(str(stats.get('pendiente', 0)))
+    total_generado = Decimal(str(stats.get('generada', 0)))
+    total_pagado = Decimal(str(stats.get('pagada', 0)))
+    total_ganado = total_generado + total_pagado
+
+    # --- CONSULTA 2: Últimas comisiones (esta es necesaria, no se puede agregar) ---
     ultimas_comisiones = Comision.query.filter_by(afiliado_id=afiliado.id)\
         .order_by(Comision.creado_en.desc()).limit(5).all()
 
@@ -76,7 +88,11 @@ def productos():
     from models import db
 
     afiliado = current_user
-    productos = Producto.query.filter_by(activo=True).order_by(Producto.creado_en.desc()).all()
+    
+    # FASE 3: Paginación de productos en vista de afiliado
+    page = request.args.get('page', 1, type=int)
+    pagination = Producto.query.filter_by(activo=True).order_by(Producto.creado_en.desc()).paginate(page=page, per_page=12, error_out=False)
+    productos = pagination.items
 
     # Obtener categorías que tienen productos activos
     categorias_con_productos = db.session.query(
@@ -112,7 +128,8 @@ def productos():
     return render_template('afiliado/productos.html',
                          productos=productos_con_comision,
                          categorias=categorias_activas,
-                         afiliado=afiliado)
+                         afiliado=afiliado,
+                         pagination=pagination)
 
 
 @bp.route('/comisiones')
@@ -133,11 +150,19 @@ def comisiones():
 
     comisiones = query.order_by(Comision.creado_en.desc()).all()
 
-    # Totales
-    total_pendiente = afiliado.total_comisiones_pendientes()
-    total_generado = afiliado.total_comisiones_generadas()
-    total_pagado = afiliado.total_comisiones_pagadas()
-    total_ganado = afiliado.total_ganado()
+    # Totales - Optimizado: 1 consulta agregada en lugar de 5 (Feedback L153-163)
+    comision_stats = db.session.query(
+        Comision.estado,
+        func.sum(Comision.monto).label('total')
+    ).filter(
+        Comision.afiliado_id == afiliado.id
+    ).group_by(Comision.estado).all()
+
+    stats = {estado: float(total or 0) for estado, total in comision_stats}
+    total_pendiente = Decimal(str(stats.get('pendiente', 0)))
+    total_generado = Decimal(str(stats.get('generada', 0)))
+    total_pagado = Decimal(str(stats.get('pagada', 0)))
+    total_ganado = total_generado + total_pagado
 
     return render_template('afiliado/comisiones.html',
                          comisiones=comisiones,

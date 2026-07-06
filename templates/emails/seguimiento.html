@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f9fafb; margin: 0; padding: 20px;">
+    <div style="max-width: 600px; margin: auto; background: white; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; color: #374151;">
+        <div style="background: #10b981; color: white; padding: 20px; text-align: center;">
+            <h2 style="margin: 0; font-size: 22px;">¡Gracias por tu compra en Shop Fusion!</h2>
+        </div>
+        <div style="padding: 30px 24px; font-size: 16px; line-height: 1.6;">
+            <p>Hola <strong>{{ nombre_cliente | default('Cliente') }}</strong>,</p>
+            <p>Queríamos escribirte para agradecerte tu reciente compra y asegurarnos de que todo llegó en perfectas condiciones.</p>
+            
+            <div style="background-color: #f3f4f6; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+                <p style="margin: 0;"><strong>Producto:</strong> {{ nombre_producto | default('Tu pedido') }}</p>
+                {% if fecha_compra %}<p style="margin: 5px 0 0 0;"><strong>Fecha:</strong> {{ fecha_compra }}</p>{% endif %}
+            </div>
+
+            <p>Si tienes alguna pregunta sobre cómo usar tu producto, o si algo no cumplió con tus expectativas, por favor responde a este correo o visita nuestra plataforma para abrir un ticket de soporte.</p>
+            
+            <p>¡Esperamos verte pronto de nuevo por la tienda!</p>
+            <p><em>El equipo de Shop Fusion</em></p>
+        </div>
+    </div>
+</body>
+</html>

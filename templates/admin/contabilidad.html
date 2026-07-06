@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Libro Diario - Shop Fusion{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>📑 Libro Diario y Contabilidad</h1>
+        <a href="{{ url_for('admin.dashboard_admin') }}" class="btn btn-outline-secondary">Volver al Dashboard</a>
+    </div>
+
+    <!-- Tarjetas de Balance -->
+    <div class="dashboard-grid mb-5">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #dcfce7; color: #166534;">💰</div>
+            <div class="stat-info">
+                <h3>${{ "%.2f"|format(balance.ingresos) }}</h3>
+                <p>Total Ingresos</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #fee2e2; color: #991b1b;">💸</div>
+            <div class="stat-info">
+                <h3>${{ "%.2f"|format(balance.gastos) }}</h3>
+                <p>Total Gastos / Comisiones</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #e0f2fe; color: #075985;">⚖️</div>
+            <div class="stat-info">
+                <h3>${{ "%.2f"|format(balance.balance) }}</h3>
+                <p>Balance Neto (Caja Real)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Movimientos -->
+    <div class="dashboard-section">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Movimientos Recientes</h2>
+            <span class="badge badge-info">{{ balance.conteo }} registros encontrados</span>
+        </div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Categoría</th>
+                    <th>Descripción</th>
+                    <th>Monto</th>
+                    <th>Referencia</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transacciones %}
+                <tr>
+                    <td>{{ t.creado_en.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>
+                        {% if t.tipo == 'ingreso' %}
+                            <span class="badge" style="background: #dcfce7; color: #166534; border: 1px solid #bcf0cf;">INGRESO</span>
+                        {% else %}
+                            <span class="badge" style="background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;">GASTO</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-capitalize">{{ t.categoria }}</td>
+                    <td>{{ t.descripcion or '-' }}</td>
+                    <td class="font-weight-bold {% if t.tipo == 'ingreso' %}text-success{% else %}text-danger{% endif %}">
+                        {% if t.tipo == 'ingreso' %}+{% else %}-{% endif %}
+                        ${{ "%.2f"|format(t.monto) }}
+                    </td>
+                    <td><small class="text-muted">{{ t.referencia_id or '-' }}</small></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">No hay movimientos registrados todavía.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+    .dashboard-section {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .badge {
+        padding: 0.4em 0.8em;
+        font-size: 0.75rem;
+        font-weight: 700;
+        border-radius: 6px;
+    }
+</style>
+{% endblock %}

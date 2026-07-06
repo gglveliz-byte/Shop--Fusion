@@ -34,10 +34,26 @@ def log_security_event(event_type, status, user_id=None, details=""):
     event_type: 'LOGIN', 'LOGOUT', 'CONFIG_CHANGE', 'BRUTE_FORCE_DETECTED', etc.
     status: 'SUCCESS', 'FAILURE', 'BLOCKED'
     """
-    # Intentar obtener la IP real (incluso detrás de proxies como Render/Cloudflare)
-    remote_addr = request.headers.get('X-Forwarded-For', request.remote_addr)
-    if ',' in str(remote_addr):
-        remote_addr = remote_addr.split(',')[0].strip()
+    # Intentar obtener la IP real (solo si hay contexto web)
+    from flask import has_request_context, has_app_context
+    remote_addr = '0.0.0.0'
+    
+    if has_request_context():
+        # FASE 6.2: Solo confiar en X-Forwarded-For si la petición proviene de un proxy de confianza.
+        # Leer la lista desde la configuración centralizada (config.py → TRUSTED_PROXIES).
+        trusted_proxies = set()
+        if has_app_context():
+            trusted_proxies = current_app.config.get('TRUSTED_PROXIES', {'127.0.0.1', '::1'})
+
+        direct_ip = request.remote_addr or '0.0.0.0'
+
+        if direct_ip in trusted_proxies:
+            # Proxy de confianza: leer el header y tomar solo la primera IP de la cadena
+            forwarded_for = request.headers.get('X-Forwarded-For', direct_ip)
+            remote_addr = forwarded_for.split(',')[0].strip()
+        else:
+            # Conexión directa o proxy no confiable: usar la IP de la conexión TCP real
+            remote_addr = direct_ip
 
     extra = {'remote_addr': remote_addr}
     
@@ -48,5 +64,6 @@ def log_security_event(event_type, status, user_id=None, details=""):
     else:
         security_logger.info(log_msg, extra=extra)
 
-    # También enviar al log de la aplicación para visibilidad inmediata en consola
-    current_app.logger.info(f"SECURITY EVENT: {log_msg}")
+    # También enviar al log de la aplicación para visibilidad inmediata en consola (solo si hay app context)
+    if has_app_context():
+        current_app.logger.info(f"SECURITY EVENT: {log_msg}")

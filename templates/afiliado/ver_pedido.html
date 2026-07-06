@@ -2,6 +2,10 @@
 
 {% block title %}Pedido #{{ pedido.id }} - Vendedor{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/afi_ver_pedido.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="container">
     <div class="pedido-header">
@@ -120,79 +124,4 @@
     </div>
 </div>
 
-<style>
-.pedido-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #e2e8f0;
-}
-
-.pedido-estado {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.badge-lg {
-    font-size: 1rem;
-    padding: 0.5rem 1rem;
-}
-
-.pedido-detalle {
-    background: white;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.pedido-seccion {
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.pedido-seccion:last-child {
-    border-bottom: none;
-}
-
-.pedido-seccion h3 {
-    color: #1e293b;
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
-}
-
-.info-cliente p {
-    margin: 0.5rem 0;
-    color: #475569;
-}
-
-.pedido-acciones {
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 2px solid #e2e8f0;
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-@media (max-width: 768px) {
-    .pedido-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-
-    .pedido-acciones {
-        flex-direction: column;
-    }
-
-    .pedido-acciones button,
-    .pedido-acciones a {
-        width: 100%;
-    }
-}
-</style>
 {% endblock %}

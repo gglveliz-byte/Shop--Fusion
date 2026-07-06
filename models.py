@@ -19,14 +19,17 @@ def sanitize_html(text):
     return bleach.clean(text, tags=[], attributes={}, strip=True)
 
 # [FASE 3 / HARDENING - CIFRADO PII]
-
-# Obtener la llave maestra desde el entorno (Fase 1)
-_fernet_key = os.environ.get('FERNET_KEY')
-if not _fernet_key:
-    # Si no existe, generamos una solo para desarrollo (esto dará error en producción Fase 1)
-    if os.environ.get('FLASK_ENV') == 'production':
-        raise EnvironmentError("ERROR DE SEGURIDAD: FERNET_KEY no configurada en producción.")
-    _fernet_key = Fernet.generate_key().decode()
+# FASE 8: Reutilización de get_required_env para variables críticas
+from config import Config
+try:
+    _fernet_key = Config.get_required_env('FERNET_KEY')
+except EnvironmentError:
+    # SEGURIDAD CRÍTICA: Jamás generar una llave efímera en memoria.
+    raise EnvironmentError(
+        "ERROR CRÍTICO DE PÉRDIDA DE DATOS: FERNET_KEY no está configurada en el entorno. "
+        "Debes generar una llave permanente (ej. con python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\") "
+        "y guardarla en tu archivo .env para evitar destrucción de datos encriptados al reiniciar."
+    )
 
 cipher_suite = Fernet(_fernet_key.encode())
 
@@ -122,8 +125,9 @@ class Afiliado(UserMixin, db.Model):
         return False
 
     # [FASE 3 / E11 - ERRORES MEDIOS] Relaciones optimizadas con carga ansiosa
-    pedidos = db.relationship('Pedido', backref='afiliado', lazy='joined')
-    comisiones = db.relationship('Comision', backref='afiliado', lazy='joined')
+    pedidos = db.relationship('Pedido', backref='afiliado', lazy='dynamic')
+    comisiones = db.relationship('Comision', backref='afiliado', lazy='dynamic')
+    oportunidades = db.relationship('Oportunidad', backref='vendedor', lazy='dynamic')
 
     def set_password(self, password):
         """Encriptar contraseña"""
@@ -202,6 +206,8 @@ class Producto(db.Model):
     #INICIA LOS CAMBIOS INDICADOS EN FASE 3
     # Columna stock: Mitiga el error crítico E41 (Inventarios Ciegos)
     stock = db.Column(db.Integer, default=0, nullable=False)
+    # [FASE 1 - HERRAMIENTA INVENTARIO EN TIEMPO REAL] Campo en memoria para cotizaciones y bloqueos
+    stock_reservado = db.Column(db.Integer, default=0, nullable=False)
     #FIN DE LOS CAMBIOS INDICADOS EN FASE 3
 
     activo = db.Column(db.Boolean, default=True)
@@ -228,8 +234,9 @@ class Producto(db.Model):
         return True
 
     def esta_disponible(self, cantidad=1):
-        """Verifica si hay stock suficiente y el producto está activo."""
-        return self.activo and self.stock >= cantidad
+        """Verifica si hay stock real suficiente (descontando las reservas temporales) y el producto está activo."""
+        stock_real = self.stock - self.stock_reservado
+        return self.activo and stock_real >= cantidad
     #FIN DE LOS CAMBIOS INDICADOS EN FASE 3
 
     def calcular_margen(self):
@@ -241,6 +248,21 @@ class Producto(db.Model):
     def precio_venta(self):
         """Obtener precio de venta (con oferta si existe)"""
         return self.precio_oferta if self.precio_oferta else self.precio_final
+
+    def to_dict(self):
+        """FASE 4: Centralizar la serialización del producto (DRY)"""
+        todas_imagenes = self.obtener_todas_imagenes()
+        return {
+            'id': self.id,
+            'nombre': self.nombre,
+            'descripcion': self.descripcion,
+            'categoria': self.categoria or 'otros',
+            'precio_final': float(self.precio_final),
+            'precio_oferta': float(self.precio_oferta) if self.precio_oferta else None,
+            'imagen': todas_imagenes[0] if todas_imagenes else None,
+            'imagenes': todas_imagenes,
+            'stock': self.stock
+        }
 
     def calcular_comision_afiliado(self, porcentaje_comision):
         """Calcular comisión que ganaría un afiliado con cierto porcentaje"""
@@ -273,6 +295,9 @@ class Producto(db.Model):
         if self.imagenes:
             for img in self.imagenes:
                 todas.append(f'/static/uploads/{img}')
+
+        # FASE 10: Eliminar duplicados manteniendo el orden de prioridad
+        todas = list(dict.fromkeys(todas))
 
         return todas if todas else ['/static/img/no-image.png']
 
@@ -318,6 +343,8 @@ class Pedido(db.Model):
     validado_en = db.Column(db.DateTime, nullable=True)  # Fecha de validación
     creado_en = db.Column(db.DateTime, default=datetime.utcnow)
     pagado_en = db.Column(db.DateTime, nullable=True)
+    metodo_pago = db.Column(db.String(30), nullable=True)
+    pago_referencia = db.Column(db.String(100), nullable=True, unique=True)
 
     # [PASO 2 - SANITIZACIÓN]
     @validates('cliente_nombre', 'cliente_direccion')
@@ -377,8 +404,13 @@ class Pedido(db.Model):
         # Calcular margen total del pedido
         margen_total = Decimal('0.00')
 
+        # FASE 10: Evitar el problema de N+1 consultas (Optimización de Base de Datos)
+        ids_productos = [item['id'] for item in self.productos_json]
+        productos_db = Producto.query.filter(Producto.id.in_(ids_productos)).all()
+        productos_dict = {p.id: p for p in productos_db}
+
         for item in self.productos_json:
-            producto = Producto.query.get(item['id'])
+            producto = productos_dict.get(item['id'])
             if producto:
                 margen_unitario = producto.calcular_margen()
                 margen_total += margen_unitario * Decimal(str(item['cantidad']))
@@ -424,6 +456,87 @@ class Comision(db.Model):
         return f'<Comision #{self.id} - Pedido #{self.pedido_id} - ${self.monto}>'
 
 
+# ==================== CRM & PIPELINE MODELS ====================
+
+ETAPAS_OPORTUNIDAD = [
+    ('prospecto', 'Prospecto (Lead)'),
+    ('contactado', 'Contactado'),
+    ('negociacion', 'En Negociación'),
+    ('cerrado_ganado', 'Cerrado (Ganado)'),
+    ('cerrado_perdido', 'Cerrado (Perdido)')
+]
+
+class Oportunidad(db.Model):
+    """
+    Representa una oportunidad de venta o prospecto en el pipeline CRM.
+    Permite a la IA rastrear el progreso de una venta antes de que se convierta en pedido.
+    """
+    __tablename__ = 'oportunidades'
+
+    id = db.Column(db.Integer, primary_key=True)
+    cliente_nombre = db.Column(db.String(100), nullable=False)
+    valor_estimado = db.Column(db.Numeric(12, 2), nullable=False, default=0.00)
+    etapa = db.Column(db.String(30), default='prospecto', index=True)
+    probabilidad = db.Column(db.Integer, default=10)  # 0 a 100%
+    notas = db.Column(db.Text)
+    
+    # Vinculación con el vendedor (afiliado)
+    afiliado_id = db.Column(db.Integer, db.ForeignKey('afiliados.id'), nullable=True)
+    
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+    actualizado_en = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # [PASO 2 - SANITIZACIÓN]
+    @validates('cliente_nombre', 'notas')
+    def validate_crm_text(self, key, value):
+        """Sanitiza datos del CRM (Anti-XSS)"""
+        return sanitize_html(value)
+
+    def __repr__(self):
+        return f'<Oportunidad {self.cliente_nombre} - {self.etapa}>'
+
+
+# ==================== MÓDULO DE FACTURACIÓN ====================
+
+class Factura(db.Model):
+    """
+    Modelo para gestionar la facturación legal de los pedidos.
+    Permite el seguimiento de montos, impuestos y estado de cobro.
+    """
+    __tablename__ = 'facturas'
+
+    id = db.Column(db.Integer, primary_key=True)
+    numero_factura = db.Column(db.String(20), unique=True, nullable=False, index=True)
+    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=False, unique=True)
+    
+    # Desglose Financiero
+    subtotal = db.Column(db.Numeric(12, 2), nullable=False)
+    iva_porcentaje = db.Column(db.Numeric(5, 2), nullable=False)
+    iva_monto = db.Column(db.Numeric(12, 2), nullable=False)
+    total = db.Column(db.Numeric(12, 2), nullable=False)
+    
+    estado = db.Column(db.String(20), default='pendiente')  # pendiente, pagada, anulada
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relación uno a uno con Pedido
+    pedido = db.relationship('Pedido', backref=db.backref('factura', uselist=False))
+
+    @classmethod
+    def generar_numero_correlativo(cls):
+        """Genera el siguiente número de factura automático (ej: FAC-0001)"""
+        ultima = cls.query.order_by(cls.id.desc()).first()
+        if not ultima:
+            return "FAC-0001"
+        try:
+            ultimo_num = int(ultima.numero_factura.split('-')[1])
+            return f"FAC-{(ultimo_num + 1):04d}"
+        except:
+            return "FAC-0001"
+
+    def __repr__(self):
+        return f'<Factura {self.numero_factura} - Pedido #{self.pedido_id}>'
+
+
 # User loader para Flask-Login
 def setup_login_manager(login_manager):
     """Configurar login manager"""
@@ -438,7 +551,7 @@ def setup_login_manager(login_manager):
         return None
 
 
-# ==================== WHITE-LABEL CONFIGURATION ====================
+# ==================== CONFIGURACIÓN WHITE-LABEL ====================
 
 class Configuracion(db.Model):
     """
@@ -476,8 +589,12 @@ class Configuracion(db.Model):
     mensaje_bienvenida = db.Column(db.String(255), default='¡Bienvenido a nuestra tienda!')
     mensaje_footer = db.Column(db.String(255), default='Tu tienda online de confianza')
     mensaje_copyright = db.Column(db.String(255), default='© 2026 Todos los derechos reservados.')
+    
     # Metadatos SEO
     meta_descripcion = db.Column(db.Text, nullable=True)
+    
+    # Configuración de Facturación (Fase 1)
+    iva_porcentaje = db.Column(db.Numeric(5, 2), default=15.00)
     
     actualizado_en = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -489,3 +606,236 @@ class Configuracion(db.Model):
 
     def __repr__(self):
         return f'<Configuracion {self.nombre_tienda}>'
+
+
+# ==================== MÓDULO DE CONTABILIDAD (HERRAMIENTA 5) ====================
+
+class Transaccion(db.Model):
+    """
+    Libro contable digital para registrar todos los movimientos financieros.
+    Soporta ingresos, gastos y categorización para reportes de balance.
+    """
+    __tablename__ = 'transacciones'
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # "ingreso" o "gasto"
+    tipo = db.Column(db.String(10), nullable=False) 
+    
+    monto = db.Column(db.Numeric(12, 2), nullable=False)
+    
+    # Categorías: ventas, marketing, operativo, salarios, otros
+    categoria = db.Column(db.String(50), default='otros')
+    
+    # Fuente: caja, banco, paypal
+    fuente = db.Column(db.String(50), default='caja')
+    
+    descripcion = db.Column(db.String(255), nullable=True)
+    
+    # Enlace opcional a pedidos o facturas
+    referencia_id = db.Column(db.String(50), nullable=True)
+    
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Transaccion {self.tipo} - {self.monto} ({self.categoria})>'
+
+# ==================== MÓDULO DE RESERVAS DE INVENTARIO (HERRAMIENTA 8) ====================
+
+class ReservaStock(db.Model):
+    """
+    Tabla para mantener la persistencia de las reservas de inventario.
+    Soluciona el problema de los hilos en memoria perdiéndose si el servidor se reinicia.
+    """
+    __tablename__ = 'reservas_stock'
+
+    id = db.Column(db.Integer, primary_key=True)
+    producto_id = db.Column(db.Integer, db.ForeignKey('productos.id'), nullable=False)
+    cantidad = db.Column(db.Integer, nullable=False)
+    fecha_expiracion = db.Column(db.DateTime, nullable=False)
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relación
+    producto = db.relationship('Producto', backref=db.backref('reservas', lazy=True))
+
+    def __repr__(self):
+        return f'<ReservaStock Prod:{self.producto_id} - Cant:{self.cantidad}>'
+
+
+# ==================== MÓDULO DE SOPORTE (TICKETS) ====================
+
+class TicketSoporte(db.Model):
+    """
+    Tabla para gestionar tickets de soporte creados desde el chatbot o canales externos.
+    Los datos de contacto (PII) se cifran automáticamente al guardar.
+    """
+    __tablename__ = 'tickets_soporte'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Asunto y descripción del problema (sanitizados anti-XSS)
+    asunto = db.Column(db.String(200), nullable=False)
+    descripcion = db.Column(db.Text, nullable=True)
+
+    # Prioridad del ticket
+    prioridad = db.Column(
+        db.Enum('baja', 'media', 'alta', 'critica', name='prioridad_ticket'),
+        nullable=False,
+        default='media'
+    )
+
+    # Estado actual del ticket
+    estado = db.Column(
+        db.Enum('abierto', 'en_progreso', 'resuelto', 'cerrado', name='estado_ticket'),
+        nullable=False,
+        default='abierto'
+    )
+
+    # Canal de origen: chat, email, formulario
+    canal = db.Column(db.String(50), nullable=False, default='chat')
+
+    # Datos de contacto del cliente (PII — cifrados)
+    _contacto_nombre = db.Column('contacto_nombre', db.String(300), nullable=True)
+    _contacto_email  = db.Column('contacto_email',  db.String(400), nullable=True)
+
+    # Indica si el ticket fue escalado al equipo humano
+    escalado = db.Column(db.Boolean, nullable=False, default=False)
+
+    # Timestamps
+    creado_en     = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    actualizado_en = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    resuelto_en   = db.Column(db.DateTime, nullable=True)
+
+    # Relación con comentarios
+    comentarios = db.relationship('ComentarioTicket', backref='ticket', lazy=True, cascade='all, delete-orphan')
+
+    # --- Propiedades de cifrado PII ---
+    @property
+    def contacto_nombre(self):
+        return decrypt_data(self._contacto_nombre) if self._contacto_nombre else None
+
+    @contacto_nombre.setter
+    def contacto_nombre(self, value):
+        self._contacto_nombre = encrypt_data(sanitize_html(value)) if value else None
+
+    @property
+    def contacto_email(self):
+        return decrypt_data(self._contacto_email) if self._contacto_email else None
+
+    @contacto_email.setter
+    def contacto_email(self, value):
+        self._contacto_email = encrypt_data(sanitize_html(value)) if value else None
+
+    # --- Validaciones ---
+    @validates('asunto')
+    def validate_asunto(self, key, value):
+        return sanitize_html(value) if value else value
+
+    @validates('descripcion')
+    def validate_descripcion(self, key, value):
+        return sanitize_html(value) if value else value
+
+    # --- Helpers ---
+    @property
+    def numero(self):
+        """Retorna un código legible tipo TKT-0042."""
+        return f"TKT-{str(self.id).zfill(4)}"
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'numero': self.numero,
+            'asunto': self.asunto,
+            'descripcion': self.descripcion,
+            'prioridad': self.prioridad,
+            'estado': self.estado,
+            'canal': self.canal,
+            'escalado': self.escalado,
+            'contacto_nombre': self.contacto_nombre,
+            'creado_en': self.creado_en.isoformat() if self.creado_en else None,
+            'actualizado_en': self.actualizado_en.isoformat() if self.actualizado_en else None,
+            'resuelto_en': self.resuelto_en.isoformat() if self.resuelto_en else None,
+        }
+
+    def __repr__(self):
+        return f'<TicketSoporte {self.numero} [{self.prioridad}] - {self.estado}>'
+
+
+class ComentarioTicket(db.Model):
+    """
+    Comentarios asociados a un ticket de soporte.
+    Pueden ser generados por la IA, el admin o el propio usuario.
+    """
+    __tablename__ = 'comentarios_tickets'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    ticket_id = db.Column(db.Integer, db.ForeignKey('tickets_soporte.id'), nullable=False)
+
+    # Quién escribió el comentario: 'ia', 'admin', 'usuario'
+    autor = db.Column(db.String(20), nullable=False, default='ia')
+
+    contenido = db.Column(db.Text, nullable=False)
+
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    @validates('contenido')
+    def validate_contenido(self, key, value):
+        return sanitize_html(value) if value else value
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'autor': self.autor,
+            'contenido': self.contenido,
+            'creado_en': self.creado_en.isoformat() if self.creado_en else None,
+        }
+
+    def __repr__(self):
+        return f'<ComentarioTicket Ticket:{self.ticket_id} por {self.autor}>'
+
+# ==================== MÓDULO DE BASE DE CONOCIMIENTO (FAQ - HERRAMIENTA 10) ====================
+
+class DocumentoConocimiento(db.Model):
+    """
+    Tabla para almacenar los manuales, políticas y preguntas frecuentes.
+    Actúa como el "cerebro" interno para que la IA responda consultas de soporte.
+    """
+    __tablename__ = 'documentos_conocimiento'
+
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(200), nullable=False)
+    categoria = db.Column(db.String(50), default='general')
+    contenido_texto = db.Column(db.Text, nullable=False)
+    
+    # Aquí guardaremos el vector matemático de la IA.
+    # Usamos JSON en lugar de instalar bases de datos gigantes, para que funcione en Render (Free Tier)
+    vector_embedding = db.Column(db.JSON, nullable=True) 
+    
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+    actualizado_en = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<DocumentoConocimiento {self.titulo}>'
+
+# ==================== MÓDULO DE ASISTENTE Y AGENDA (HERRAMIENTA 13) ====================
+
+class Recordatorio(db.Model):
+    """
+    Tabla para gestionar recordatorios y tareas del administrador delegadas a la IA.
+    """
+    __tablename__ = 'recordatorios'
+
+    id = db.Column(db.Integer, primary_key=True)
+    texto_tarea = db.Column(db.String(500), nullable=False)
+    fecha_hora_programada = db.Column(db.DateTime, nullable=False)
+    completado = db.Column(db.Boolean, default=False)
+    creado_en = db.Column(db.DateTime, default=datetime.utcnow)
+
+    """__repr__ define cómo se mostrará este objeto cuando se imprima en consola,
+    aparezca en logs o durante tareas de depuración (debugging).
+    Esto facilita identificar rápidamente el contenido del registro
+    en lugar de mostrar únicamente una dirección de memoria."""
+    
+    def __repr__(self):
+        return f'<Recordatorio {self.id}: {self.texto_tarea[:20]}...>'
