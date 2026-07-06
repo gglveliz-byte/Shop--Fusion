@@ -286,11 +286,18 @@ Para el correcto funcionamiento del sistema, el archivo `.env` debe contener:
 - `FERNET_KEY`: **[CRÍTICO]** Llave para el cifrado de datos PII. Sin esta llave, los datos de clientes y afiliados no pueden cifrarse ni descifrarse.
 - `DASHSCOPE_API_KEY`: Llave para la integración con IA Qwen.
 - `PAYPAL_CLIENT_ID` / `PAYPAL_SECRET` / `PAYPAL_MODE`: Credenciales para PayPal.
-- `WHATSAPP_NUMBER`: Número de WhatsApp para la integración con la API de WhatsApp Business.
+- `PAYPAL_WEBHOOK_ID`: ⚠️ (Obligatorio en producción) ID del Webhook para auto-confirmar pagos de PayPal.
+- `WHATSAPP_NUMBER`: Número de WhatsApp de la tienda.
+- `DEFAULT_COUNTRY_CODE`: ✅ (Opcional) Código de país por defecto (ej. 593). Ver detalle abajo.
 - `REDIS_URL`: Cadena de conexión para Redis (ver detalle abajo).
 - `THINKING_MODELS`: Modelos de IA con razonamiento profundo habilitado (ver detalle en `seleccion_modelos_ia.md`).
 - `ALLOWED_ORIGINS`: Dominios autorizados para usar la API de IA Qwen y otras APIs sensibles (ver detalle abajo).
+- `TRUSTED_PROXIES`: ✅ (Opcional) Lista de IPs de proxies de confianza (ver detalle abajo).
 - `FLASK_ENV`: Modo de ejecución. `development` para local, `production` para Render/Servidor.
+- `MAIL_USERNAME` / `MAIL_PASSWORD`: ⚠️ (Recomendadas) Credenciales SMTP (ej. App Password de Gmail) para envío de correos del sistema.
+- `MAIL_SERVER` / `MAIL_PORT`: ✅ (Opcionales) Servidor y puerto SMTP (por defecto Gmail smtp.gmail.com / 587).
+- `SUPPORT_EMAIL`: ✅ (Opcional) Email donde llegan los tickets de soporte escalados.
+- `LOGIN_ATTEMPTS_LIMIT` / `LOGIN_LOCK_MINUTES`: ✅ (Opcionales) Límite de intentos de login y tiempo de bloqueo (por defecto 5 intentos / 5 minutos).
 
 ### Detalle: `ALLOWED_ORIGINS` (Protección de API)
 
@@ -314,6 +321,26 @@ Para el correcto funcionamiento del sistema, el archivo `.env` debe contener:
 > ```env
 > REDIS_URL=rediss://default:tu_contraseña@tu-servidor.upstash.io:6379
 > ```
+
+### Detalle: `DEFAULT_COUNTRY_CODE` (Formato Internacional)
+
+Esta variable se aplica tanto al **Administrador (tienda principal)** como a todos los **Afiliados**.
+
+**Cómo funciona actualmente:**
+Si un número ingresado empieza con `0` (ej. `0999999999`), el sistema (`utils/validators.py`) automáticamente reemplaza ese cero por el valor de esta variable (ej. `593999999999`). Si el número no empieza con cero y no tiene el código de país, le añade el prefijo configurado al inicio.
+
+**Comportamiento Práctico:** 
+Funciona perfectamente para una tienda que opera exclusivamente a nivel local/nacional. Sin embargo, si en el futuro se afilian vendedores de otros países (ej. México +52) y guardan su número nacional en el panel, el sistema forzará la inserción del prefijo `593` y sus enlaces de WhatsApp se romperán.
+
+### Detalle: `TRUSTED_PROXIES` (Código Fantasma y ProxyFix)
+
+Esta variable define una lista de IPs de proxies confiables (ej. la red interna de Render) para mitigar el Spoofing de IP evaluando los encabezados `X-Forwarded-For`.
+
+**Comportamiento actual ("Código Fantasma"):**
+La aplicación ya cuenta con `ProxyFix` activado globalmente en `app.py`. `ProxyFix` intercepta las peticiones, extrae la IP real del cliente y sobrescribe la variable nativa de IP en Flask.
+Cuando el sistema de logs (`utils/security_logger.py`) intenta usar `TRUSTED_PROXIES` para verificar si la petición viene de un proxy conocido, **siempre falla (da falso)** porque `ProxyFix` ya removió la IP del proxy. Al fallar, el código toma la IP "directa" (que, irónicamente, es la correcta del cliente extraída por `ProxyFix`). 
+
+**Conclusión:** Configurar esta variable no romperá el sistema en Render. Simplemente su validación interna será omitida de forma segura y silenciosa. Puede dejarse configurada en el `.env` (o vacía) sin riesgo.
 
 ### Apéndice: Verificación de Esquema
 
