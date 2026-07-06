@@ -613,5 +613,80 @@ Tu tono global es altamente profesional y transparente. Eres servicial y persuas
         except Exception as e:
             return f"Error Qwen: {str(e)}"
 
+    def get_stream_response(self, prompt, model=None, system_instruction=None, history=None, tools=None, faq_context=""):
+        """Versión generadora de get_response que soporta SSE (streaming).
+        Hace 'yield' de cada fragmento (chunk) a medida que llega desde Qwen,
+        y al final emite un diccionario con el resultado ensamblado completo."""
+        if not self.client:
+            yield {"type": "error", "content": "Error: API KEY no configurada."}
+            return
+
+        try:
+            base_prompt = system_instruction if system_instruction else self.SYSTEM_PROMPT
+            sys_msg = f"""{base_prompt}
+            === BASE DE CONOCIMIENTO INTERNA (FAQ) ===
+            Las siguientes son las politicas estrictas de la empresa.
+            Úsalas siempre para responder dudas de clientes sobre estos temas:
+            {faq_context}
+            """
+
+            messages = [{"role": "system", "content": sys_msg}]
+            if history: messages.extend(history)
+            if prompt: messages.append({"role": "user", "content": prompt})
+
+            target_model = model if model else self.MODEL_LOGICA
+            final_tools = tools if tools is not None else self.TOOLS
+
+            extra_params = {}
+            thinking_models = os.environ.get('THINKING_MODELS', 'qwen-max').split(',')
+            if target_model in [m.strip() for m in thinking_models]:
+                extra_params["extra_body"] = {"enable_thinking": True}
+
+            response_stream = self.client.chat.completions.create(
+                model=target_model,
+                messages=messages,
+                tools=final_tools if (target_model == self.MODEL_LOGICA and len(final_tools) > 0) else None,
+                stream=True,
+                **extra_params
+            )
+
+            full_content, full_reasoning, tool_calls = "", "", []
+            for chunk in response_stream:
+                if not chunk.choices: continue
+                delta = chunk.choices[0].delta
+                
+                # Capturar y emitir razonamiento (Streaming)
+                if hasattr(delta, 'reasoning_content') and delta.reasoning_content:
+                    full_reasoning += delta.reasoning_content
+                    yield {"type": "reasoning", "content": delta.reasoning_content}
+                
+                # Capturar y emitir contenido (Streaming)
+                if delta.content: 
+                    full_content += delta.content
+                    yield {"type": "content", "content": delta.content}
+                
+                # Capturar herramientas (Sin emitir fragmentos por seguridad)
+                if delta.tool_calls:
+                    for tc_chunk in delta.tool_calls:
+                        if len(tool_calls) <= tc_chunk.index:
+                            tool_calls.append({
+                                "id": tc_chunk.id, "type": "function",
+                                "function": {"name": tc_chunk.function.name, "arguments": ""}
+                            })
+                        if tc_chunk.function.arguments:
+                            tool_calls[tc_chunk.index]["function"]["arguments"] += tc_chunk.function.arguments
+            
+            # Emitir resultado final ensamblado para compatibilidad con el bucle ReAct
+            yield {
+                "type": "final",
+                "result": {
+                    "content": full_content if full_content else None,
+                    "reasoning": full_reasoning if full_reasoning else None,
+                    "tool_calls": tool_calls if tool_calls else None
+                }
+            }
+        except Exception as e:
+            yield {"type": "error", "content": f"Error Qwen: {str(e)}"}
+
 # Instancia global del servicio
 qwen_service = QwenAIService()

@@ -131,56 +131,127 @@
             typingIndicator.style.display = 'block';
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
+            const csrfTokenElement = document.querySelector('meta[name="csrf-token"]') || document.querySelector('input[name="csrf_token"]');
+            const csrfToken = csrfTokenElement ? csrfTokenElement.content || csrfTokenElement.value : '';
+
             try {
-                const response = await fetch(BASE_URL + '/ai/chat', {
+                const response = await fetch(BASE_URL + '/ai/stream-chat', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
                     body: JSON.stringify({
                         message: text,
                         model: modelSelect.value,
-                        history: chatHistory // Enviar historial
+                        history: chatHistory
                     })
                 });
 
-                const data = await response.json();
                 typingIndicator.style.display = 'none';
 
-                if (data.error) {
-                    addMessage("Error: " + data.error, 'ai');
-                } else {
-                    addMessage(data.response, 'ai', data.reasoning, data.tool_calls);
+                if (!response.ok) {
+                    addMessage("Error: La solicitud fue rechazada por el servidor.", 'ai');
+                    return;
+                }
 
-                    // Interceptar acciones de carrito ejecutadas por la IA
-                    if (data.status === "tool_executed") {
-                        const results = data.db_results || (data.db_result ? [data.db_result] : []);
-                        results.forEach(res => {
-                            if (res.success) {
-                                const action = res.action;
-                                if (action === "addProductToCart" || action === "updateCartItem") {
-                                    ejecutarUpdateCartDesdeIA(res);
-                                } else if (action === "checkoutCart") {
-                                    ejecutarCheckoutDesdeIA();
+                // Crear la burbuja de la IA vacía donde se irá inyectando el texto (Streaming)
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message', 'ai');
+                
+                const reasoningDiv = document.createElement('div');
+                reasoningDiv.classList.add('reasoning');
+                reasoningDiv.style.display = 'none'; // Oculto hasta que haya razonamiento
+                
+                const contentSpan = document.createElement('span');
+                
+                messageDiv.appendChild(reasoningDiv);
+                messageDiv.appendChild(contentSpan);
+                messagesContainer.appendChild(messageDiv);
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let buffer = "";
+
+                let fullContent = "";
+                let fullReasoning = "";
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    
+                    // Procesar los fragmentos SSE dividiendo por el doble salto de línea
+                    let lines = buffer.split('\n\n');
+                    buffer = lines.pop(); // Guardar el fragmento incompleto para la siguiente iteración
+
+                    for (let line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const dataStr = line.substring(6); // Quitar el prefijo 'data: '
+                                const data = JSON.parse(dataStr);
+                                
+                                if (data.type === 'error') {
+                                    contentSpan.innerHTML += `<br><span style="color:red">Error: ${data.content}</span>`;
+                                } else if (data.type === 'reasoning') {
+                                    reasoningDiv.style.display = 'block';
+                                    fullReasoning += data.content;
+                                    reasoningDiv.innerText = "Pensamiento: " + fullReasoning;
+                                } else if (data.type === 'content') {
+                                    fullContent += data.content;
+                                    contentSpan.innerHTML = fullContent.replace(/\n/g, '<br>');
+                                } else if (data.type === 'final') {
+                                    // Al finalizar el stream, actualizamos el historial para recordar la conversación
+                                    chatHistory.push({ "role": "user", "content": text });
+                                    if (fullContent) {
+                                        chatHistory.push({ "role": "assistant", "content": fullContent });
+                                    } else if (data.result && data.result.tool_calls) {
+                                        chatHistory.push({ "role": "assistant", "content": "Acción de herramienta ejecutada." });
+                                    }
+                                    
+                                    if (chatHistory.length > 10) chatHistory = chatHistory.slice(-10);
+
+                                    // Fase 3/4: Renderizar tarjetas de herramientas si las hay en el resultado final
+                                    if (data.result && data.result.tool_calls) {
+                                        data.result.tool_calls.forEach(tool => {
+                                            const actionDiv = document.createElement('div');
+                                            actionDiv.classList.add('action-box');
+                                            let toolName = tool.function.name;
+                                            actionDiv.innerHTML = `
+                                                <div style="background: #f3f4f6; border-left: 3px solid #9ca3af; padding: 5px; margin-top: 8px; border-radius: 4px; font-size: 0.8em; color: #333;">
+                                                    <strong>🔧 Acción solicitada: ${toolName}</strong><br>
+                                                    <small>(Ejecución pendiente - Fase Reactiva)</small>
+                                                </div>
+                                            `;
+                                            messageDiv.appendChild(actionDiv);
+                                        });
+                                    }
                                 }
+                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                            } catch (e) {
+                                console.error("Error parseando fragmento SSE:", e, line);
                             }
-                        });
-                    }
-
-                    // Guardar en el historial
-                    chatHistory.push({ "role": "user", "content": text });
-                    if (data.response) {
-                        chatHistory.push({ "role": "assistant", "content": data.response });
-                    } else if (data.tool_calls) {
-                        chatHistory.push({ "role": "assistant", "content": "Acción de herramienta detectada." });
-                    }
-
-                    // Limitar a los últimos 10 mensajes
-                    if (chatHistory.length > 10) {
-                        chatHistory = chatHistory.slice(-10);
+                        }
                     }
                 }
             } catch (error) {
+                console.error("Error SSE/Fetch (Equivalente a onerror):", error);
                 typingIndicator.style.display = 'none';
-                addMessage("Error de conexión con el servidor de IA.", 'ai');
+                
+                // Manejo de reconexión/error equivalente al evento onerror
+                const errorMsg = document.createElement('div');
+                errorMsg.style.color = '#ef4444';
+                errorMsg.style.fontSize = '0.9em';
+                errorMsg.style.marginTop = '10px';
+                errorMsg.innerHTML = "❌ <strong>Conexión perdida.</strong> Hubo un micro-corte con el servidor. Puedes volver a enviar tu mensaje para reconectar.";
+                
+                // Si el mensaje se cortó a la mitad, le pegamos la advertencia, si no, creamos un mensaje nuevo.
+                if (typeof messageDiv !== 'undefined' && messageDiv && messagesContainer.contains(messageDiv)) {
+                    messageDiv.appendChild(errorMsg);
+                } else {
+                    addMessage("Error de red. No se pudo establecer comunicación con Qwen.", 'ai');
+                }
             }
         };
 
