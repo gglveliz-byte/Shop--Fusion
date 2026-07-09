@@ -775,6 +775,25 @@
     // Guardar carrito en localStorage
     function guardarCarrito() {
         localStorage.setItem('carrito', JSON.stringify(carrito));
+        
+        // Sincronizar con la sesión de Flask
+        const carritoSeguro = carrito.map(item => ({
+            id: item.id,
+            cantidad: item.cantidad
+        }));
+        
+        const tokenInput = document.querySelector('input[name="csrf_token"]');
+        const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+        const token = tokenInput ? tokenInput.value : (tokenMeta ? tokenMeta.content : '');
+
+        fetch('/api/actualizar-carrito-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': token
+            },
+            body: JSON.stringify({ carrito: carritoSeguro })
+        }).catch(err => console.error('Error sincronizando carrito:', err));
     }
 
     // Actualizar visualizacion del carrito

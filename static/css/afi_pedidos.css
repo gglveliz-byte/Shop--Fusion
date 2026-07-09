@@ -1,0 +1,18 @@
+/* afi_pedidos.css
+   Estilos específicos para la vista Pedidos del Afiliado
+   Complementa style.css y sigue las variables CSS del tema global.
+   ============================================================ */
+
+/* La vista pedidos.html usa mayoritariamente clases de style.css (.container, .table, .btn, .badge).
+   Este archivo está reservado para overrides o estilos adicionales futuros. */
+
+.lista-productos-simple {
+    margin: 0;
+    padding-left: 1.2rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #475569);
+}
+
+.lista-productos-simple li {
+    margin-bottom: 0.2rem;
+}

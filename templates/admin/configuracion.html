@@ -3,22 +3,7 @@
 {% block title %}Configuración de Marca{% endblock %}
 
 {% block content %}
-<style>
-    .m-form-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-    }
-    .m-form-group { margin-bottom: 1.5rem; }
-    .m-form-label { display: block; font-size: 0.875rem; font-weight: 600; color: #334155; margin-bottom: 0.5rem; }
-    .m-form-control { width: 100%; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 2px; font-size: 0.875rem; color: #1e293b; background-color: #f8fafc; transition: all 0.2s; }
-    .m-form-control:focus { outline: none; border-color: #3b82f6; background-color: #ffffff; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-    .m-color-input { height: 50px; padding: 0.25rem; cursor: pointer; }
-    .m-current-asset { margin-top: 1rem; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 4px; display: inline-block; background-color: #f8fafc; }
-    .m-current-asset img { max-height: 50px; display: block; }
-    .m-current-asset.icon-preview img { max-height: 32px; }
-    @media (max-width: 768px) { .m-form-grid { grid-template-columns: 1fr; } }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 
 <div class="m-admin-container">
     <div class="m-admin-header">

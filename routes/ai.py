@@ -1,6 +1,6 @@
 from sqlalchemy.engine import result
 import json
-from flask import Blueprint, request, jsonify, render_template, current_app, redirect, url_for, flash, session
+from flask import Blueprint, request, jsonify, render_template, current_app, redirect, url_for, flash, session, Response, stream_with_context
 from flask_login import current_user
 from utils.ai_qwen import qwen_service
 from utils.rate_limit import limiter
@@ -848,3 +848,66 @@ def chat():
         "db_result": db_results_totales[0] if db_results_totales else None,
         "model": modelo_actual
     })
+
+@bp.route('/stream-chat', methods=['POST'])
+@limiter.limit("10 per minute")
+def stream_chat():
+    """Endpoint para procesar mensajes del chatbot mediante Server-Sent Events (SSE)."""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No hay datos en la solicitud"}), 400
+
+    mensaje = data.get('message')
+    modelo = data.get('model', 'qwen-plus')
+    
+    ALLOWED_MODELS = {'qwen-plus', 'qwen-max'}
+    if modelo not in ALLOWED_MODELS:
+        return jsonify({"error": "Modelo no autorizado o inválido"}), 403
+    if not mensaje:
+        return jsonify({"error": "El mensaje es obligatorio"}), 400
+
+    @stream_with_context
+    def generate():
+        es_admin = hasattr(current_user, 'username')
+        herramientas_disponibles = qwen_service.TOOLS
+        system_msg = qwen_service.SYSTEM_PROMPT
+
+        if not es_admin:
+            herramientas_permitidas = ['createCustomerOrder', 'addProductToCart', 'updateCartItem', 'checkoutCart', 'listProducts', 'validatePaymentReceipt', 'createSupportTicket', 'getTicketStatus', 'addComment']
+            herramientas_disponibles = [t for t in qwen_service.TOOLS if t['function']['name'] in herramientas_permitidas]
+            system_msg += "\n\nAVISO CRÍTICO DE SEGURIDAD: El usuario actual NO es Administrador. Para esta conversación se te han bloqueado temporalmente las herramientas de CRM, Contabilidad y Facturación."
+
+        system_msg += "\n\nREGLA ESTRICTA PARA HERRAMIENTAS: Cada vez que uses una herramienta, DEBES extraer los parámetros ÚNICAMENTE del último mensaje enviado por el usuario."
+
+        from models import DocumentoConocimiento
+        faq_context = ""
+        try:
+            documentos = DocumentoConocimiento.query.all()
+            if documentos:
+                faq_context = "\n\n".join([f"[{doc.categoria.upper()}] {doc.titulo}:\n{doc.contenido_texto}" for doc in documentos])
+        except Exception:
+            pass
+
+        historial = data.get('history', [])
+
+        try:
+            for chunk in qwen_service.get_stream_response(
+                prompt=mensaje,
+                model=modelo,
+                history=historial,
+                tools=herramientas_disponibles,
+                system_instruction=system_msg,
+                faq_context=faq_context
+            ):
+                if chunk["type"] in ["content", "reasoning", "error"]:
+                    # Formatear como evento SSE: data: {"type": "...", "content": "..."}\n\n
+                    yield f"data: {json.dumps(chunk)}\n\n"
+                elif chunk["type"] == "final":
+                    # Emitimos el evento final. Aquí en Fases posteriores se integrará
+                    # la ejecución del bucle ReAct si 'tool_calls' está presente.
+                    chunk["is_final"] = True
+                    yield f"data: {json.dumps(chunk)}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+
+    return Response(generate(), mimetype='text/event-stream')
